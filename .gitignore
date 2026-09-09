@@ -4,6 +4,9 @@
 .playwright-cli/
 output/
 
+# Published separately on the demo branch
+Demo/
+
 # Common local tooling directories
 node_modules/
 .venv/
