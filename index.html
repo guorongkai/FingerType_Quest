@@ -343,8 +343,8 @@
       }
 
       .stage.sentence-stage {
-        grid-template-rows: auto auto auto auto;
-        align-content: start;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        align-content: stretch;
         gap: 6px;
       }
 
@@ -401,14 +401,45 @@
 
       .word.sentence-target {
         align-self: start;
-        max-height: none;
-        overflow: visible;
-        padding: 2px 2px 4px;
-        font-size: clamp(1rem, 2.35vh, 1.5rem);
-        line-height: 1.3;
+        min-height: 0;
+        max-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 5px 8px 8px;
+        color: #8592a1;
+        font-size: clamp(1.2rem, 3.1vh, 2rem);
+        line-height: 1.45;
         max-width: 100%;
         word-break: normal;
         overflow-wrap: anywhere;
+        white-space: pre-wrap;
+        scrollbar-width: thin;
+      }
+
+      .sentence-char {
+        border-radius: 3px;
+        color: #8491a1;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+        transition:
+          background 140ms ease,
+          box-shadow 140ms ease,
+          color 140ms ease;
+      }
+
+      .sentence-char.done {
+        background: #dff7ea;
+        box-shadow: inset 0 -2px 0 #7bcf99;
+        color: #0c6d38;
+      }
+
+      .sentence-char.error {
+        background: #ffe0dc;
+        box-shadow: 0 0 0 2px rgba(207, 67, 57, 0.24);
+        color: #a42e28;
+        text-decoration: underline wavy #cf4339;
+        text-underline-offset: 4px;
       }
 
       .letter-rail {
@@ -420,33 +451,44 @@
       }
 
       .letter-rail.dictation-progress {
-        justify-content: center;
-      }
-
-      .letter-rail.sentence-progress {
-        min-height: 34px;
-        max-height: none;
+        min-height: 30px;
         flex-wrap: nowrap;
         gap: 4px;
+        justify-content: flex-start;
         overflow-x: auto;
         overflow-y: hidden;
-        align-content: center;
-        padding: 3px 0 3px;
-        scroll-padding-inline: 44px;
+        padding: 2px 0;
       }
 
-      .letter-rail.sentence-progress .letter {
-        flex: 0 0 26px;
-        width: 26px;
-        height: 29px;
+      .dictation-history {
+        align-self: start;
+        min-height: 0;
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+        color: #000;
+        font-size: var(--dictation-history-font-size, clamp(1rem, 2.2vw, 1.45rem));
+        font-weight: 950;
+        line-height: 1.3;
+        max-height: min(5.2em, 100%);
+        overflow-x: hidden;
+        overflow-y: auto;
+        overflow-wrap: anywhere;
+        padding: 0 5px 2px 0;
+        scrollbar-width: thin;
+      }
+
+      .word.dictation-status {
+        font-size: clamp(1rem, 2.2vw, 1.45rem);
+        line-height: 1.3;
+      }
+
+      .stage.dictation-stage .letter {
+        flex: 0 0 25px;
+        width: 25px;
+        height: 27px;
         border-width: 1px;
         font-size: 0.84rem;
-      }
-
-      .letter-rail.sentence-progress .letter.space-letter {
-        flex-basis: 46px;
-        width: 46px;
-        font-size: 0.62rem;
       }
 
       .letter {
@@ -525,6 +567,49 @@
       .reveal-word[aria-pressed="true"] {
         background: var(--gold);
         border-color: #d8a91c;
+      }
+
+      .stage.dictation-stage {
+        grid-template-columns: max-content minmax(0, 1fr);
+        grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+        align-content: stretch;
+        gap: 4px;
+        column-gap: 14px;
+        padding-top: 9px;
+      }
+
+      .stage.dictation-stage .badge-row {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      .stage.dictation-stage .word {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .stage.dictation-stage .letter-rail.dictation-progress {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        justify-content: flex-start;
+      }
+
+      .stage.dictation-stage .dictation-history {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        align-self: stretch;
+        max-height: none;
+      }
+
+      .stage.dictation-stage .hint {
+        grid-column: 1 / -1;
+        grid-row: 4;
+      }
+
+      .stage.dictation-stage .word-actions {
+        grid-column: 1 / -1;
+        grid-row: 5;
       }
 
       .stats {
@@ -1635,8 +1720,12 @@
           grid-template-rows: auto minmax(64px, 1fr) auto auto;
         }
 
+        .stage.dictation-stage {
+          grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+        }
+
         .stage.sentence-stage {
-          grid-template-rows: auto auto auto auto;
+          grid-template-rows: auto minmax(0, 1fr) auto;
           gap: 5px;
         }
 
@@ -1772,9 +1861,14 @@
           grid-template-rows: minmax(58px, 1fr) auto auto;
         }
 
+        .stage.dictation-stage {
+          grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+          padding-top: 6px;
+        }
+
         .stage.sentence-stage {
-          grid-template-rows: auto auto auto auto;
-          align-content: start;
+          grid-template-rows: auto minmax(0, 1fr) auto;
+          align-content: stretch;
         }
 
         .stage .badge-row {
@@ -1783,6 +1877,24 @@
 
         .word {
           font-size: clamp(2rem, 6.2vh, 3.25rem);
+        }
+
+        .dictation-history {
+          font-size: 0.9rem;
+          line-height: 1.2;
+          max-height: min(4.8em, 100%);
+        }
+
+        .word.dictation-status {
+          font-size: 0.9rem;
+          line-height: 1.2;
+        }
+
+        .stage.dictation-stage .letter {
+          flex-basis: 22px;
+          width: 22px;
+          height: 24px;
+          font-size: 0.76rem;
         }
 
         .letter-rail {
@@ -1929,6 +2041,11 @@
           grid-template-columns: 1fr;
         }
 
+        .word.sentence-target {
+          max-height: min(32dvh, 13.5rem);
+          font-size: clamp(1.1rem, 2.35vh, 1.35rem);
+        }
+
         .app.sentence-mode .practice-row {
           grid-template-columns: 1fr;
         }
@@ -1952,6 +2069,10 @@
       }
 
       @media (max-width: 560px) {
+        .stage.dictation-stage .dictation-history {
+          max-height: clamp(72px, calc(100dvh - 724px), 120px);
+        }
+
         .settings {
           grid-template-columns: 1fr;
         }
@@ -2089,7 +2210,8 @@
             <span class="badge" id="gradeBadge">Grade 1</span>
             <span class="badge alt" id="modeBadge">Word Practice</span>
           </div>
-          <h2 class="word" id="targetWord">ready</h2>
+          <h2 class="word" id="targetWord">Ready</h2>
+          <p class="dictation-history" id="dictationHistory" hidden aria-label="Previous dictation words"></p>
           <div class="letter-rail" id="letterRail" aria-label="Letter progress"></div>
           <p class="hint" id="hintMessage" aria-live="polite">
             Press Start, then type on your keyboard.
@@ -3750,13 +3872,19 @@
         timerId: null,
         advanceTimerId: null,
         speechTimerIds: [],
+        speechSessionId: 0,
+        speechInFlight: false,
+        pendingDictationTransition: "",
         audioContext: null,
         shiftHeld: false,
         capsOn: false,
-        dictationRevealHeld: false
+        dictationRevealHeld: false,
+        dictationHistory: [],
+        sentenceMistakeIndex: null
       };
 
       const pressedKeys = new Set();
+      let dictationHistoryFitFrame = 0;
       let customCurrentWords = [];
       let customAllWords = [];
       let customCurrentSentenceItems = [];
@@ -3815,6 +3943,7 @@
         gradeBadge: document.querySelector("#gradeBadge"),
         modeBadge: document.querySelector("#modeBadge"),
         targetWord: document.querySelector("#targetWord"),
+        dictationHistory: document.querySelector("#dictationHistory"),
         letterRail: document.querySelector("#letterRail"),
         hintMessage: document.querySelector("#hintMessage"),
         fingerName: document.querySelector("#fingerName"),
@@ -5660,10 +5789,11 @@
       }
 
       function updateKeyboardLayer() {
-        const showUppercase = currentLetterIsUppercase();
+        const suppressDictationKeyFeedback = state.mode === "dictation" && state.running;
+        const showUppercase = currentLetterIsUppercase() && !suppressDictationKeyFeedback;
         const shiftTarget = state.running && !state.paused ? currentTargetShiftKey() : "";
-        els.keyboard.classList.toggle("shift-layer", state.shiftHeld);
-        els.keyboard.classList.toggle("caps-layer", state.capsOn);
+        els.keyboard.classList.toggle("shift-layer", state.shiftHeld && !suppressDictationKeyFeedback);
+        els.keyboard.classList.toggle("caps-layer", state.capsOn && !suppressDictationKeyFeedback);
 
         document.querySelectorAll(".key.letter-key").forEach((key) => {
           key.textContent = showUppercase
@@ -5677,8 +5807,8 @@
           const isPressed =
             pressedKeys.has(keyId) ||
             (isShiftKey(keyId) && state.shiftHeld && !hasPressedShift);
-          key.classList.toggle("pressed", isPressed);
-          key.classList.toggle("locked", keyId === "caps" && state.capsOn);
+          key.classList.toggle("pressed", isPressed && !suppressDictationKeyFeedback);
+          key.classList.toggle("locked", keyId === "caps" && state.capsOn && !suppressDictationKeyFeedback);
           key.classList.toggle("shift-required", keyId === shiftTarget && state.mode === "sentence");
         });
       }
@@ -5805,6 +5935,10 @@
       }
 
       function flashKeyFeedback(keyId, tone = "typed", typedChar = "") {
+        if (state.mode === "dictation" && state.running) {
+          return;
+        }
+
         const keyEl = keyElement(keyId);
         if (!keyEl) {
           return;
@@ -5871,31 +6005,45 @@
         const isSentence = state.mode === "sentence";
         const isDictationRevealVisible =
           isDictation && state.running && !state.paused && state.dictationRevealHeld;
-        els.targetWord.textContent = isDictation
+        const isDictationStatus = isDictation && !isDictationRevealVisible;
+        const displayText = isDictation
           ? isDictationRevealVisible
             ? state.currentWord
             : state.running && !state.paused
-            ? "listen"
-            : "ready"
+            ? "Listen"
+            : "Ready"
           : state.currentWord;
+        if (isSentence) {
+          renderSentenceTarget(displayText);
+        } else {
+          els.targetWord.textContent = displayText;
+        }
         els.targetWord.classList.toggle("sentence-target", isSentence);
         els.targetWord.classList.toggle("dictation-revealed", isDictationRevealVisible);
+        els.targetWord.classList.toggle("dictation-status", isDictationStatus);
         updateDictationRevealControl();
+        renderDictationHistory();
         els.letterRail.innerHTML = "";
+        els.letterRail.hidden = isSentence || isDictationRevealVisible;
         els.letterRail.classList.toggle("dictation-progress", isDictation);
         els.letterRail.classList.toggle("sentence-progress", isSentence);
 
         if (isDictation) {
-          [...state.currentWord].slice(0, state.charIndex).forEach((letter) => {
-            const item = document.createElement("span");
-            item.className = "letter done";
-            item.textContent = letter;
-            els.letterRail.appendChild(item);
-          });
+          if (!isDictationRevealVisible) {
+            [...state.currentWord].slice(0, state.charIndex).forEach((letter) => {
+              const item = document.createElement("span");
+              item.className = "letter done";
+              item.textContent = letter;
+              els.letterRail.appendChild(item);
+            });
+          }
           return;
         }
 
-        let currentLetterItem = null;
+        if (isSentence) {
+          return;
+        }
+
         [...state.currentWord].forEach((letter, index) => {
           const item = document.createElement("span");
           item.className = "letter";
@@ -5907,17 +6055,22 @@
           }
           if (index === state.charIndex && state.running && !state.paused) {
             item.classList.add("next");
-            currentLetterItem = item;
           }
           item.textContent = letter === " " ? "space" : letter;
           els.letterRail.appendChild(item);
         });
+      }
 
-        if (isSentence && currentLetterItem) {
-          requestAnimationFrame(() => {
-            currentLetterItem.scrollIntoView({ block: "nearest", inline: "center" });
-          });
-        }
+      function renderSentenceTarget(sentence) {
+        els.targetWord.replaceChildren();
+        [...sentence].forEach((character, index) => {
+          const item = document.createElement("span");
+          item.className = "sentence-char";
+          item.classList.toggle("done", index < state.charIndex);
+          item.classList.toggle("error", index === state.sentenceMistakeIndex && index >= state.charIndex);
+          item.textContent = character;
+          els.targetWord.appendChild(item);
+        });
       }
 
       function currentTargetKey() {
@@ -5942,9 +6095,12 @@
 
       function updateDictationRevealControl() {
         const isDictation = state.mode === "dictation";
-        const canReveal = isDictation && state.running && !state.paused;
+        const waitingForNextWord = isDictation && Boolean(state.pendingDictationTransition);
+        const canReveal = isDictation && state.running && !state.paused && !waitingForNextWord;
         els.revealWordBtn.hidden = !isDictation;
         els.revealWordBtn.disabled = !canReveal;
+        els.nextBtn.disabled = waitingForNextWord;
+        els.sayBtn.disabled = waitingForNextWord;
         els.revealWordBtn.setAttribute(
           "aria-pressed",
           String(canReveal && state.dictationRevealHeld)
@@ -5961,6 +6117,58 @@
 
         state.dictationRevealHeld = nextRevealState;
         renderWord();
+      }
+
+      function releaseDictationReveal() {
+        setDictationRevealHeld(false);
+        if (state.running && !state.paused && els.bankPage.hidden) {
+          els.stage.focus({ preventScroll: true });
+        }
+      }
+
+      function renderDictationHistory() {
+        const hasHistory = state.mode === "dictation" && state.dictationHistory.length > 0;
+        els.dictationHistory.hidden = !hasHistory;
+        els.dictationHistory.textContent = hasHistory ? state.dictationHistory.join(", ") : "";
+        els.dictationHistory.style.removeProperty("--dictation-history-font-size");
+
+        if (dictationHistoryFitFrame) {
+          cancelAnimationFrame(dictationHistoryFitFrame);
+          dictationHistoryFitFrame = 0;
+        }
+        if (hasHistory) {
+          dictationHistoryFitFrame = requestAnimationFrame(() => {
+            dictationHistoryFitFrame = 0;
+            fitDictationHistory();
+          });
+        }
+      }
+
+      function fitDictationHistory() {
+        if (state.mode !== "dictation" || els.dictationHistory.hidden) {
+          return;
+        }
+
+        const history = els.dictationHistory;
+        const availableHeight = history.clientHeight;
+        if (availableHeight <= 0) {
+          return;
+        }
+
+        let fontSize = parseFloat(getComputedStyle(history).fontSize);
+        const minimumFontSize = 10;
+        while (history.scrollHeight > availableHeight && fontSize > minimumFontSize) {
+          fontSize = Math.max(minimumFontSize, fontSize - 0.5);
+          history.style.setProperty("--dictation-history-font-size", `${fontSize}px`);
+        }
+      }
+
+      function addDictationHistoryWord(word) {
+        if (state.mode !== "dictation" || !word) {
+          return;
+        }
+
+        state.dictationHistory.push(word);
       }
 
       function updateHighlights() {
@@ -6218,15 +6426,17 @@
 
       function applyModeButtons() {
         const isSentence = state.mode === "sentence";
+        const isDictation = state.mode === "dictation";
         els.practicePage.classList.toggle("sentence-mode", isSentence);
         els.stage.classList.toggle("sentence-stage", isSentence);
+        els.stage.classList.toggle("dictation-stage", isDictation);
         els.modeButtons.forEach((button) => {
           button.classList.toggle("active", button.dataset.mode === state.mode);
         });
       }
 
       function previewRound() {
-        clearTimeout(state.advanceTimerId);
+        clearAdvanceTimer();
         clearInterval(state.timerId);
         clearSpeechQueue();
         ensureBankMatchesMode();
@@ -6240,6 +6450,8 @@
         state.running = false;
         state.paused = false;
         state.dictationRevealHeld = false;
+        state.dictationHistory = [];
+        state.sentenceMistakeIndex = null;
         state.correctChars = 0;
         state.mistakes = 0;
         state.completedWords = 0;
@@ -6256,7 +6468,7 @@
       }
 
       function startRound() {
-        clearTimeout(state.advanceTimerId);
+        clearAdvanceTimer();
         clearInterval(state.timerId);
         clearSpeechQueue();
         ensureBankMatchesMode();
@@ -6277,6 +6489,8 @@
         state.running = true;
         state.paused = false;
         state.dictationRevealHeld = false;
+        state.dictationHistory = [];
+        state.sentenceMistakeIndex = null;
         state.correctChars = 0;
         state.mistakes = 0;
         state.completedWords = 0;
@@ -6342,16 +6556,22 @@
           renderWord();
           updateHighlights();
           announceTarget();
-          speakCurrentWord();
+          if (state.pendingDictationTransition) {
+            schedulePendingDictationTransition();
+          } else {
+            speakCurrentWord();
+          }
           els.stage.focus({ preventScroll: true });
           return;
         }
 
+        const preservePendingTransition = Boolean(state.pendingDictationTransition);
         state.paused = true;
         state.dictationRevealHeld = false;
         state.pausedAt = performance.now();
         els.pauseBtn.textContent = "Resume";
-        clearSpeechQueue();
+        clearAdvanceTimer();
+        clearSpeechQueue({ preserveDictationTransition: preservePendingTransition });
         renderWord();
         updateHighlights();
         setHint("Paused. Press Resume when you are ready.");
@@ -6365,9 +6585,29 @@
         if (!state.running || state.paused) {
           return;
         }
+
+        if (state.mode === "dictation") {
+          if (state.pendingDictationTransition) {
+            return;
+          }
+
+          if (state.charIndex < currentTargetText().length) {
+            addDictationHistoryWord(state.currentWord);
+          }
+          renderWord();
+          requestDictationTransition(
+            state.wordIndex + 1 >= state.activeRoundSize ? "finish" : "next"
+          );
+          return;
+        }
+
+        clearAdvanceTimer();
         clearSpeechQueue();
         state.streak = 0;
         state.dictationRevealHeld = false;
+        if (state.charIndex < currentTargetText().length) {
+          addDictationHistoryWord(state.currentWord);
+        }
         state.wordIndex += 1;
         if (state.wordIndex >= state.activeRoundSize) {
           finishRound();
@@ -6375,6 +6615,7 @@
         }
         state.currentWord = state.queue[state.wordIndex];
         state.charIndex = 0;
+        state.sentenceMistakeIndex = null;
         renderWord();
         updateHighlights();
         updateStats();
@@ -6421,15 +6662,26 @@
       }
 
       function handleCorrectKey() {
+        if (state.mode === "sentence") {
+          state.sentenceMistakeIndex = null;
+        }
         state.correctChars += 1;
         state.charIndex += 1;
 
         if (state.charIndex >= currentTargetText().length) {
+          addDictationHistoryWord(state.currentWord);
           state.completedWords += 1;
           state.streak += 1;
           renderWord();
           updateHighlights();
           updateStats();
+
+          if (state.mode === "dictation") {
+            requestDictationTransition(
+              state.completedWords >= state.activeRoundSize ? "finish" : "next"
+            );
+            return;
+          }
 
           if (state.completedWords >= state.activeRoundSize) {
             finishRound();
@@ -6438,10 +6690,12 @@
 
           setHint(`Nice typing. Get ready for the next ${unitLabel(1)}.`, "success");
           state.advanceTimerId = setTimeout(() => {
+            state.advanceTimerId = null;
             state.wordIndex += 1;
             state.currentWord = state.queue[state.wordIndex];
             state.charIndex = 0;
             state.dictationRevealHeld = false;
+            state.sentenceMistakeIndex = null;
             renderWord();
             updateHighlights();
             updateStats();
@@ -6463,6 +6717,11 @@
         updateStats();
         playErrorSound();
         flashCoach();
+
+        if (state.mode === "sentence") {
+          state.sentenceMistakeIndex = state.charIndex;
+          renderWord();
+        }
 
         if (state.mode === "dictation") {
           setHint("Not that letter. Listen and try again.", "error");
@@ -6524,34 +6783,194 @@
         if (!els.voiceToggle.checked || !("speechSynthesis" in window)) {
           return;
         }
-        clearSpeechQueue();
 
-        const repeatCount = state.mode === "dictation" ? 3 : 1;
-        for (let index = 0; index < repeatCount; index += 1) {
-          const word = state.currentWord;
-          const timerId = setTimeout(() => {
-            state.speechTimerIds = state.speechTimerIds.filter((queuedId) => queuedId !== timerId);
-            speakWordOnce(word);
-          }, index * 3000);
-          state.speechTimerIds.push(timerId);
+        if (state.mode === "dictation") {
+          if (state.pendingDictationTransition) {
+            return;
+          }
+          startDictationPlayback(state.currentWord);
+          return;
+        }
+
+        clearSpeechQueue();
+        speakWordOnce(state.currentWord);
+      }
+
+      function startDictationPlayback(word) {
+        clearSpeechQueue();
+        const sessionId = state.speechSessionId;
+        scheduleDictationRepeat(sessionId, word, 0, 0);
+      }
+
+      function scheduleDictationRepeat(sessionId, word, repeatIndex, delay) {
+        const timerId = window.setTimeout(() => {
+          state.speechTimerIds = state.speechTimerIds.filter((queuedId) => queuedId !== timerId);
+          if (!isActiveDictationSpeech(sessionId, word) || state.pendingDictationTransition) {
+            return;
+          }
+
+          const startedAt = performance.now();
+          state.speechInFlight = true;
+          speakWordOnce(word, {
+            onend: () => finishDictationRepeat(sessionId, word, repeatIndex, startedAt),
+            onerror: () => finishDictationRepeat(sessionId, word, repeatIndex, startedAt)
+          });
+        }, delay);
+        state.speechTimerIds.push(timerId);
+      }
+
+      function isActiveDictationSpeech(sessionId, word) {
+        return (
+          state.mode === "dictation" &&
+          state.running &&
+          !state.paused &&
+          state.speechSessionId === sessionId &&
+          state.currentWord === word
+        );
+      }
+
+      function finishDictationRepeat(sessionId, word, repeatIndex, startedAt) {
+        if (!isActiveDictationSpeech(sessionId, word)) {
+          return;
+        }
+
+        state.speechInFlight = false;
+        if (state.pendingDictationTransition) {
+          schedulePendingDictationTransition();
+          return;
+        }
+
+        if (repeatIndex < 2) {
+          const remainingDelay = Math.max(0, 3000 - (performance.now() - startedAt));
+          scheduleDictationRepeat(sessionId, word, repeatIndex + 1, remainingDelay);
         }
       }
 
-      function speakWordOnce(word) {
+      function requestDictationTransition(transition) {
+        if (state.pendingDictationTransition) {
+          return;
+        }
+
+        state.pendingDictationTransition = transition;
+        clearSpeechTimers();
+        updateDictationRevealControl();
+        setHint(
+          transition === "finish"
+            ? "Nice typing. The current reading will finish first."
+            : "Nice typing. The next word will begin 1 second after this reading finishes.",
+          "success"
+        );
+
+        if (!els.voiceToggle.checked || !("speechSynthesis" in window) || !state.speechInFlight) {
+          schedulePendingDictationTransition();
+        }
+      }
+
+      function schedulePendingDictationTransition() {
+        const transition = state.pendingDictationTransition;
+        if (!transition || state.advanceTimerId) {
+          return;
+        }
+
+        const delay = transition === "next" && els.voiceToggle.checked ? 1000 : 0;
+        state.advanceTimerId = window.setTimeout(() => {
+          state.advanceTimerId = null;
+          if (!state.pendingDictationTransition) {
+            return;
+          }
+
+          const pendingTransition = state.pendingDictationTransition;
+          state.pendingDictationTransition = "";
+          if (pendingTransition === "finish") {
+            finishRound();
+            return;
+          }
+
+          state.wordIndex += 1;
+          state.currentWord = state.queue[state.wordIndex];
+          state.charIndex = 0;
+          state.dictationRevealHeld = false;
+          renderWord();
+          updateHighlights();
+          updateStats();
+          announceTarget();
+          speakCurrentWord();
+        }, delay);
+      }
+
+      function preferredEnglishVoice() {
+        if (!("speechSynthesis" in window)) {
+          return null;
+        }
+
+        const voices = window.speechSynthesis
+          .getVoices()
+          .filter((voice) => /^en(?:-|_)/i.test(voice.lang));
+        if (voices.length === 0) {
+          return null;
+        }
+
+        const samantha = voices.find(
+          (voice) => /^samantha\b/i.test(voice.name) && /^en-us/i.test(voice.lang)
+        );
+        if (samantha) {
+          return samantha;
+        }
+
+        const scoreVoice = (voice) => {
+          const name = voice.name.toLowerCase();
+          let score = /^en-us/i.test(voice.lang) ? 30 : 0;
+          if (/(natural|neural|premium|enhanced|siri)/i.test(name)) score += 240;
+          if (/(ava|eddy|flo|reed|shelley|sandy)/i.test(name)) score += 160;
+          if (/(samantha|alex|allison|zoe|karen|moira|tessa|nicky)/i.test(name)) score += 70;
+          if (/online/i.test(name)) score += 30;
+          if (voice.localService) score += 10;
+          if (voice.default) score += 5;
+          if (/google us english/i.test(name)) score -= 15;
+          return score;
+        };
+
+        return voices.sort((left, right) => scoreVoice(right) - scoreVoice(left))[0];
+      }
+
+      function speakWordOnce(word, callbacks = {}) {
         if (!els.voiceToggle.checked || !("speechSynthesis" in window) || !word) {
           return;
         }
 
         const utterance = new SpeechSynthesisUtterance(word);
-        utterance.lang = "en-US";
-        utterance.rate = 0.84;
-        utterance.pitch = 1.05;
+        const voice = preferredEnglishVoice();
+        utterance.lang = voice?.lang || "en-US";
+        if (voice) {
+          utterance.voice = voice;
+        }
+        utterance.rate = 0.86;
+        utterance.pitch = 1;
+        utterance.onend = callbacks.onend || null;
+        utterance.onerror = callbacks.onerror || null;
         window.speechSynthesis.speak(utterance);
       }
 
-      function clearSpeechQueue() {
+      function clearSpeechTimers() {
         state.speechTimerIds.forEach((timerId) => clearTimeout(timerId));
         state.speechTimerIds = [];
+      }
+
+      function clearAdvanceTimer() {
+        if (state.advanceTimerId) {
+          clearTimeout(state.advanceTimerId);
+        }
+        state.advanceTimerId = null;
+      }
+
+      function clearSpeechQueue({ preserveDictationTransition = false } = {}) {
+        const pendingTransition = preserveDictationTransition
+          ? state.pendingDictationTransition
+          : "";
+        clearSpeechTimers();
+        state.speechSessionId += 1;
+        state.speechInFlight = false;
+        state.pendingDictationTransition = pendingTransition;
         if ("speechSynthesis" in window) {
           window.speechSynthesis.cancel();
         }
@@ -6561,14 +6980,17 @@
         state.running = false;
         state.paused = false;
         state.dictationRevealHeld = false;
-        clearTimeout(state.advanceTimerId);
+        clearAdvanceTimer();
         clearInterval(state.timerId);
         clearSpeechQueue();
         const roundStats = calculateStats();
         writeBest(roundStats);
         updateStats();
         clearHighlights();
-        els.targetWord.textContent = "great work";
+        els.targetWord.textContent = "Great Work";
+        els.targetWord.classList.toggle("dictation-status", state.mode === "dictation");
+        els.targetWord.classList.remove("dictation-revealed");
+        renderDictationHistory();
         els.letterRail.innerHTML = "";
         setHint(
           `Round complete. You typed ${state.completedWords} ${unitLabel(state.completedWords)} with ${roundStats.accuracy}% accuracy.`,
@@ -6643,10 +7065,10 @@
         });
         els.revealWordBtn.addEventListener("pointerup", (event) => {
           event.preventDefault();
-          setDictationRevealHeld(false);
+          releaseDictationReveal();
         });
-        els.revealWordBtn.addEventListener("pointercancel", () => setDictationRevealHeld(false));
-        els.revealWordBtn.addEventListener("lostpointercapture", () => setDictationRevealHeld(false));
+        els.revealWordBtn.addEventListener("pointercancel", releaseDictationReveal);
+        els.revealWordBtn.addEventListener("lostpointercapture", releaseDictationReveal);
         els.revealWordBtn.addEventListener("keydown", (event) => {
           if (event.repeat || ![" ", "Enter"].includes(event.key)) {
             return;
@@ -6659,7 +7081,7 @@
             return;
           }
           event.preventDefault();
-          setDictationRevealHeld(false);
+          releaseDictationReveal();
         });
         els.revealWordBtn.addEventListener("click", (event) => event.preventDefault());
 
@@ -6683,7 +7105,11 @@
         els.soundToggle.addEventListener("change", persistSettings);
         els.voiceToggle.addEventListener("change", () => {
           if (!els.voiceToggle.checked) {
-            clearSpeechQueue();
+            const preservePendingTransition = Boolean(state.pendingDictationTransition);
+            clearSpeechQueue({ preserveDictationTransition: preservePendingTransition });
+            if (preservePendingTransition) {
+              schedulePendingDictationTransition();
+            }
           }
           persistSettings();
         });
