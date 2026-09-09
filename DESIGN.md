@@ -53,7 +53,7 @@ Typing Game/
 
 - 顶部栏：`FingerType Quest`, `Banks`, `Start`, `Pause`, `Reset`
 - 设置栏：`Bank`, `Mode`, `Round`, `Sound`, `Voice`
-- 练习区：当前目标、字符进度、提示、朗读、跳过
+- 练习区：当前目标、字符进度、提示、朗读、下一题
 - 统计区：完成数量、准确率、WPM、错误数、连续正确、最好成绩
 - Typing Coach：当前手指、目标键、完整键盘和手指覆盖层
 
@@ -309,11 +309,13 @@ My FingerType Banks/
 保持稳定版行为：
 
 - 当前单词不显示，只显示 `listen`。
+- 听写进行中会显示 `Hold to Show`；按住鼠标左键（或键盘 Space/Enter）时才临时显示完整当前单词，松开后立即回到 `listen`。暂停、切换下一题、完成回合或浏览器失焦时也会隐藏。
 - 朗读当前单词三遍，每遍开始间隔 3 秒。
 - 正确输入后逐字显示。
 - 不提前暴露目标字母、目标键、目标手指或总长度。
 - 错键不写入。
 - 不需要 Backspace。
+- 所有模式使用 `Next` 进入下一题；其行为与原 `Skip` 一致，不计为完成。
 
 ### 9.3 Sentence Practice
 
