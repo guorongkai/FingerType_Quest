@@ -3395,6 +3395,55 @@
         Object.entries(shiftedCharacterMap).map(([base, shifted]) => [shifted, base])
       );
 
+      const practiceCharacterMap = Object.freeze({
+        "“": "\"",
+        "”": "\"",
+        "‘": "'",
+        "’": "'",
+        "–": "-",
+        "—": "-",
+        "，": ",",
+        "、": ",",
+        "。": ".",
+        "！": "!",
+        "？": "?",
+        "：": ":",
+        "；": ";",
+        "（": "(",
+        "）": ")",
+        "＂": "\"",
+        "＇": "'",
+        "－": "-"
+      });
+
+      const physicalPunctuationCodeMap = {
+        Backquote: "`",
+        Digit1: "1",
+        Digit2: "2",
+        Digit3: "3",
+        Digit4: "4",
+        Digit5: "5",
+        Digit6: "6",
+        Digit7: "7",
+        Digit8: "8",
+        Digit9: "9",
+        Digit0: "0",
+        Minus: "-",
+        Equal: "=",
+        BracketLeft: "[",
+        BracketRight: "]",
+        Backslash: "\\",
+        Semicolon: ";",
+        Quote: "'",
+        Comma: ",",
+        Period: ".",
+        Slash: "/"
+      };
+
+      function normalizePracticeCharacter(character) {
+        return practiceCharacterMap[character] || character;
+      }
+
       const namedKeyMap = {
         Backspace: "backspace",
         Tab: "tab",
@@ -4578,9 +4627,7 @@
 
       function normalizePracticeSentence(sentence) {
         return String(sentence)
-          .replace(/[“”]/g, "\"")
-          .replace(/[‘’]/g, "'")
-          .replace(/[–—]/g, "-")
+          .replace(/[“”‘’–—，、。！？：；（）＂＇－]/g, normalizePracticeCharacter)
           .replace(/\s+/g, " ")
           .replace(/\s+([,.?!;:])/g, "$1")
           .replace(/([({["'])\s+/g, "$1")
@@ -5490,7 +5537,7 @@
         }
 
         if (event.key && event.key.length === 1) {
-          return normalizePracticeSentence(event.key);
+          return normalizePracticeCharacter(event.key);
         }
 
         return "";
@@ -5620,7 +5667,7 @@
       }
 
       function normalizeKeyboardEvent(event) {
-        const key = event.key;
+        const key = normalizePracticeCharacter(event.key);
 
         if (key === " ") {
           return " ";
@@ -5670,7 +5717,7 @@
           return baseCharacterMap[key] || key;
         }
 
-        return "";
+        return physicalPunctuationCodeMap[event.code] || "";
       }
 
       function pressKey(keyId, options = {}) {
