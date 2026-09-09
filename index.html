@@ -389,6 +389,16 @@
         word-break: break-word;
       }
 
+      .word:not(.sentence-target) {
+        padding: 2px 0 4px;
+        font-size: clamp(2.5rem, 6.9vh, 4.6rem);
+        line-height: 1;
+      }
+
+      .stage:not(.sentence-stage) {
+        grid-template-rows: auto minmax(82px, 1fr) auto auto;
+      }
+
       .word.sentence-target {
         align-self: start;
         max-height: none;
@@ -1616,6 +1626,10 @@
           gap: 7px;
         }
 
+        .stage:not(.sentence-stage) {
+          grid-template-rows: auto minmax(64px, 1fr) auto auto;
+        }
+
         .stage.sentence-stage {
           grid-template-rows: auto auto auto auto;
           gap: 5px;
@@ -1747,6 +1761,10 @@
           grid-template-rows: minmax(42px, 1fr) auto auto;
           padding: 7px 10px;
           gap: 4px;
+        }
+
+        .stage:not(.sentence-stage) {
+          grid-template-rows: minmax(58px, 1fr) auto auto;
         }
 
         .stage.sentence-stage {
