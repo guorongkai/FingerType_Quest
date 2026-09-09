@@ -17,16 +17,14 @@ A child-friendly English typing game for learners beginning to build QWERTY keyb
 
 ## Run it
 
-The Alpha experience is in `index-next.html`. Because it loads the Markdown bank files beside it, serve this folder with any simple local static server instead of opening the file directly.
+The Alpha experience is in `index.html`. Because it loads the Markdown bank files beside it, serve this folder with any simple local static server instead of opening the file directly.
 
 ```bash
 cd "Typing Game"
 python3 -m http.server 8000
 ```
 
-Then visit [http://localhost:8000/index-next.html](http://localhost:8000/index-next.html).
-
-`index.html` is the earlier, single-file version and can be opened directly in a browser.
+Then visit [http://localhost:8000/index.html](http://localhost:8000/index.html).
 
 ## How to play
 
@@ -41,11 +39,9 @@ In Sentence Practice, capitalization, spaces, and common punctuation are part of
 
 ```text
 .
-├── index-next.html       # Alpha app: bank library and all practice modes
-├── index.html            # Earlier standalone version
+├── index.html            # Alpha app: bank library and all practice modes
 ├── banks/                # K–8, custom, and sentence-bank Markdown files
-├── DESIGN-next.md        # Alpha design and data-model notes
-├── DESIGN.md             # Earlier version's design notes
+├── DESIGN.md             # Alpha design and data-model notes
 └── Demo/                 # Static demonstration copy
 ```
 
@@ -59,8 +55,7 @@ For the full Alpha experience, use a current desktop Chromium browser (such as C
 
 ## Documentation
 
-- [Alpha design notes](DESIGN-next.md)
-- [Earlier-version design notes](DESIGN.md)
+- [Alpha design notes](DESIGN.md)
 
 ## License
 

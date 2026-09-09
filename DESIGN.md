@@ -1,373 +1,480 @@
 # FingerType Quest 设计文档
 
-## 1. 项目定位
+## 1. 版本关系
 
-**FingerType Quest** 是一个面向 7 岁左右儿童的英文打字练习游戏。它参考 QWERTY Learner 的“单词记忆 + 打字肌肉记忆”思路，但交互方式更温和、更直观，适合刚开始学习英文和键盘的小孩。
+本文件描述当前版本：`index.html`。
 
-当前交付形式：一个自包含的 HTML 文件。
+当前版本使用 `index.html`、`DESIGN.md` 和根目录的 `banks/*.md`。为了读取旁边的 Markdown 词库文件，推荐通过本地静态服务打开 `index.html`。
 
-主文件：
+## 2. 本次升级目标
 
-- `index.html`
+在保留现有单词训练功能不变的基础上，新增更清晰的数据和工程结构：
 
-维护规则：
+- K-8 年级词库拆成独立 Markdown 文件。
+- 自定义词库拆成独立 Markdown 文件。
+- `Banks` 按钮从小弹窗升级为完整的 Bank Library 页面。
+- Bank Library 可以管理 K-8、Current List、All Added Words、句子库和导入句子库。
+- 新增 `Sentence Practice`，训练大小写、空格和标点符号。
+- 支持从电子书文本或电影脚本文本中提取句子，生成可练习的句子库。
+- 新增更明确的数据加载、浏览器保存、导入、导出和重置策略。
+- 支持每位用户授权一个自己的本地资料库文件夹，把四个自定义 bank 独立保存为 Markdown 文件；该能力不需要登录或后端。
 
-- 以后任何功能、交互、词库、视觉布局或验收标准的改动，都必须同步更新本设计文档。
-- 如果实现和文档冲突，以最新实现为准，但应立即补全文档。
+## 3. 文件结构
 
-## 2. 目标用户
+```text
+Typing Game/
+├── index.html
+├── DESIGN.md
+└── banks/
+    ├── grade-k.md
+    ├── grade-1.md
+    ├── grade-2.md
+    ├── grade-3.md
+    ├── grade-4.md
+    ├── grade-5.md
+    ├── grade-6.md
+    ├── grade-7.md
+    ├── grade-8.md
+    ├── custom-current.md
+    ├── custom-all.md
+    ├── current-sentences.md
+    └── all-imported-sentences.md
+```
 
-- 年龄：7 岁及以上。
-- 英文水平：初学或早期阅读阶段。
-- 键盘水平：刚开始学习 QWERTY 键盘。
-- 使用场景：家庭练习、家长陪伴练习、课后练习。
-- 主要学习目标：认识字母位置、理解基础指法、逐步形成英文单词打字肌肉记忆。
+## 4. 页面结构
 
-默认推荐：
+新版仍然是一个前端离线应用，但 UI 从单一练习页扩展为两个页面状态。
 
-- 默认词库：`Grade 1 Words`
-- 默认模式：`Word Practice`
-- 默认一轮：`10 words`
+### 4.1 Practice 页面
 
-## 3. 设计原则
+`index.html` 默认显示练习页。
 
-- **同屏可见**：孩子练习时必须同时看到当前单词、统计、键盘和手指提示。
-- **全英文界面**：游戏页面所有可见文字必须是英文。
-- **错误不惩罚**：按错键只提示，不把错误字母写进单词，不要求重打整个单词。
-- **不用删除**：孩子不需要按 Backspace 来修正。
-- **指法直观**：手指应直接和键盘发生空间关系，而不是独立显示在远处。
-- **儿童友好**：文字大、反馈清楚、颜色明快，但不做复杂装饰干扰注意力。
-- **完全离线可用**：不依赖后端，不需要登录，不在练习时访问外部网站；K-8 年级词库直接内置在 HTML 中。
+保留原有结构：
 
-## 4. 当前页面结构
+- 顶部栏：`FingerType Quest`, `Banks`, `Start`, `Pause`, `Reset`
+- 设置栏：`Bank`, `Mode`, `Round`, `Sound`, `Voice`
+- 练习区：当前目标、字符进度、提示、朗读、跳过
+- 统计区：完成数量、准确率、WPM、错误数、连续正确、最好成绩
+- Typing Coach：当前手指、目标键、完整键盘和手指覆盖层
 
-页面采用一屏式练习布局：
+新增：
 
-1. 顶部栏
-   - 游戏名称：`FingerType Quest`
-   - 词库按钮：`Banks`
-   - 主按钮：`Start`, `Pause`, `Reset`
+- `Mode` 增加第三项：`Sentence Practice`
+- `Bank` 下拉菜单同时包含词库和句子库
+- 当选择句子库时，模式自动切到 `Sentence Practice`
+- 当从句子模式切回词库时，模式自动回到 `Word Practice`
+- `Round` 在词库下显示 `10 words`, `20 words`, `30 words`
+- `Round` 在句子库下显示 `10 sentences`, `20 sentences`, `30 sentences`
+- 统计标签在词库下显示 `Words`，在句子库下显示 `Sentences`
+- `Say Word` 在句子模式下显示为 `Say Sentence`
+- 句子模式的练习区与右侧统计区保持同高；目标句按可用宽度自然换行，字号收敛为适合阅读的范围，完整文本不以内部滚动截断。
+- 句子模式的主练习区不显示 `Next: press...` 按键提示；当前键和手指提示只保留在右侧 Typing Coach。
+- 句子模式的字符进度格使用单行横向滚动，避免长句把练习区撑高或遮挡其他内容。
+- 当前字符高亮只改变颜色和描边，不向上位移，避免顶部被裁切。
+- Typing Coach 的黄色键名徽章支持较长键名，例如 `Shift`、`Command`、`Backspace`。
+- `Shift`、`Control`、`Option`、`Command`、`Fn` 长按时，对应手指保持停在按键上，松开后回到 home row。
+- 左右 `Control` 使用独立键位 ID；实体右 `Ctrl` 会点亮虚拟右 `Ctrl`，并由右小指保持按住。
 
-2. 设置栏
-   - `Word Bank`
-   - `Mode`
-   - `Round`
-   - `Sound`
-   - `Voice`
+### 4.2 Bank Library 页面
 
-3. 练习区
-   - 当前词库标签
-   - 当前模式标签
-   - 当前单词
-   - 字母进度格
-   - 当前按键提示
-   - `Say Word`
-   - `Skip`
+点击 `Banks` 不再打开小弹窗，而是进入 `#banks` 页面状态。
 
-4. 统计区
-   - `Words`
-   - `Accuracy`
-   - `WPM`
-   - `Mistakes`
-   - `Streak`
-   - `Best`
+Bank Library 包含一个个人资料库工具栏和两列管理区：
 
-5. Typing Coach 区
-   - 当前应使用的手指
-   - 当前目标键
-   - 半透明手指覆盖在键盘上
-   - 屏幕键盘
-   - 错键说明
+- 个人资料库工具栏：连接、重载或断开用户本地文件夹。
+- 左侧：所有 bank 列表。
+- 右侧：选中 bank 的 Markdown 编辑器和对应的导入区。四个自定义 bank 都支持从图片、PDF、TXT 或 Markdown 导入。
 
-6. Word Banks 弹窗
-   - `Paste Current List`
-   - `Save List`
-   - `Current List` 可视词表、数量、添加、逐词编辑、逐词删除、清空
-   - `All Added Words` 可视词表、数量、添加、逐词编辑、逐词删除、清空
-   - `Done`
+左侧 bank 分组：
 
-## 5. 键盘与手指设计
+- `California K-8 Word Banks`
+- `Custom Word Banks`
+- `Sentence Banks`
 
-### 5.1 键盘
+中间编辑器显示：
 
-键盘使用照片中的 Mac 风格 QWERTY 布局。每一行使用同一套横向定位单位，宽键会真实占位，避免字母键位置被平均拉伸而偏移。
+- bank 类型：`Words` 或 `Sentences`
+- bank 名称
+- 当前条目数量
+- 对应 Markdown 文件路径
+- Markdown 内容
+- `Save Bank`
+- `Use in Practice`
+- `Export Markdown`
+- `Clear This List`：仅在四个自定义 bank 显示；清空当前选中的列表，不影响配对的 Current 或 All 列表。
+- `Reset Browser Edits`
 
-- 功能键行：`esc F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 Power`
-- 数字符号行：`` ` 1 2 3 4 5 6 7 8 9 0 - = Backspace ``
-- 顶行：`Tab Q W E R T Y U I O P [ ] \`
-- Home row：`Caps A S D F G H J K L ; ' Enter`
-- 底行：`Shift Z X C V B N M , . / Shift`
-- 空格行：`fn control option command Space command option ← ↑/↓ →`
+个人资料库工具栏显示当前状态：
 
-`A S D F` 和 `J K L ;` 是 home row 参照键。
+- 未连接时使用 `Browser storage`，可选择一个本地文件夹。
+- 已连接时显示文件夹名称；四个自定义 bank 会从该文件夹读取，并在保存或导入时写回。
+- `Reload Folder` 用于读取用户在外部编辑器中保存后的 Markdown 内容。
+- `Disconnect` 只移除网站对文件夹的已保存引用，不删除用户文件。
 
-数字键、符号键和功能键用于让屏幕键盘更接近孩子面前的实体键盘，帮助孩子理解键盘整体结构。当前单词练习仍然只要求输入英文单词字母；`Backspace` 会触发“不需要删除”的提示，其他功能键不作为正确输入目标。
+右侧导入区提供：
 
-键盘交互规则：
+- 文件选择器，支持图片、PDF、`.txt`、`.text` 和 `.md`
+- 当前所选自定义 bank 的导入状态与结果提示
+- 词库文件自动抽取英文单词；句库文件自动抽取完整英文句子
+- 选中 K-8 公共词库时不显示导入区，避免误把个人资料写入公共课程词库
 
-- 屏幕键盘和实体键盘共用同一套按键逻辑。
-- 默认显示小写字母。
-- 按住左侧或右侧 `Shift` 时，字母键临时显示为大写，数字和符号键凸显上层符号。
-- 按住左侧或右侧 `Shift` 时，对应的小指必须一直停在该 `Shift` 键上；松开后才回到 home row。
-- 松开 `Shift` 后，键盘回到当前基础层。
-- 按下 `Caps` 会锁定大写字母显示，再按一次取消。
-- 使用实体键盘时，页面以浏览器事件里的真实 `CapsLock` 状态为准，并在 `keydown` 与 `keyup` 都即时校准屏幕键盘。
-- 使用屏幕 `Caps` 键时，它只模拟页面内的大写锁定；下一次实体键盘输入会重新以真实键盘状态为准。
-- `Caps` 和 `Shift` 同时作用时遵循常见键盘行为：`Shift` 会临时反转字母大小写层。
-- 所有屏幕键都可以按下并显示动画，包括功能键、符号键、修饰键和方向键。
-- 在练习运行中，字母键按物理键位判断正确性；非字母可打印键会作为错误尝试反馈，但不会输入到单词里。
-- `Shift`, `Caps`, `control`, `option`, `command`, `fn` 和方向键主要作为键盘教学反馈，不会让当前单词重来。
+## 5. Bank 数据模型
 
-### 5.2 手指覆盖层
+新版统一使用 `bankSources` 作为数据注册表。
 
-当前设计把手指画在键盘上，而不是放在键盘外面；手掌已移除，避免遮挡键盘和分散注意力。
+每个 bank 有以下字段：
 
-视觉要求：
+- `id`：稳定 ID，例如 `grade:1` 或 `sentence:current`
+- `label`：界面显示名
+- `type`：`word` 或 `sentence`
+- `group`：左侧列表和下拉菜单分组
+- `file`：对应 Markdown 文件路径
+- `coversAll`：是否每轮覆盖全部条目
+- `coversAllUntil`：当条目数不超过某个数量时，是否覆盖全部条目
 
-- 手指是半透明的，不能完全遮挡键盘字母。
-- 左手四指默认以指尖落在 `A S D F` 键帽上。
-- 右手四指默认以指尖落在 `J K L ;` 键帽上。
-- 左右大拇指默认落在 `Space`。
-- 手指带颜色，用来区分不同手指，但键盘字母仍然清楚可读。
+当前 bank 清单：
 
-### 5.3 当前指法动画
+| ID | 类型 | 文件 | 规则 |
+| --- | --- | --- | --- |
+| `grade:K` | word | `banks/grade-k.md` | 按 Round 随机抽取 |
+| `grade:1` | word | `banks/grade-1.md` | 按 Round 随机抽取 |
+| `grade:2` | word | `banks/grade-2.md` | 按 Round 随机抽取 |
+| `grade:3` | word | `banks/grade-3.md` | 按 Round 随机抽取 |
+| `grade:4` | word | `banks/grade-4.md` | 按 Round 随机抽取 |
+| `grade:5` | word | `banks/grade-5.md` | 按 Round 随机抽取 |
+| `grade:6` | word | `banks/grade-6.md` | 按 Round 随机抽取 |
+| `grade:7` | word | `banks/grade-7.md` | 按 Round 随机抽取 |
+| `grade:8` | word | `banks/grade-8.md` | 按 Round 随机抽取 |
+| `custom:current` | word | `banks/custom-current.md` | 每轮覆盖全部 |
+| `custom:all` | word | `banks/custom-all.md` | 30 个以内覆盖全部，超过 30 个按 Round |
+| `sentence:current` | sentence | `banks/current-sentences.md` | 每轮覆盖全部 |
+| `sentence:all-imported` | sentence | `banks/all-imported-sentences.md` | 30 句以内覆盖全部，超过 30 句按 Round |
 
-`Word Practice` 等待某个字母时：
+## 6. Markdown 格式
 
-- 对应目标键高亮。
-- 对应手指从 home row 位置移动到目标键。
-- 目标键上有圆形 pulse 提示。
-- 顶部提示条显示类似：`Left Index taps T`。
+### 6.1 单词 bank
 
-动画意图：
+推荐格式：
 
-- 让孩子直观看到“这根手指从哪里出发，去按哪个键”。
-- 不只是闪烁文字提示，而是模拟真实打字动作。
+```md
+# Grade 1 Words
 
-`Dictation` 中不使用提前指路动画。键盘和手指只在孩子按键后短暂反馈刚刚按下的字母，避免提前暴露正确答案。
+id: grade:1
+type: words
+label: Grade 1 Words
 
-## 6. 指法映射
+- after
+- again
+- school
+```
 
-采用标准 QWERTY 触控打字指法：
+解析规则：
 
-| 手指 | Home Key | 负责按键 |
+- 忽略 Markdown 标题行。
+- 忽略 `id:`, `type:`, `label:`, `file:`, `note:` 元数据行。
+- 忽略 HTML 注释行。
+- 支持项目符号、编号列表或普通粘贴文本。
+- 单词统一转为小写。
+- 只保留英文字母。
+- 自动去重。
+- 允许 1 个字母的词，例如 `a` 和 `i`。
+- 单词长度限制为 1 到 16 个字母。
+
+### 6.2 句子 bank
+
+推荐格式：
+
+```md
+# Current Sentences
+
+id: sentence:current
+type: sentences
+label: Current Sentence List
+
+- The sun is warm.
+- Can you read this line?
+- She said, "Great work!"
+```
+
+解析规则：
+
+- 保留大小写。
+- 保留空格。
+- 保留常见英文标点：`. , ! ? ' " ; : - ( )`
+- 智能引号会转换为直引号。
+- 长破折号会转换为 `-`。
+- 多余空白会压缩成一个空格。
+- 过短片段会过滤。
+- 过长句子会过滤。
+- 不可由当前屏幕键盘输入的字符会过滤。
+- 自动去重。
+
+## 7. 数据加载优先级
+
+新版有四层数据来源：
+
+1. `banks/*.md` 部署文件。
+2. 浏览器 `localStorage` 中的编辑内容。
+3. 用户授权的个人资料库文件夹。
+4. `index.html` 里的兜底数据。
+
+加载顺序：
+
+1. 初始化内置兜底数据，保证页面永远有可练习内容。
+2. 尝试读取每个 `banks/*.md` 文件。
+3. 读取浏览器保存的自定义词库、导入句子库和 bank override。
+4. 若用户已授权且权限仍有效，读取个人资料库文件夹中的四个 Markdown 文件。
+5. 个人资料库只覆盖四个自定义 bank，并优先于浏览器保存内容。
+
+这样设计的原因：
+
+- K-8 公共词库可随线上版本统一发布。
+- 每位用户可在自己的文件夹中维护个人词库和句库，不会与其他用户共享或互相覆盖。
+- 页面内编辑也可以立即生效。
+- Markdown 文件读取失败时，新版仍能运行。
+- 稳定可执行版本完全不受新版改动影响。
+
+## 8. 保存与导出策略
+
+浏览器不能在所有环境中静默写回任意本地路径，所以新版采用两种策略：
+
+- `Save Bank`：始终保存到浏览器本地存储，立即用于练习；已连接个人资料库时，同时写回相关 Markdown 文件。
+- `Export Markdown`：下载当前编辑器里的 Markdown 文件。
+- `Reload Banks`：重新读取部署站点的 `banks/*.md`，并重载已连接的个人资料库。
+- `Reload Folder`：只重新读取用户选定文件夹的四个 Markdown 文件。
+- `Reset Browser Edits`：清除当前 bank 的浏览器覆盖内容；个人资料库仍连接时，会重新以个人文件夹内容为准。
+- `Clear This List`：清空当前选中的自定义 bank，并保存空列表；Current 与 All 始终独立清空。已连接个人资料库时，只写回该 bank 对应的一个 Markdown 文件。
+- `Disconnect`：只忘记已保存的文件夹授权引用，不删除磁盘上的任何文件。
+
+外部编辑推荐流程：
+
+1. 打开 `banks/grade-1.md` 或其他 bank 文件。
+2. 直接编辑 Markdown。
+3. 保存文件。
+4. 在 Bank Library 点击 `Reload Banks`。
+
+页面内编辑推荐流程：
+
+1. 在 Bank Library 选择一个 bank。
+2. 修改 Markdown。
+3. 点击 `Save Bank`；已连接个人资料库时内容会立即写回文件夹。
+4. 点击 `Use in Practice`。
+5. 未连接个人资料库时，如需同步到磁盘，点击 `Export Markdown`。
+
+### 8.1 个人资料库文件夹
+
+在线部署时，用户从 Bank Library 点击 `Choose Folder`，在自己的电脑上选择一个文件夹。浏览器只会访问该用户明确选中的文件夹，并在首次连接时为缺失文件创建以下四个 Markdown 文件：
+
+```text
+My FingerType Banks/
+├── current-words.md
+├── all-added-words.md
+├── current-sentences.md
+└── all-imported-sentences.md
+```
+
+对应关系：
+
+| 个人文件 | Bank ID | 写入时机 |
 | --- | --- | --- |
-| Left Pinky | A | Q, A, Z |
-| Left Ring | S | W, S, X |
-| Left Middle | D | E, D, C |
-| Left Index | F | R, T, F, G, V, B |
-| Right Index | J | Y, U, H, J, N, M |
-| Right Middle | K | I, K |
-| Right Ring | L | O, L |
-| Right Pinky | ; | P, ; |
-| Thumbs | Space | Space |
+| `current-words.md` | `custom:current` | 编辑、导入或单独清空 Current Word List 时 |
+| `all-added-words.md` | `custom:all` | Current Word List 自动汇总、直接编辑、直接导入或单独清空 All Added Words 时 |
+| `current-sentences.md` | `sentence:current` | 编辑、导入或单独清空 Current Sentence List 时 |
+| `all-imported-sentences.md` | `sentence:all-imported` | Current Sentence List 自动汇总、直接编辑、直接导入或单独清空 All Imported Sentence List 时 |
 
-数字键沿用相邻字母列的指法颜色：`1` 左小指、`2` 左无名指、`3` 左中指、`4/5` 左食指、`6/7` 右食指、`8` 右中指、`9` 右无名指、`0` 右小指。
+文件夹授权规则：
 
-当前单词练习主要使用英文小写字母，`Space` 和其他功能键目前作为键盘结构参照，不作为普通单词输入目标。
-
-## 7. 游戏流程
-
-1. 孩子选择词库、模式和一轮单词数量。
-2. 点击 `Start`。
-3. 游戏根据所选词库生成本轮词表：
-   - 内置年级词库：按 `Round` 随机抽取 10、20 或 30 个词。
-   - `Current List`：必须覆盖当前列表里的全部词，不使用 `Round` 随机数量。
-   - `All Added Words`：30 个词以内覆盖全部词；超过 30 个词时按 `Round` 随机抽取 10、20 或 30 个词。
-   - 上述所有本轮词表都会先随机打乱顺序，再开始练习或听写。
-4. `Word Practice` 显示当前单词；`Dictation` 隐藏当前单词并显示 `listen`。
-5. `Word Practice` 中，当前要输入的字母在字母进度格中高亮。
-6. `Word Practice` 中，Typing Coach 显示目标键和应使用的手指。
-7. `Dictation` 中，Typing Coach 不提前显示目标键、目标字母、目标手指或单词总字母数。
-8. `Dictation` 中，浏览器自动播放当前单词三遍，每遍开始时间间隔 3 秒。
-9. 孩子按键。
-10. 如果按对：
-   - 当前字母变为完成状态。
-   - `Dictation` 中刚打对的字母会显示出来。
-   - 进入下一个字母。
-   - `Word Practice` 中手指动画移动到下一个目标键。
-   - `Dictation` 中键盘和手指只短暂反馈刚刚按对的字母。
-11. 如果按错：
-   - 错误字母不会出现在单词中。
-   - 当前字母不前进。
-   - 播放错误提示音。
-   - 错误次数增加。
-   - `Word Practice` 显示正确按键和手指提示。
-   - `Dictation` 不显示正确字母，只提示继续听并重试。
-12. 当前单词完成后，短暂停顿，然后自动进入下一个单词。
-13. 完成一轮后显示完成提示。
-
-## 8. 错误处理
-
-儿童友好的错误策略：
-
-- 错误按键不会被输入。
-- 不重置当前单词。
-- 不要求重新输入整个单词。
-- 不要求按 Backspace。
-- 错误会计入 `Mistakes`。
-- `Accuracy` 根据正确输入和错误尝试实时计算。
-- `Sound` 打开时播放短促、轻柔的错误音。
-- `Word Practice` 错误提示示例：`Try again: press T with your Left Index.`
-- `Dictation` 错误提示示例：`Not that letter. Listen and try again.`
-
-设计原因：
-
-- 防止孩子看到错误拼写并形成错误视觉记忆。
-- 降低挫败感。
-- 保留即时纠错和准确率反馈。
+- 不上传文件内容；网站没有后端、账号或共享资料库。
+- 浏览器会把文件夹句柄保存到当前网站域名的 IndexedDB 中，便于下次访问尝试恢复。
+- 浏览器可能在清理网站数据、切换浏览器或权限被撤销后要求用户再次选择文件夹。
+- 需要 HTTPS 部署（`localhost` 开发环境也可），并优先使用支持 File System Access API 的 Chromium 浏览器。
+- Safari、Firefox 或不支持的环境自动退回到浏览器保存和 Markdown 导入/导出，不影响练习功能。
 
 ## 9. 练习模式
 
-### Word Practice
+### 9.1 Word Practice
 
-主模式。根据所选 `Word Bank` 练习英文单词，完整显示当前单词。
+保持稳定版行为：
 
-适合：
+- 当前单词完整显示。
+- 只要求输入英文小写字母。
+- 键位判断按字母物理键位进行。
+- 即使按住 Shift 输入大写，仍然按字母键位判断，不改变原有单词训练体验。
+- 错键不写入。
+- 不需要 Backspace。
+- Typing Coach 提前显示目标键和目标手指。
 
-- 每天常规练习。
-- 单词拼写和键盘位置同步熟悉。
+### 9.2 Dictation
 
-### Dictation
+保持稳定版行为：
 
-听写模式。浏览器先读出当前单词，页面不显示完整单词，只显示 `listen` 和已经输入正确的字母。
+- 当前单词不显示，只显示 `listen`。
+- 朗读当前单词三遍，每遍开始间隔 3 秒。
+- 正确输入后逐字显示。
+- 不提前暴露目标字母、目标键、目标手指或总长度。
+- 错键不写入。
+- 不需要 Backspace。
 
-交互规则：
+### 9.3 Sentence Practice
 
-- 当前单词自动播放三遍，每遍开始时间间隔 3 秒。
-- `Say Word` 在听写模式下也会按三遍规则重播当前单词。
-- 打对一个字母，就显示一个字母。
-- 没打出来的字母不显示占位格、短横线或任何数量提示，避免暴露单词总字母数。
-- 打错不会显示错误字母。
-- Typing Coach 不提前高亮目标键，不显示目标字母，也不提前移动目标手指。
-- 孩子按下某个字母后，键盘和对应手指才短暂反馈刚刚按下的字母。
-- 错键时只反馈“按下的是哪个键”和错误音，不显示正确答案。
+新增模式。
 
-适合：
+目标：
 
-- 孩子已经见过这组词，想练听音拼写。
-- 家长希望同一组单词既能看词打字，也能听写巩固。
+- 训练句首大写。
+- 训练专有名词大写。
+- 训练空格。
+- 训练逗号、句号、问号、感叹号、引号、分号、冒号、连字符和括号。
+- 训练 Shift 与符号层的配合。
 
-## 10. 词库策略
+行为：
 
-词库入口统一为 `Word Bank`，孩子可以选择内置 California K-8 年级词库、Mia 当前课程词库或 Mia 历史累计词库。
+- 完整显示当前句子。
+- 字符进度格逐字符显示，并在句子模式下保持单行横向滚动。
+- 空格显示为 `space`。
+- 标点显示为原字符。
+- 当前目标字符高亮，但不向上位移。
+- 如果目标需要 Shift，Typing Coach 会提示 Shift；主练习区不重复显示同类按键提示。
+- 实体键盘按键使用浏览器事件里的真实字符判断。
+- 屏幕键盘按键根据当前 Shift/Caps 状态生成字符。
+- 大小写严格区分。
+- 标点严格区分。
+- 错键不写入。
+- 不需要 Backspace。
 
-### 10.1 内置年级词库
+## 10. 文件导入
 
-内置词库参考 California K-8 英语语言艺术学习目标来分级，覆盖基础拼读、常见词、拼写、词汇习得、通用学术词和跨学科词汇。
+Bank Library 的四个自定义 bank 都可以直接导入文件；解析类型由当前选择的 bank 决定。
 
-重要说明：
+| 选中的 bank | 解析结果 | 导入后的写入规则 |
+| --- | --- | --- |
+| `Current Word List` | 英文单词 | 替换 Current Word List，并把词汇累积到 All Added Words |
+| `All Added Words` | 英文单词 | 只累积到 All Added Words，不改变 Current Word List |
+| `Current Sentence List` | 完整英文句子 | 替换 Current Sentence List，并把句子累积到 All Imported Sentence List |
+| `All Imported Sentence List` | 完整英文句子 | 只累积到 All Imported Sentence List，不改变 Current Sentence List |
 
-- California Department of Education 的 standards 页面提供的是学习标准，例如 Vocabulary Acquisition and Use，不是一个官方可下载的完整 K-8 儿童词表。
-- 当前实现删除了在线更新入口，把 K-8 练习词库直接内置在 HTML 中。
-- 每次点击 `Start` 时，游戏会从所选年级词库随机抽取 `Round` 设定的 10、20 或 30 个词。
-- 后续如果有学校、老师或 Mia 课程提供的词表，可以通过 `Banks` 添加到自定义词库，不需要改代码。
+导入成功后，数据会立即用于练习；已连接个人资料库时，系统会把变动同步写入相应的本地 Markdown 文件。
 
-参考来源：
+适合导入：
 
-- California Content Standards Search: https://www2.cde.ca.gov/cacs/
-- CDE Content Standards: https://www.cde.ca.gov/BE/ST/SS/index.asp
-- CDE Common Core Resources: https://www.cde.ca.gov/re/cc/
+- 自己有权使用的电子书文本
+- 课程阅读材料
+- 公开领域文本
+- 家长自己整理的短文
+- 电影脚本片段
 
-年级范围：
+不适合导入：
 
-| 年级 | 练习重点 |
-| --- | --- |
-| Kindergarten | CVC 单词、颜色、家庭、学校常见词 |
-| Grade 1 | sight words、简单动词、常见短词 |
-| Grade 2 | 更长常见词、家庭、自然和生活词 |
-| Grade 3 | 描述词、课堂词汇、早期学术词 |
-| Grade 4 | 学术动词、阅读、科学和社区词 |
-| Grade 5 | 信息文本、多音节词和跨学科词 |
-| Grade 6 | 初中通用学术词 |
-| Grade 7 | 分析、评价和跨学科表达 |
-| Grade 8 | 更强的学术和技术词 |
+- 含大量舞台方向、时间码、乱码的原始字幕
+- 过短的台词碎片
+- 含当前键盘无法输入的大量特殊符号的文本
 
-### 10.2 自定义词库
+## 11. 出题规则
 
-`Banks` 打开词库管理弹窗。
+### 11.1 年级词库
 
-家长可以管理两个固定自定义词库：
+K-8 年级词库按 `Round` 随机抽取：
 
-- `Current List`：当前课程词库。
-- `All Added Words`：历史累计词库，保存所有添加过的词。
+- 10 words
+- 20 words
+- 30 words
 
-弹窗结构：
+每次开始前都会重新打乱。
 
-- `Paste Current List`：可一次粘贴一组课程词，支持逗号、空格或一行一个单词。
-- `Save List`：用粘贴区内容替换 `Current List`，并把这些词合并到 `All Added Words`。
-- `Current List` 面板：直接显示当前列表所有词，显示总词数，可新增、逐词修改、逐词删除或清空。
-- `All Added Words` 面板：直接显示历史累计所有词，显示总词数，可新增、逐词修改、逐词删除或清空。
-- `Done`：关闭弹窗。
+### 11.2 Current List
 
-自定义词库练习规则：
+保持原规则：
 
-- 这两个自定义词库始终出现在 `Word Bank` 下拉菜单的 `Custom Mia Banks` 分组里。
-- 选择 `Current List` 练习或听写时，必须覆盖当前列表里的每一个词。
-- 选择 `Current List` 时，每轮都会先打乱当前列表顺序，再完整覆盖全部词。
-- 选择 `Current List` 时，`Round` 下拉菜单自动变灰，因为本轮总数由当前列表总词数决定。
-- 选择 `All Added Words` 且总词数不超过 30 个时，也覆盖全部词，`Round` 下拉菜单自动变灰。
-- 选择 `All Added Words` 且总词数不超过 30 个时，每轮也会先打乱顺序，再完整覆盖全部词。
-- 选择 `All Added Words` 且总词数超过 30 个时，`Round` 下拉菜单可用，每轮随机抽取 10、20 或 30 个词。
-- `Words` 统计显示本轮实际总数，例如 `0 / 17` 或 `0 / 30`。
-- 清空 `Current List` 不影响 `All Added Words`。
-- 清空 `All Added Words` 不影响 `Current List`。
-- 修改或新增 `Current List` 中的词时，新词会合并进 `All Added Words`；从 `Current List` 删除词不会自动从 `All Added Words` 删除，家长可以在 `All Added Words` 面板单独删除。
+- 每轮覆盖当前列表全部单词。
+- `Round` 自动禁用。
+- 每轮先随机打乱。
+- 修改 Current List 时，新单词合并到 All Added Words。
 
-输入清洗规则：
+### 11.3 All Added Words
 
-- 所有词统一转为小写。
-- 只保留英文字母。
-- 自动去重。
-- 允许 1 个字母的词，例如 `a` 和 `I`。
-- 单词长度限制为 1 到 16 个字母。
+保持原规则：
 
-## 11. 声音与语音
+- 30 个以内覆盖全部。
+- 超过 30 个时按 Round 随机抽取。
+- 每轮先随机打乱。
 
-### Sound
+### 11.4 Starter Sentences
 
-控制错误提示音。
+默认按 Round 随机抽取：
 
-实现：
+- 10 sentences
+- 20 sentences
+- 30 sentences
 
-- 使用浏览器 Web Audio API 本地生成。
-- 不加载外部音频文件。
+如果句子数不足，会循环填充打乱后的句子，保证一轮长度和 Round 一致。
 
-### Voice
+### 11.5 Imported Sentences
 
-控制单词发音。
+导入句子库：
 
-实现：
+- 30 句以内覆盖全部。
+- 超过 30 句时按 Round 随机抽取。
+- 每轮先随机打乱。
 
-- 使用浏览器 SpeechSynthesis API。
-- 发音语言设为 `en-US`。
-- `Word Practice` 中每个单词播放 1 遍。
-- `Dictation` 中每个单词播放 3 遍，每遍开始时间间隔 3 秒。
-- `Say Word` 遵循当前模式：普通练习读 1 遍，听写读 3 遍。
-- `Pause`, `Reset`, `Skip` 或进入下一个词时，会清除尚未播放的排队发音。
-- 如果浏览器不支持，会自动关闭相关控件。
+## 12. 键盘与字符判断
 
-## 12. 数据与状态
+### 12.1 键位层
 
-游戏状态保存在浏览器内存中：
+屏幕键盘仍然保留稳定版的完整 Mac 风格键盘：
 
-- 当前词库 ID
+- 功能键
+- 数字符号行
+- QWERTY 字母区
+- Tab/Caps/Shift/Enter/Backspace
+- Space
+- 方向键
+
+### 12.2 Word/Dictation 判断
+
+为了保持旧体验，单词类模式继续按基础字母键位判断：
+
+- `a` 目标接受 `a` 键。
+- 即使 Shift/Caps 让实际字符变成 `A`，仍然视为按对 `a` 键。
+- 数字、标点和其他可打印键会作为错误尝试。
+
+### 12.3 Sentence 判断
+
+句子模式按实际字符判断：
+
+- 目标 `A` 必须输入 `A`。
+- 输入 `a` 会错。
+- 目标 `?` 必须输入 `?`。
+- 输入 `/` 会错。
+- 目标空格必须按 `Space`。
+
+字符到键位映射：
+
+- 字母映射到对应小写键位。
+- 大写字母映射到同一字母键，并提示 Shift。
+- `! @ # $ % ^ & * ( ) _ + { } | : " < > ?` 映射到对应基础键，并提示 Shift。
+- 空格映射到 `Space`。
+
+## 13. 状态持久化
+
+继续使用浏览器本地存储。
+
+保存内容：
+
+- 当前设置
+- 当前 bank ID
 - 当前模式
-- 当前单词队列
-- 当前单词位置
-- 当前字母位置
-- 正确字符数
-- 错误次数
-- 已完成单词数
-- 连续正确单词数
-- 开始时间和暂停时间
+- Sound/Voice 开关
+- 自定义 Current List
+- 自定义 All Added Words
+- 自定义 Current Sentence List
+- 自定义 All Imported Sentence List
+- 个人资料库的最近一次内容（作为离线降级副本）
+- K-8 公共词库的浏览器编辑覆盖
+- 各 bank + mode 的最好成绩
 
-持久化数据：
+单独保存在 IndexedDB：
 
-- 设置项保存在 `localStorage`。
-- Mia 当前课程词库保存在 `localStorage`。
-- Mia 历史累计词库保存在 `localStorage`。
-- 最好成绩按词库和模式保存在 `localStorage`。
+- 用户选择的个人资料库文件夹句柄；文件内容本身不复制到 IndexedDB。
 
 不保存：
 
@@ -376,172 +483,129 @@
 - 远程账号信息
 - 个人身份信息
 
-网络请求：
+## 14. 技术边界
 
-- 当前版本没有练习时网络请求。
-- Online CA Standards Mix 已删除。
-- 所有内置 K-8 年级词库都直接存放在 `index.html` 中。
+新版仍然不引入构建工具。
 
-## 13. 技术实现
+当前实现：
 
-当前实现为单文件：
-
-- `index.html`
-
-包含：
-
-- HTML 结构
-- CSS 布局与动画
-- JavaScript 游戏逻辑
-- 内置 California K-8 年级词库
-- Mia 当前课程词库和历史累计词库的本地保存逻辑
-- 本地图标
+- 纯 HTML
+- 内联 CSS
+- 内联 JavaScript
+- Markdown 数据文件
+- 浏览器 `fetch`
+- 浏览器 `localStorage`
+- 浏览器 `IndexedDB`
+- File System Access API（可选增强）
+- Web Audio API
+- SpeechSynthesis API
 
 没有使用：
 
-- 构建工具
-- 外部 JavaScript 库
 - 后端服务
+- 数据库
 - 登录系统
+- 外部 JavaScript 库
+- 网络 API
 
-主要 JavaScript 模块概念：
+注意：
 
-- `wordBanks`：按年级分组的单词库。
-- `californiaVocabularyBank`：补充的本地 California K-8 核心词库。
-- `customCurrentWords`：Mia 当前课程词库，只保存最近一次新增的词。
-- `customAllWords`：Mia 历史累计词库，保存所有添加过的词并自动去重。
-- `activeRoundSize`：当前这一轮实际需要完成的词数，支持自定义词库完整覆盖。
-- `getRoundTargetSize()`：根据词库类型决定本轮使用完整词表还是使用 `Round` 随机数量。
-- `buildRoundQueue()`：先按词库规则确定本轮词数，再随机打乱词汇顺序并生成本轮队列。
-- `updateRoundControl()`：当 `Round` 不适用于当前自定义词库时禁用下拉菜单。
-- `parseWords()`：清洗、去重、过滤词表输入。
-- `renderBankOptions()`：生成 `Word Bank` 下拉菜单。
-- `renderCustomWordLists()`：刷新 `Current List` 和 `All Added Words` 两个可视词表。
-- `renderWordList()`：生成每个词的可编辑行和删除按钮。
-- `addWordsToList()`：向当前列表或历史列表新增单词。
-- `updateWordAt()`：逐词修改当前列表或历史列表。
-- `removeWordAt()`：逐词删除当前列表或历史列表。
-- `functionKey()` / `letterKey()` / `dualKey()` / `arrowStackKey()`：声明屏幕键盘中的功能键、字母键、上下双字符键和方向键堆叠。
-- `keyToFinger`：键到手指的映射。
-- `fingerHomeKeys`：每根手指默认放置的 home key。
-- `renderKeyboard()`：生成带数字键和功能键的完整屏幕键盘。
-- `bindVirtualKey()`：把屏幕键盘按下、松开和点击行为接到统一按键逻辑。
-- `normalizeKeyboardEvent()`：把实体键盘事件转换成屏幕键盘的键位 ID。
-- `readCapsLockState()` / `syncCapsLockFromEvent()`：从真实键盘事件中读取并同步系统 `CapsLock` 状态。
-- `heldShiftKeyForFinger()`：判断左右小指是否正在按住对应 `Shift`，用于把该小指的静止位置临时锚定到 `Shift` 键。
-- `pressKey()` / `releaseKey()`：处理真实键盘和屏幕键盘的按下、松开、Shift 按住和 Caps 锁定，并让 Caps 视觉先更新再播放反馈动画。
-- `updateKeyboardLayer()`：根据 `Shift` 和 `Caps` 状态更新字母大小写和符号层视觉。
-- `flashKeyFeedback()` / `animateFingerForKey()`：让任意键触发键帽反馈、手指移动和目标圈动画。
-- `showPressedCoach()`：在 Typing Coach 中显示刚按下的键和对应手指。
-- `renderWord()`：根据 `Word Practice` 或 `Dictation` 渲染完整单词或只显示已打对的听写字母。
-- `placeHomeFingers()`：把手指定位到 home row 和 Space。
-- `updateMotionCue()`：在 `Word Practice` 中根据目标键移动对应手指，并定位目标键 pulse。
-- `speakCurrentWord()`：根据当前模式播放 1 遍或排队播放 3 遍。
-- `clearSpeechQueue()`：清除尚未播放的语音计时器并停止当前语音。
-- `handlePracticeKey()`：处理练习运行中的正确、错误和非输入型按键。
-- `handleWrongKey()`：处理错误提示。
-- `shouldIgnoreGlobalKey()`：词库弹窗或输入框获得焦点时，阻止练习键盘逻辑拦截普通文字输入。
-- `updateStats()`：更新统计。
+- 直接双击 `index.html` 时，某些浏览器会阻止读取旁边的 Markdown 文件。
+- 推荐用本地静态服务打开新版。
+- 稳定可执行版本不需要新版的本地静态服务。
+- 在线版的个人资料库只能通过用户点击 `Choose Folder` 后访问；网页不能也不会扫描或指定用户任意本地路径。
 
-## 14. 当前验收状态
+## 15. 关键函数设计
 
-已经检查：
+### 数据层
 
-- 页面可以打开。
-- 游戏界面无中文文案。
-- `Start` 后单词、统计、手指和键盘在 1280 x 720 窗口中同屏可见。
-- `Start` 后单词、统计、手指和键盘在 1280 x 650 窗口中也能完整显示。
-- 屏幕键盘包含数字行、`Tab`, `Caps`, `Shift`, `Enter`, `Backspace`, `control`, `option`, `command`, `Space` 等参照键。
-- 屏幕键盘按参考照片的 Mac 风格键位排布，包含真实宽键占位、符号键、功能键行和方向键区。
-- 屏幕键盘默认显示小写字母，`Caps` 可锁定大写显示。
-- 左右 `Shift` 都由对应小指操作；按住 `Shift` 时字母键临时大写，数字符号键凸显上层符号。
-- 所有屏幕键都可以按下并显示键帽、手指和 Typing Coach 反馈。
-- 键盘区域上方空白已缩小，数字行和功能键使用原先多余空间。
-- 左手四指的指尖落在 `A S D F` 键帽范围内。
-- 右手四指的指尖落在 `J K L ;` 键帽范围内。
-- 大拇指落在 `Space`。
-- 手掌已移除，只保留手指覆盖层。
-- 目标键高亮。
-- 目标手指会移动到目标键。
-- `Word Practice` 中会提前提示目标键和目标手指。
-- `Dictation` 中不会提前提示目标键、目标字母或目标手指。
-- `Dictation` 中按下字母后，键盘和手指只反馈刚刚按下的字母。
-- `Dictation` 中当前单词会播放三遍，每遍开始时间间隔 3 秒。
-- 错键不会写入单词。
-- 错键后错误次数增加。
-- 错键后仍停留在当前字母。
-- 浏览器控制台无错误。
-- `Banks` 可以打开自定义词库弹窗。
-- `Banks` 弹窗能同时直接看到 `Current List` 和 `All Added Words` 的全部词与各自总数。
-- `Current List` 可以新增词、逐词修改、逐词删除和清空。
-- `All Added Words` 可以新增词、逐词修改、逐词删除和清空。
-- `Word Bank` 中始终有 `Current List` 和 `All Added Words` 两个自定义词库。
-- `Banks` 弹窗不再提供自定义词库名称输入，当前课程词库固定叫 `Current List`。
-- 保存 Mia 新词后，当前课程词库只包含本次新增词。
-- 保存 Mia 新词后，历史累计词库包含所有添加过的词并自动去重。
-- 选择 `Current List` 后，`Word Practice` 和 `Dictation` 都覆盖当前列表全部词，`Round` 自动禁用，`Words` 统计显示实际总数。
-- 选择 `All Added Words` 且总词数不超过 30 个时，练习和听写覆盖全部词，`Round` 自动禁用。
-- 选择 `All Added Words` 且总词数超过 30 个时，每轮按 `Round` 随机抽取 10、20 或 30 个词。
-- `Current List` 和 `All Added Words` 的完整覆盖轮次不会按列表原始顺序出题，而是每轮先随机打乱。
-- `Dictation` 模式隐藏完整单词和总字母数量，只在字母打对后逐字显示。
-- Online CA Standards Mix 入口已删除。
-- 内置年级词库每次点击 `Start` 都按 `Round` 随机抽取 10、20 或 30 个词。
+- `bankSources`：所有 bank 的注册表。
+- `bankSourceById`：按 ID 查询 bank 元数据。
+- `bankLibrary`：运行时 bank 数据缓存。
+- `loadMarkdownBankFiles()`：读取 `banks/*.md`。
+- `parseBankItems()`：按 bank 类型解析 Markdown。
+- `parseWords()`：解析和清洗单词。
+- `parseSentences()`：解析和清洗句子。
+- `formatBankMarkdown()`：把运行时条目重新格式化为 Markdown。
+- `registerBankItems()`：写入运行时 bank 缓存。
+- `applyStoredOverrides()`：应用浏览器覆盖内容。
+- `syncCustomBanksIntoLibrary()`：把旧自定义词库和导入句子库同步到统一 bank 缓存。
+- `restorePersonalBankDirectory()`：恢复已保存的个人文件夹句柄，并在权限仍有效时读取文件。
+- `loadPersonalBankDirectory()`：读取个人文件夹的四个 Markdown bank；首次连接可创建缺失文件。
+- `writePersonalBankDirectory()`：把 Current/All 联动后的内容写回相应个人文件。
+
+### Bank Library
+
+- `renderLibraryPage()`：刷新整个管理页。
+- `renderLibraryBankList()`：刷新左侧 bank 列表。
+- `renderLibraryEditor()`：刷新 Markdown 编辑器。
+- `saveSelectedMarkdownBank()`：保存当前编辑器内容。
+- `useSelectedBankInPractice()`：将选中 bank 用于练习。
+- `exportSelectedMarkdownBank()`：导出当前 Markdown。
+- `resetSelectedMarkdownBank()`：重置当前 bank 的浏览器覆盖。
+- `clearSelectedCustomBank()`：二次确认后只清空选中的一个自定义 bank。
+- `pairedPersonalBankSource()`：找出用于清空提示的 Current/All 配对 bank。
+- `reloadBankFilesFromPage()`：重新读取 Markdown 文件。
+- `canImportFileInto()`：只允许向四个自定义 bank 导入文件。
+- `importSelectedFile()`：读取并按当前 bank 类型解析用户选择的文件。
+- `saveImportedItems()`：根据 Current 或 All 规则更新 bank，并同步个人资料库。
+
+### 练习引擎
+
+- `selectedBankSource()`：当前 bank 元数据。
+- `selectedBankType()`：当前是词库还是句子库。
+- `ensureBankMatchesMode()`：保证句子库和句子模式同步。
+- `getCurrentPool()`：从统一 bank 缓存取当前练习条目。
+- `getRoundTargetSize()`：计算本轮长度。
+- `buildRoundQueue()`：生成随机队列。
+- `currentTargetText()`：当前完整目标文本。
+- `currentTargetChar()`：当前目标字符。
+- `keyIdForCharacter()`：把目标字符映射到键位。
+- `characterForKeyId()`：屏幕键盘根据 Shift/Caps 生成真实字符。
+- `characterFromKeyboardEvent()`：实体键盘读取真实输入字符。
+- `currentTargetShiftKey()`：判断当前目标是否需要 Shift。
+- `handlePracticeKey()`：统一处理单词、听写和句子输入。
+
+## 16. 验收记录
+
+已检查：
+
+- 稳定可执行版本保留，未被新版覆盖。
+- 当前版本保存为 `index.html`。
+- K-8 年级词库已拆分到 `banks/grade-k.md` 到 `banks/grade-8.md`。
+- 自定义词库已拆分到 `banks/custom-current.md` 和 `banks/custom-all.md`。
+- 句子库已拆分到 `banks/current-sentences.md` 和 `banks/all-imported-sentences.md`。
+- 新版脚本语法检查通过。
+- 浏览器打开 `index.html` 成功。
+- 浏览器通过本地预览成功读取所有 `banks/*.md` 文件。
+- Practice 页面可见 K-8、Custom、Sentence banks。
+- `Banks` 按钮进入 Bank Library 页面，不再使用小弹窗。
+- Bank Library 显示所有 K-8 词库、Custom 词库、句子库。
+- Bank Library 可显示选中 bank 的 Markdown 文件路径、数量和内容。
+- 选择 `Current Sentence List` 或 `All Imported Sentence List` 后可以进入 `Sentence Practice`。
+- 句子模式中 Round 标签显示为 sentences。
+- 统计标签显示为 `Sentences`。
+- `Say Word` 切换为 `Say Sentence`。
+- 句子模式显示完整句子。
+- 178 字符长句压力测试可完整显示在句子目标区。
+- 句子面板按内容收缩，短句底部空白约 9px。
+- 句子模式主练习区隐藏 `Next: press...` 按键提示。
+- 句子模式字符进度格为单行横向滚动。
+- 当前字符黄色高亮顶部未被裁切。
+- 句子模式进度格显示大小写、空格和标点。
+- 右侧黄色键名徽章可容纳 `Command`，不会超出按钮框。
+- 长按 `Control`、`Option`、`Command` 时，对应手指保持在按键上；松开后回位。
+- 句首大写 `A` 会提示 Shift。
+- 输入小写 `a` 时会判错。
+- 输入 `Shift+A` 时会判对并前进。
+- 输入 `Space` 时会判对并前进。
+- 导入区可以把粘贴文本生成 Imported Sentences。
+- 导入区会过滤过短片段。
+- 已支持个人资料库文件夹：四个自定义 bank 可读取和写回用户选择的本地 Markdown 文件；不支持该 API 的浏览器会保留浏览器保存和导出路径。
 
 仍可继续优化：
 
-- 手指形状可以进一步画得更像真实儿童教学图。
-- 可以增加“只练左手”“只练右手”“只练 home row”等模式。
-- 可以增加每个年级更多词。
-- 可以增加导入/导出自定义词库文件。
-
-## 15. 更新记录
-
-### 2026-09-05
-
-- 创建初版 HTML 打字游戏。
-- 加入 Kindergarten 到 Grade 8 词库。
-- 加入 `Word Practice` 和 `Finger Drill`。
-- 加入错键不输入、不重来、不需要删除的练习逻辑。
-- 加入统计、发音和错误提示音。
-- 第一次重构：把单词、统计、指法提示和键盘放到同屏布局中。
-- 第二次重构：把独立 Finger Guide 改成键盘上的半透明指法覆盖层。
-- 加入 `;` 和 `Space` 键作为 home row 与大拇指位置参照。
-- 加入从 home row 移动到目标键的手指动画。
-- 明确规定以后任何改动必须同步更新本设计文档。
-
-### 2026-09-06
-
-- 调整手指定位方式：四指以指尖为锚点贴在 `A S D F` 和 `J K L ;` 键帽上，而不是整根手指悬在键帽上方。
-- 缩短手指视觉高度，让半透明手指覆盖键盘时更紧凑。
-- 压缩顶部栏、设置栏、练习区、统计区和 Typing Coach 的垂直间距。
-- 增加低高度桌面窗口的紧凑布局，在 1280 x 650 下仍能完整显示单词、统计、手指、键盘和 Space。
-- 将设置项从 `Grade` 升级为 `Word Bank`，支持内置年级词库和自定义词库。
-- 新增 `Banks` 弹窗，支持保存 Mia 当前课程词库并累计到 Mia 历史词库。
-- 将 `Finger Drill` 模式替换为 `Dictation` 模式：完整单词隐藏，正确输入后逐字显示。
-- 移除早先的 `Update CA Mix` / `Refresh CA Mix` 在线刷新方向，当前版本不再保留联网 CA Mix。
-- 更新本设计文档，明确以后所有功能、交互和词库改动都必须同步记录。
-- 移除键盘上的半透明手掌，只保留当前手指层和目标手指动画，让键盘区域更清爽。
-- 删除 Online CA Standards Mix 入口和联网刷新逻辑，改为完全本地内置 California K-8 年级核心词库。
-- 扩充内置 K-8 年级词库，并在每次 `Start` 时按 `Round` 随机抽取 10、20 或 30 个词。
-- 将自定义词库改为两个固定 Mia 词库：当前课程词库只保存本次新增词，历史累计词库保存所有添加过的词。
-- 将 `Banks` 弹窗改为固定的 Mia 当前课程词库和历史累计词库管理入口。
-- `Dictation` 发音改为每个单词播放三遍，每遍开始时间间隔 3 秒。
-- `Dictation` 不再提前提示目标键、目标字母或目标手指，只对孩子实际按下的字母做键盘和手指反馈。
-- 重新设计 `Banks` 弹窗：同时显示 `Current List` 和 `All Added Words`，每个词都可以直接编辑或删除，两个列表都可以新增和清空。
-- 更新自定义词库出题规则：`Current List` 总是覆盖全部词；`All Added Words` 在 30 个以内覆盖全部词，超过 30 个才按 `Round` 随机抽取。
-- 当当前自定义词库覆盖全部词时，`Round` 下拉菜单自动禁用，并由 `Words` 统计显示本轮实际总词数。
-- 修复词库弹窗输入体验：弹窗打开或输入框获得焦点时，练习键盘监听不会拦截家长正在输入的单词。
-
-### 2026-09-07
-
-- 删除 `Current List Name`，自定义当前课程词库固定显示为 `Current List`。
-- 简化 `Banks` 弹窗：顶部只保留粘贴当前词表入口，下方保留 `Current List` 和 `All Added Words` 两个直接可编辑清单。
-- `Dictation` 不再显示未输入字母的占位格或短横线，避免暴露单词总字母数。
-- 扩展屏幕键盘：新增数字行、`Tab`, `Caps`, `Shift`, `Enter`, `Backspace`, `control`, `option`, `command` 等参照键。
-- 压缩 Typing Coach 键盘区域上方空白，让数字行和功能键进入原先较空的位置。
-- 保持自定义词库覆盖规则不变，同时明确 `Current List` 和 `All Added Words` 的练习、听写顺序每轮都要随机打乱。
-- 根据用户提供的实体键盘照片重排屏幕键盘：改为统一 58 单位横向网格，宽键真实占位，加入 `esc`、`F1-F12`、`Power`、符号键和方向键，使字母键位置更接近真实键盘。
-- 将屏幕键盘升级为完整交互键盘：所有键都可以按下并显示反馈，`Shift` 按住时切换临时大写和上层符号，`Caps` 可锁定大写显示。
-- 新增统一按键逻辑，让实体键盘和屏幕键盘共用同一套动画、指法和练习判断。
-- 修正实体键盘 `CapsLock` 同步：真实键盘输入会优先使用浏览器提供的系统 Caps 状态，`keydown` 与 `keyup` 都会校准，Caps 显示层也改为先更新再播放动画，减少按下后的视觉延迟。
-- 修正 `Shift` 长按指法：左/右 `Shift` 被按住时，对应小指会保持停在 `Shift` 键上，不会被 home row 或其他按键动画提前拉回。
+- 为句子练习增加难度分级，例如 short / medium / script。
+- 增加 “punctuation only” 或 “capital letters only” 小练习。
+- 给导入脚本增加角色名、时间码和舞台方向的更细清洗规则。
+- 把 CSS 和 JavaScript 拆成多个文件，进一步工程化。
