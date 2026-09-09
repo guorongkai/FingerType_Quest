@@ -6594,7 +6594,10 @@
           if (state.charIndex < currentTargetText().length) {
             addDictationHistoryWord(state.currentWord);
           }
+          state.completedWords += 1;
+          state.streak = 0;
           renderWord();
+          updateStats();
           requestDictationTransition(
             state.wordIndex + 1 >= state.activeRoundSize ? "finish" : "next"
           );
@@ -6993,7 +6996,7 @@
         renderDictationHistory();
         els.letterRail.innerHTML = "";
         setHint(
-          `Round complete. You typed ${state.completedWords} ${unitLabel(state.completedWords)} with ${roundStats.accuracy}% accuracy.`,
+          `Round complete. You finished ${state.completedWords} ${unitLabel(state.completedWords)}.`,
           "success"
         );
         els.fingerName.textContent = "Round Done";
