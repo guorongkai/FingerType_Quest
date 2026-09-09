@@ -417,6 +417,10 @@
         scrollbar-width: thin;
       }
 
+      .word.sentence-target.round-complete {
+        color: var(--ink);
+      }
+
       .sentence-char {
         border-radius: 3px;
         color: #8491a1;
@@ -6021,6 +6025,7 @@
         els.targetWord.classList.toggle("sentence-target", isSentence);
         els.targetWord.classList.toggle("dictation-revealed", isDictationRevealVisible);
         els.targetWord.classList.toggle("dictation-status", isDictationStatus);
+        els.targetWord.classList.remove("round-complete");
         updateDictationRevealControl();
         renderDictationHistory();
         els.letterRail.innerHTML = "";
@@ -6993,6 +6998,7 @@
         els.targetWord.textContent = "Great Work";
         els.targetWord.classList.toggle("dictation-status", state.mode === "dictation");
         els.targetWord.classList.remove("dictation-revealed");
+        els.targetWord.classList.add("round-complete");
         renderDictationHistory();
         els.letterRail.innerHTML = "";
         setHint(
