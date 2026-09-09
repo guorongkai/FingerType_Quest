@@ -1,0 +1,9 @@
+.DS_Store
+
+# Local browser-automation state and generated verification screenshots
+.playwright-cli/
+output/
+
+# Common local tooling directories
+node_modules/
+.venv/

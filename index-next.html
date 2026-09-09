@@ -1,0 +1,6577 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FingerType Quest</title>
+    <meta
+      name="description"
+      content="A one-screen English typing game for kids with animated finger hints."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23f8c33a'/%3E%3Cpath d='M12 23h40v20H12z' fill='%2314243d'/%3E%3Cpath d='M18 28h5v5h-5zm8 0h5v5h-5zm8 0h5v5h-5zm8 0h5v5h-5zM18 36h28v4H18z' fill='white'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #f5f7fb;
+        --panel: #ffffff;
+        --soft: #eef4f7;
+        --ink: #14243d;
+        --muted: #617086;
+        --line: #d4dfeb;
+        --primary: #0f766e;
+        --primary-dark: #0b5f59;
+        --blue: #2563eb;
+        --gold: #f8c33a;
+        --coral: #fb6f61;
+        --red: #dc2626;
+        --green: #16a34a;
+        --shadow: 0 18px 42px rgba(20, 36, 61, 0.12);
+        --radius: 8px;
+        --left-pinky: #e11d48;
+        --left-ring: #d97706;
+        --left-middle: #65a30d;
+        --left-index: #0891b2;
+        --right-index: #2563eb;
+        --right-middle: #7c3aed;
+        --right-ring: #c026d3;
+        --right-pinky: #db2777;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(20, 36, 61, 0.035) 1px, transparent 1px),
+          linear-gradient(rgba(20, 36, 61, 0.035) 1px, transparent 1px),
+          var(--page);
+        background-size: 30px 30px;
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      button,
+      select {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      .stage:focus-visible {
+        outline: 3px solid rgba(37, 99, 235, 0.35);
+        outline-offset: 2px;
+      }
+
+      select:disabled {
+        background: #eef4f7;
+        color: #64748b;
+        cursor: not-allowed;
+      }
+
+      .app {
+        width: min(1240px, calc(100% - 28px));
+        height: 100dvh;
+        margin: 0 auto;
+        padding: 10px 0;
+        display: grid;
+        grid-template-rows: auto auto minmax(132px, 0.58fr) minmax(292px, 1.42fr);
+        gap: 9px;
+        min-height: 0;
+      }
+
+      .app.sentence-mode {
+        grid-template-rows: auto auto auto minmax(292px, 1fr);
+      }
+
+      body.bank-view {
+        overflow: auto;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .top-bar {
+        min-height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 43px;
+        height: 43px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--ink);
+        border-radius: var(--radius);
+        background: var(--gold);
+        box-shadow: 4px 4px 0 var(--ink);
+        font-weight: 950;
+      }
+
+      h1 {
+        font-size: clamp(1.5rem, 2.8vw, 2.15rem);
+        line-height: 1;
+        letter-spacing: 0;
+        white-space: nowrap;
+      }
+
+      .brand p {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.95rem;
+        font-weight: 650;
+        white-space: nowrap;
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .btn {
+        min-height: 37px;
+        border: 1px solid #c9d6e3;
+        border-radius: var(--radius);
+        padding: 0 15px;
+        background: #e8eef5;
+        color: var(--ink);
+        font-weight: 900;
+        transition:
+          transform 140ms ease,
+          box-shadow 140ms ease,
+          background 140ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 9px 18px rgba(20, 36, 61, 0.13);
+      }
+
+      .btn.primary {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary-dark);
+      }
+
+      .btn.warn {
+        background: #fff5d4;
+        border-color: #e7be44;
+      }
+
+      .settings {
+        min-height: 54px;
+        display: grid;
+        grid-template-columns: minmax(150px, 1.05fr) minmax(360px, 1.55fr) minmax(130px, 0.75fr) auto auto;
+        gap: 10px;
+        align-items: end;
+        padding: 8px 11px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 9px 24px rgba(20, 36, 61, 0.08);
+        min-width: 0;
+      }
+
+      .field,
+      .mode-control,
+      .toggle {
+        display: grid;
+        gap: 5px;
+        min-width: 0;
+      }
+
+      .field span,
+      .mode-label,
+      .toggle span:first-child,
+      .coach-kicker,
+      .stat span,
+      .badge {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      select {
+        width: 100%;
+        height: 36px;
+        min-width: 0;
+        border: 1px solid #c5d2df;
+        border-radius: var(--radius);
+        padding: 0 11px;
+        color: var(--ink);
+        background: #fff;
+        font-weight: 850;
+      }
+
+      .segmented {
+        height: 36px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid #c5d2df;
+        border-radius: var(--radius);
+        background: #e8eef5;
+      }
+
+      .segmented button {
+        min-width: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 900;
+      }
+
+      .segmented button.active {
+        background: #fff;
+        color: var(--ink);
+        box-shadow: 0 4px 12px rgba(20, 36, 61, 0.12);
+      }
+
+      .toggle {
+        min-width: 72px;
+      }
+
+      .toggle input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .switch-track {
+        position: relative;
+        width: 66px;
+        height: 36px;
+        border: 1px solid #c5d2df;
+        border-radius: 999px;
+        background: #dce6ef;
+        transition: background 140ms ease;
+      }
+
+      .switch-track::after {
+        content: "";
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 5px 14px rgba(20, 36, 61, 0.24);
+        transition: transform 140ms ease;
+      }
+
+      .toggle input:checked + .switch-track {
+        background: var(--primary);
+      }
+
+      .toggle input:checked + .switch-track::after {
+        transform: translateX(30px);
+      }
+
+      .practice-row {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+        gap: 9px;
+      }
+
+      .app.sentence-mode .practice-row {
+        grid-template-columns: minmax(0, 1fr) minmax(270px, 330px);
+        align-items: stretch;
+      }
+
+      .panel {
+        min-height: 0;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .stage {
+        position: relative;
+        display: grid;
+        grid-template-rows: auto minmax(56px, 1fr) auto auto;
+        align-content: center;
+        gap: 6px;
+        padding: 12px 15px;
+      }
+
+      .stage.sentence-stage {
+        grid-template-rows: auto auto auto auto;
+        align-content: start;
+        gap: 6px;
+      }
+
+      .stage::before,
+      .coach::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 6px;
+        background: linear-gradient(90deg, var(--primary), var(--gold), var(--coral), var(--blue));
+      }
+
+      .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        align-items: center;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 25px;
+        border-radius: 999px;
+        padding: 0 9px;
+        background: #e7f7f4;
+        color: var(--primary-dark);
+      }
+
+      .badge.alt {
+        background: #fff4d3;
+        color: #835c00;
+      }
+
+      .word {
+        align-self: center;
+        color: var(--ink);
+        font-size: clamp(2.7rem, 7.5vh, 5rem);
+        line-height: 0.92;
+        font-weight: 950;
+        letter-spacing: 0;
+        word-break: break-word;
+      }
+
+      .word.sentence-target {
+        align-self: start;
+        max-height: none;
+        overflow: visible;
+        padding: 2px 2px 4px;
+        font-size: clamp(1rem, 2.35vh, 1.5rem);
+        line-height: 1.3;
+        max-width: 100%;
+        word-break: normal;
+        overflow-wrap: anywhere;
+      }
+
+      .letter-rail {
+        min-height: 38px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .letter-rail.dictation-progress {
+        justify-content: center;
+      }
+
+      .letter-rail.sentence-progress {
+        min-height: 34px;
+        max-height: none;
+        flex-wrap: nowrap;
+        gap: 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        align-content: center;
+        padding: 3px 0 3px;
+        scroll-padding-inline: 44px;
+      }
+
+      .letter-rail.sentence-progress .letter {
+        flex: 0 0 26px;
+        width: 26px;
+        height: 29px;
+        border-width: 1px;
+        font-size: 0.84rem;
+      }
+
+      .letter-rail.sentence-progress .letter.space-letter {
+        flex-basis: 46px;
+        width: 46px;
+        font-size: 0.62rem;
+      }
+
+      .letter {
+        width: clamp(29px, 4.6vw, 39px);
+        height: clamp(32px, 4.6vh, 40px);
+        display: grid;
+        place-items: center;
+        border: 2px solid #cbd8e5;
+        border-radius: var(--radius);
+        background: #f8fafc;
+        color: #738198;
+        font-size: clamp(1rem, 2.2vw, 1.45rem);
+        font-weight: 950;
+        text-transform: none;
+        transition:
+          transform 120ms ease,
+          background 120ms ease,
+          border-color 120ms ease,
+          color 120ms ease;
+      }
+
+      .letter.done {
+        background: #dff7ea;
+        border-color: #7fd29e;
+        color: #12713b;
+      }
+
+      .letter.next {
+        background: #fff0bd;
+        border-color: var(--gold);
+        color: #5d4300;
+        box-shadow: 0 0 0 2px rgba(248, 195, 58, 0.22);
+      }
+
+      .letter.space-letter {
+        width: clamp(47px, 7vw, 60px);
+        color: #4b5e76;
+        font-size: clamp(0.62rem, 1.35vw, 0.82rem);
+        text-transform: uppercase;
+      }
+
+      .letter.punctuation-letter {
+        background: #eef4f7;
+      }
+
+      .hint {
+        min-height: 21px;
+        color: var(--muted);
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.3;
+      }
+
+      .hint strong {
+        color: var(--ink);
+      }
+
+      .hint.error {
+        color: var(--red);
+      }
+
+      .hint.success {
+        color: var(--green);
+      }
+
+      .stage.sentence-stage .hint {
+        display: none;
+      }
+
+      .word-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 7px;
+        padding: 12px;
+      }
+
+      .stats h2,
+      .coach h2 {
+        font-size: 1rem;
+        line-height: 1.1;
+      }
+
+      .stat-grid {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .stat {
+        min-height: 0;
+        display: grid;
+        align-content: center;
+        gap: 2px;
+        padding: 7px 9px;
+        border: 1px solid #d8e3ee;
+        border-radius: var(--radius);
+        background: #f8fafc;
+      }
+
+      .stat strong {
+        font-size: clamp(1.18rem, 2.2vw, 1.5rem);
+        line-height: 1;
+      }
+
+      .meter {
+        height: 10px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e4ecf5;
+      }
+
+      .meter-fill {
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--primary), var(--blue));
+        transition: width 180ms ease;
+      }
+
+      .coach {
+        position: relative;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(252px, 1fr);
+        gap: 7px;
+        padding: 11px 13px 10px;
+      }
+
+      .coach-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .coach-title {
+        display: grid;
+        gap: 1px;
+      }
+
+      .coach-title p {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 750;
+      }
+
+      .coach-now {
+        display: grid;
+        grid-template-columns: auto minmax(116px, 1fr) minmax(44px, max-content);
+        align-items: center;
+        gap: 6px;
+        min-width: 290px;
+        padding: 6px 8px;
+        border: 1px solid #d8e3ee;
+        border-radius: var(--radius);
+        background: #f8fafc;
+      }
+
+      .coach-action {
+        grid-column: 1 / -1;
+        color: var(--ink);
+        font-size: 0.82rem;
+        font-weight: 900;
+        line-height: 1.2;
+      }
+
+      .coach-tip {
+        grid-column: 1 / -1;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .coach-finger {
+        min-width: 122px;
+        font-weight: 950;
+      }
+
+      .coach-key {
+        width: auto;
+        min-width: 41px;
+        max-width: 118px;
+        height: 35px;
+        display: grid;
+        place-items: center;
+        justify-self: end;
+        padding: 0 9px;
+        overflow: hidden;
+        border-radius: var(--radius);
+        background: var(--gold);
+        color: var(--ink);
+        border: 2px solid var(--ink);
+        box-shadow: 4px 4px 0 var(--ink);
+        font-size: clamp(0.78rem, 1.8vh, 1.18rem);
+        font-weight: 950;
+        line-height: 1;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .keyboard-wrap {
+        position: relative;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto auto auto;
+        align-content: start;
+        gap: 6px;
+        padding: 7px 10px 9px;
+        border: 1px solid #d8e3ee;
+        border-radius: var(--radius);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.96)),
+          #fff;
+      }
+
+      .home-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 850;
+        line-height: 1.2;
+      }
+
+      .home-strip strong {
+        color: var(--ink);
+      }
+
+      .typing-surface {
+        position: relative;
+        min-height: 0;
+        display: grid;
+        align-items: start;
+        padding-top: clamp(4px, 1.4vh, 16px);
+      }
+
+      .keyboard {
+        position: relative;
+        z-index: 2;
+        --key-height: clamp(32px, 5.1vh, 42px);
+        min-width: 0;
+        display: grid;
+        gap: 5px;
+      }
+
+      .key-row {
+        display: grid;
+        grid-template-columns: repeat(var(--columns, 58), minmax(0, 1fr));
+        gap: 4px;
+      }
+
+      .row-spacer {
+        min-width: 0;
+      }
+
+      .hand-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+      }
+
+      .finger {
+        --finger-color: #9ca3af;
+        --finger-height: 58px;
+        --move-x: 0px;
+        --move-y: 0px;
+        position: absolute;
+        z-index: 7;
+        width: clamp(32px, 4vw, 44px);
+        height: var(--finger-height);
+        display: grid;
+        place-items: center;
+        border: 2px solid color-mix(in srgb, var(--finger-color), #111 18%);
+        border-radius: 999px 999px 11px 11px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 36%),
+          color-mix(in srgb, var(--finger-color), transparent 14%);
+        box-shadow:
+          inset 0 -9px 0 rgba(20, 36, 61, 0.1),
+          0 8px 14px rgba(20, 36, 61, 0.12);
+        opacity: 0.68;
+        transform: translate(-50%, 0);
+        transform-origin: 50% 96%;
+        transition:
+          left 220ms ease,
+          top 220ms ease,
+          opacity 160ms ease,
+          filter 160ms ease;
+      }
+
+      .finger .home-letter {
+        display: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.85);
+        color: var(--ink);
+        font-size: 0.78rem;
+        font-weight: 950;
+      }
+
+      .finger .finger-name {
+        position: absolute;
+        right: 50%;
+        bottom: -18px;
+        width: auto;
+        overflow: hidden;
+        padding: 3px 6px;
+        border: 1px solid rgba(20, 36, 61, 0.16);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        color: rgba(20, 36, 61, 0.8);
+        font-size: clamp(0.54rem, 1vw, 0.66rem);
+        font-weight: 950;
+        line-height: 1;
+        text-align: center;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateX(50%);
+        transition: opacity 160ms ease;
+      }
+
+      .finger.active {
+        z-index: 9;
+        opacity: 0.9;
+        filter: drop-shadow(0 12px 16px rgba(20, 36, 61, 0.22));
+        animation: fingerReach 1050ms ease-in-out infinite;
+      }
+
+      .finger.active .home-letter {
+        display: none;
+      }
+
+      .finger.active .finger-name {
+        opacity: 1;
+      }
+
+      .finger.holding {
+        z-index: 10;
+        opacity: 0.9;
+        filter: drop-shadow(0 12px 16px rgba(20, 36, 61, 0.2));
+      }
+
+      .finger.holding .finger-name {
+        opacity: 1;
+      }
+
+      .finger.holding.typed,
+      .finger.holding.miss {
+        z-index: 10;
+        animation: none;
+      }
+
+      .finger.miss {
+        animation: fingerMiss 260ms linear 1;
+      }
+
+      .finger.typed {
+        z-index: 9;
+        opacity: 0.9;
+        filter: drop-shadow(0 10px 14px rgba(20, 36, 61, 0.2));
+        animation: fingerTap 260ms ease 1;
+      }
+
+      .finger[data-finger="left-pinky"],
+      .key[data-finger="left-pinky"] {
+        --finger-color: var(--left-pinky);
+      }
+
+      .finger[data-finger="left-ring"],
+      .key[data-finger="left-ring"] {
+        --finger-color: var(--left-ring);
+      }
+
+      .finger[data-finger="left-middle"],
+      .key[data-finger="left-middle"] {
+        --finger-color: var(--left-middle);
+      }
+
+      .finger[data-finger="left-index"],
+      .key[data-finger="left-index"] {
+        --finger-color: var(--left-index);
+      }
+
+      .finger[data-finger="right-index"],
+      .key[data-finger="right-index"] {
+        --finger-color: var(--right-index);
+      }
+
+      .finger[data-finger="right-middle"],
+      .key[data-finger="right-middle"] {
+        --finger-color: var(--right-middle);
+      }
+
+      .finger[data-finger="right-ring"],
+      .key[data-finger="right-ring"] {
+        --finger-color: var(--right-ring);
+      }
+
+      .finger[data-finger="right-pinky"],
+      .key[data-finger="right-pinky"] {
+        --finger-color: var(--right-pinky);
+      }
+
+      .finger[data-finger$="thumb"],
+      .key[data-finger="thumb"] {
+        --finger-color: #94a3b8;
+      }
+
+      .finger[data-finger$="pinky"] {
+        --finger-height: 45px;
+      }
+
+      .finger[data-finger$="ring"] {
+        --finger-height: 53px;
+      }
+
+      .finger[data-finger$="middle"] {
+        --finger-height: 62px;
+      }
+
+      .finger[data-finger$="index"] {
+        --finger-height: 57px;
+      }
+
+      .finger.thumb {
+        --finger-height: 34px;
+        width: clamp(50px, 6vw, 76px);
+        border-radius: 999px 18px 18px 999px;
+        opacity: 0.56;
+        transform: translate(-50%, -50%) rotate(-8deg);
+      }
+
+      .finger.thumb.right-thumb {
+        border-radius: 18px 999px 999px 18px;
+        transform: translate(-50%, -50%) rotate(8deg);
+      }
+
+      .target-ring {
+        --ring-left: 50%;
+        --ring-top: 50%;
+        position: absolute;
+        z-index: 8;
+        left: var(--ring-left);
+        top: var(--ring-top);
+        width: 46px;
+        height: 46px;
+        border: 2px solid var(--ink);
+        border-radius: 999px;
+        background: rgba(248, 195, 58, 0.26);
+        box-shadow:
+          0 0 0 6px rgba(248, 195, 58, 0.2),
+          0 10px 18px rgba(20, 36, 61, 0.16);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        animation: ringPulse 1050ms ease-in-out infinite;
+      }
+
+      .target-ring[hidden] {
+        display: none;
+      }
+
+      .key {
+        position: relative;
+        min-width: 0;
+        height: var(--key-height);
+        display: grid;
+        place-items: center;
+        padding: 0 4px;
+        border: 1px solid #c4d1df;
+        border-bottom-width: 4px;
+        border-radius: var(--radius);
+        background: #f9fbfd;
+        color: var(--ink);
+        font-size: clamp(0.86rem, 1.65vw, 1.16rem);
+        font-weight: 950;
+        line-height: 1;
+        text-transform: none;
+        transition:
+          transform 110ms ease,
+          background 110ms ease,
+          color 110ms ease,
+          border-color 110ms ease,
+          box-shadow 110ms ease;
+      }
+
+      .key.home-key {
+        box-shadow: inset 0 -5px 0 rgba(20, 36, 61, 0.08);
+      }
+
+      .key.target {
+        z-index: 4;
+        background: var(--finger-color);
+        border-color: color-mix(in srgb, var(--finger-color), #111 16%);
+        color: #fff;
+        transform: translateY(-4px);
+        box-shadow:
+          0 11px 21px rgba(20, 36, 61, 0.2),
+          0 0 0 5px color-mix(in srgb, var(--finger-color), transparent 75%);
+        animation: keyPulse 850ms ease-in-out infinite;
+      }
+
+      .key.shift-required {
+        z-index: 4;
+        background: #fff7de;
+        border-color: #e7be44;
+        color: #5d4300;
+        box-shadow: 0 0 0 5px rgba(248, 195, 58, 0.18);
+      }
+
+      .key.wrong {
+        z-index: 4;
+        background: #ffe2e2;
+        border-color: var(--red);
+        color: var(--red);
+        animation: keyWrong 230ms ease 1;
+      }
+
+      .key.typed {
+        z-index: 4;
+        background: #dff7ea;
+        border-color: #7fd29e;
+        color: #12713b;
+        transform: translateY(2px);
+        box-shadow:
+          0 7px 13px rgba(20, 36, 61, 0.16),
+          0 0 0 5px rgba(22, 163, 74, 0.13);
+        animation: keyTyped 240ms ease 1;
+      }
+
+      .key.pressed {
+        z-index: 5;
+        background: #dbeafe;
+        border-color: var(--blue);
+        color: #1d4ed8;
+        transform: translateY(2px);
+        box-shadow:
+          inset 0 4px 0 rgba(37, 99, 235, 0.12),
+          0 7px 14px rgba(37, 99, 235, 0.16);
+      }
+
+      .key.locked {
+        background: #e7f7f4;
+        border-color: var(--primary);
+        color: var(--primary-dark);
+        box-shadow:
+          inset 0 -5px 0 rgba(15, 118, 110, 0.16),
+          0 0 0 4px rgba(15, 118, 110, 0.11);
+      }
+
+      .key.space-key {
+        text-transform: none;
+        font-size: 0.82rem;
+      }
+
+      .key.function-key {
+        background: #eef4f7;
+        color: #4b5e76;
+        font-size: clamp(0.55rem, 0.95vw, 0.78rem);
+        text-transform: none;
+      }
+
+      .key.number-key {
+        font-size: clamp(0.75rem, 1.35vw, 1rem);
+      }
+
+      .key.dual-label {
+        grid-template-rows: 1fr 1fr;
+        align-content: center;
+        gap: 1px;
+        padding: 3px 3px 4px;
+      }
+
+      .key-shift {
+        align-self: end;
+        color: #5b697c;
+        font-size: 0.72em;
+        font-weight: 800;
+      }
+
+      .key-main {
+        align-self: start;
+        color: var(--ink);
+        font-weight: 950;
+      }
+
+      .keyboard.shift-layer .key.dual-key .key-shift {
+        color: var(--blue);
+        font-size: 0.95em;
+        font-weight: 950;
+      }
+
+      .keyboard.shift-layer .key.dual-key .key-main {
+        color: #8a98aa;
+        font-size: 0.72em;
+      }
+
+      .keyboard.shift-layer .key.dual-key {
+        background: #eff6ff;
+        border-color: #9bbcfb;
+      }
+
+      .arrow-stack {
+        min-width: 0;
+        height: var(--key-height);
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        gap: 3px;
+      }
+
+      .arrow-stack .key {
+        height: auto;
+        min-height: 0;
+        border-bottom-width: 2px;
+        font-size: clamp(0.48rem, 0.8vw, 0.66rem);
+      }
+
+      .trainer-note {
+        display: flex;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 0.83rem;
+        font-weight: 800;
+        line-height: 1.25;
+        text-align: center;
+      }
+
+      .stage.shake,
+      .coach.shake {
+        animation: panelShake 190ms linear 1;
+      }
+
+      .screen-reader-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .icon-btn {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #c9d6e3;
+        border-radius: var(--radius);
+        background: #eef4f7;
+        color: var(--ink);
+        font-size: 1.2rem;
+        font-weight: 950;
+      }
+
+      .bank-page {
+        width: min(1240px, calc(100% - 28px));
+        height: 100dvh;
+        min-height: 0;
+        margin: 0 auto;
+        padding: 10px 0 14px;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        gap: 9px;
+      }
+
+      .bank-page-header {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .bank-page-title {
+        display: grid;
+        gap: 3px;
+      }
+
+      .bank-page-title h1 {
+        font-size: clamp(1.6rem, 3vw, 2.25rem);
+      }
+
+      .bank-page-title p,
+      .library-note,
+      .import-note {
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 750;
+        line-height: 1.35;
+      }
+
+      .library-layout {
+        height: auto;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(300px, 0.9fr) minmax(0, 2.1fr);
+        gap: 12px;
+      }
+
+      .library-panel {
+        min-height: 0;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .library-sidebar,
+      .library-editor,
+      .library-import {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+        padding: 12px;
+      }
+
+      .library-sidebar {
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .library-sidebar h2,
+      .library-editor h2,
+      .library-import h2 {
+        font-size: 1rem;
+        line-height: 1.1;
+      }
+
+      .library-groups {
+        min-height: 0;
+        overflow: auto;
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .library-group {
+        display: grid;
+        gap: 6px;
+      }
+
+      .library-group-title,
+      .editor-kicker {
+        color: var(--muted);
+        font-size: 0.7rem;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .library-bank-button {
+        width: 100%;
+        min-height: 44px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #d8e3ee;
+        border-radius: var(--radius);
+        padding: 8px 9px;
+        background: #f8fafc;
+        color: var(--ink);
+        text-align: left;
+      }
+
+      .library-bank-button.active {
+        border-color: var(--primary);
+        background: #e7f7f4;
+        box-shadow: inset 4px 0 0 var(--primary);
+      }
+
+      .library-bank-button strong {
+        min-width: 0;
+        font-size: 0.9rem;
+        font-weight: 950;
+        overflow-wrap: anywhere;
+        white-space: normal;
+      }
+
+      .library-bank-button span {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .library-editor {
+        grid-template-rows: auto auto auto auto auto auto;
+        min-height: 0;
+        overflow: auto;
+      }
+
+      .editor-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .count-pill {
+        flex: 0 0 auto;
+        min-height: 27px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 999px;
+        padding: 0 10px;
+        background: #e7f7f4;
+        color: var(--primary-dark);
+        font-size: 0.76rem;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .bank-file-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 7px;
+        align-items: center;
+        padding: 8px 9px;
+        border: 1px solid #d8e3ee;
+        border-radius: var(--radius);
+        background: #f8fafc;
+      }
+
+      .bank-file-row span {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .bank-file-row code {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--ink);
+        font-size: 0.82rem;
+        font-weight: 850;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .word-textarea,
+      .word-input {
+        width: 100%;
+        border: 1px solid #c5d2df;
+        border-radius: var(--radius);
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 750;
+      }
+
+      .word-input {
+        min-height: 36px;
+        padding: 0 10px;
+      }
+
+      .word-textarea {
+        min-height: 64px;
+        resize: vertical;
+        padding: 10px 12px;
+        line-height: 1.45;
+      }
+
+      .markdown-editor {
+        height: clamp(220px, 34dvh, 420px);
+        min-height: 0;
+        resize: vertical;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        line-height: 1.45;
+      }
+
+      .editor-actions,
+      .import-actions,
+      .bank-page-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .bank-page-actions {
+        justify-content: flex-end;
+      }
+
+      .local-library-toolbar {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 10px;
+        border: 1px solid #d8e3ee;
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.84);
+      }
+
+      .local-library-summary {
+        min-width: 0;
+        display: grid;
+        gap: 2px;
+      }
+
+      .local-library-summary strong {
+        overflow: hidden;
+        color: var(--ink);
+        font-size: 0.92rem;
+        font-weight: 950;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .local-library-summary p {
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 750;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .local-library-actions {
+        flex: 0 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 7px;
+      }
+
+      .local-library-actions .btn {
+        min-height: 32px;
+        padding: 0 11px;
+        font-size: 0.8rem;
+      }
+
+      .bank-status {
+        min-height: 22px;
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 800;
+      }
+
+      .bank-status.success {
+        color: var(--green);
+      }
+
+      .bank-status.error {
+        color: var(--red);
+      }
+
+      .library-import {
+        grid-template-rows: auto auto auto;
+        min-height: 0;
+      }
+
+      .library-editor .library-import {
+        margin-top: 4px;
+        padding: 12px 0 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .import-status {
+        min-height: 1.4em;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 800;
+        line-height: 1.35;
+      }
+
+      .import-status.success {
+        color: var(--green);
+      }
+
+      .import-status.error {
+        color: var(--red);
+      }
+
+      .file-input {
+        width: 100%;
+        min-height: 39px;
+        border: 1px dashed #c5d2df;
+        border-radius: var(--radius);
+        padding: 8px;
+        background: #f8fafc;
+        color: var(--ink);
+        font: inherit;
+        font-size: 0.84rem;
+        font-weight: 750;
+      }
+
+      .mini-btn {
+        min-height: 36px;
+        border: 1px solid #c9d6e3;
+        border-radius: var(--radius);
+        padding: 0 10px;
+        background: #e8eef5;
+        color: var(--ink);
+        font-size: 0.82rem;
+        font-weight: 950;
+      }
+
+      .mini-btn.warn {
+        background: #fff5d4;
+        border-color: #e7be44;
+      }
+
+      @keyframes fingerReach {
+        0%,
+        100% {
+          transform: translate(-50%, 0) translate(0, 0) rotate(0deg);
+        }
+        42% {
+          transform: translate(-50%, 0) translate(var(--move-x), var(--move-y)) rotate(1deg);
+        }
+        62% {
+          transform: translate(-50%, 0)
+            translate(var(--move-x), calc(var(--move-y) + 10px))
+            rotate(1deg)
+            scaleY(0.96);
+        }
+      }
+
+      @keyframes fingerMiss {
+        0%,
+        100% {
+          transform: translate(-50%, 0) translate(var(--move-x), var(--move-y));
+        }
+        25% {
+          transform: translate(-50%, 0)
+            translate(calc(var(--move-x) - 5px), var(--move-y));
+        }
+        75% {
+          transform: translate(-50%, 0)
+            translate(calc(var(--move-x) + 5px), var(--move-y));
+        }
+      }
+
+      @keyframes fingerTap {
+        0%,
+        100% {
+          transform: translate(-50%, 0) translate(var(--move-x), var(--move-y));
+        }
+        55% {
+          transform: translate(-50%, 0)
+            translate(var(--move-x), calc(var(--move-y) + 8px))
+            scaleY(0.95);
+        }
+      }
+
+      @keyframes keyPulse {
+        0%,
+        100% {
+          filter: brightness(1);
+        }
+        55% {
+          filter: brightness(1.16);
+        }
+      }
+
+      @keyframes keyWrong {
+        50% {
+          transform: translateY(4px);
+        }
+      }
+
+      @keyframes keyTyped {
+        50% {
+          transform: translateY(5px);
+        }
+      }
+
+      @keyframes ringPulse {
+        0%,
+        100% {
+          opacity: 0.72;
+          transform: translate(-50%, -50%) scale(0.86);
+        }
+        55% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.08);
+        }
+      }
+
+      @keyframes panelShake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-4px);
+        }
+        75% {
+          transform: translateX(4px);
+        }
+      }
+
+      @media (max-height: 760px) and (min-width: 760px) {
+        .app {
+          padding: 6px 0;
+          grid-template-rows: auto auto minmax(176px, 0.7fr) minmax(232px, 1.3fr);
+          gap: 6px;
+        }
+
+        .app.sentence-mode {
+          grid-template-rows: auto auto auto minmax(220px, 1fr);
+        }
+
+        .top-bar {
+          min-height: 40px;
+        }
+
+        .brand-mark {
+          width: 38px;
+          height: 38px;
+          box-shadow: 3px 3px 0 var(--ink);
+        }
+
+        .brand p {
+          display: none;
+        }
+
+        .settings {
+          min-height: 46px;
+          padding: 6px 9px;
+        }
+
+        .field span,
+        .mode-label,
+        .toggle span:first-child {
+          font-size: 0.66rem;
+        }
+
+        select,
+        .segmented,
+        .switch-track {
+          height: 32px;
+        }
+
+        .switch-track {
+          width: 56px;
+        }
+
+        .switch-track::after {
+          width: 22px;
+          height: 22px;
+        }
+
+        .toggle input:checked + .switch-track::after {
+          transform: translateX(26px);
+        }
+
+        .stage,
+        .stats,
+        .coach {
+          padding: 8px 10px;
+        }
+
+        .stage {
+          gap: 7px;
+        }
+
+        .stage.sentence-stage {
+          grid-template-rows: auto auto auto auto;
+          gap: 5px;
+        }
+
+        .word {
+          font-size: clamp(2.35rem, 6.8vh, 3.7rem);
+        }
+
+        .letter {
+          width: 30px;
+          height: 31px;
+          font-size: 0.96rem;
+        }
+
+        .hint {
+          font-size: 0.84rem;
+          min-height: 17px;
+        }
+
+        .btn {
+          min-height: 31px;
+          padding: 0 12px;
+        }
+
+        .coach {
+          grid-template-rows: auto minmax(220px, 1fr);
+          gap: 5px;
+        }
+
+        .coach-title p {
+          display: none;
+        }
+
+        .keyboard-wrap {
+          padding: 6px 7px;
+          gap: 4px;
+        }
+
+        .home-strip,
+        .trainer-note {
+          font-size: 0.68rem;
+        }
+
+        .coach-tip {
+          display: none;
+        }
+
+        .finger[data-finger$="pinky"] {
+          --finger-height: 39px;
+        }
+
+        .finger[data-finger$="ring"] {
+          --finger-height: 47px;
+        }
+
+        .finger[data-finger$="middle"] {
+          --finger-height: 54px;
+        }
+
+        .finger[data-finger$="index"] {
+          --finger-height: 50px;
+        }
+
+        .finger.thumb {
+          --finger-height: 28px;
+        }
+
+        .keyboard {
+          --key-height: 26px;
+        }
+
+        .key {
+          border-bottom-width: 3px;
+          font-size: 0.7rem;
+        }
+
+        .typing-surface {
+          padding-top: 0;
+        }
+
+        .keyboard,
+        .key-row {
+          gap: 3px;
+        }
+      }
+
+      @media (max-height: 680px) and (min-width: 760px) {
+        .app {
+          grid-template-rows: auto auto minmax(156px, 0.62fr) minmax(218px, 1.38fr);
+          gap: 5px;
+        }
+
+        .app.sentence-mode {
+          grid-template-rows: auto auto auto minmax(206px, 1fr);
+        }
+
+        h1 {
+          font-size: 1.7rem;
+        }
+
+        .settings {
+          min-height: 42px;
+          padding: 5px 8px;
+        }
+
+        select,
+        .segmented,
+        .switch-track {
+          height: 30px;
+        }
+
+        .switch-track {
+          width: 52px;
+        }
+
+        .switch-track::after {
+          top: 3px;
+          left: 3px;
+          width: 22px;
+          height: 22px;
+        }
+
+        .toggle input:checked + .switch-track::after {
+          transform: translateX(24px);
+        }
+
+        .stage {
+          grid-template-rows: minmax(42px, 1fr) auto auto;
+          padding: 7px 10px;
+          gap: 4px;
+        }
+
+        .stage.sentence-stage {
+          grid-template-rows: auto auto auto auto;
+          align-content: start;
+        }
+
+        .stage .badge-row {
+          display: none;
+        }
+
+        .word {
+          font-size: clamp(2rem, 6.2vh, 3.25rem);
+        }
+
+        .letter-rail {
+          min-height: 30px;
+          gap: 5px;
+        }
+
+        .letter {
+          width: 27px;
+          height: 29px;
+          font-size: 0.9rem;
+        }
+
+        .hint {
+          font-size: 0.78rem;
+          min-height: 16px;
+        }
+
+        .word-actions .btn {
+          min-height: 28px;
+        }
+
+        .stats {
+          padding: 8px 10px;
+          gap: 5px;
+        }
+
+        .stats h2 {
+          display: none;
+        }
+
+        .stat-grid {
+          gap: 4px;
+        }
+
+        .stat {
+          padding: 4px 7px;
+        }
+
+        .stat span {
+          font-size: 0.62rem;
+        }
+
+        .stat strong {
+          font-size: 1.2rem;
+        }
+
+        .coach {
+          grid-template-rows: auto minmax(214px, 1fr);
+        }
+
+        .coach-head {
+          align-items: start;
+        }
+
+        .coach-now {
+          min-width: 260px;
+          padding: 5px 7px;
+        }
+
+        .keyboard-wrap {
+          padding: 5px 7px 7px;
+        }
+
+        .home-strip,
+        .trainer-note {
+          font-size: 0.66rem;
+        }
+
+        .keyboard {
+          --key-height: 24px;
+        }
+
+        .key {
+          font-size: 0.66rem;
+        }
+
+        .target-ring {
+          width: 40px;
+          height: 40px;
+        }
+
+      }
+
+      @media (max-width: 860px) {
+        body {
+          overflow: auto;
+        }
+
+        .app {
+          width: min(100% - 20px, 1240px);
+          height: auto;
+          min-height: 100dvh;
+          grid-template-rows: auto auto auto auto;
+          padding: 12px 0;
+        }
+
+        .app.sentence-mode {
+          grid-template-rows: auto auto auto auto;
+        }
+
+        .bank-page {
+          height: auto;
+          min-height: 100dvh;
+        }
+
+        .local-library-toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .local-library-summary p,
+        .local-library-summary strong {
+          white-space: normal;
+        }
+
+        .local-library-actions {
+          justify-content: flex-start;
+        }
+
+        .top-bar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .brand p {
+          white-space: normal;
+        }
+
+        .settings {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .segmented {
+          grid-template-columns: 1fr;
+          height: auto;
+        }
+
+        .segmented button {
+          min-height: 30px;
+        }
+
+        .practice-row {
+          grid-template-columns: 1fr;
+        }
+
+        .app.sentence-mode .practice-row {
+          grid-template-columns: 1fr;
+        }
+
+        .stat-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .coach {
+          grid-template-rows: auto auto;
+        }
+
+        .library-layout {
+          height: auto;
+          grid-template-columns: 1fr;
+        }
+
+        .library-editor {
+          grid-template-rows: auto auto minmax(260px, 1fr) auto auto;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .settings {
+          grid-template-columns: 1fr;
+        }
+
+        .stat-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        h1 {
+          font-size: 1.7rem;
+          white-space: normal;
+        }
+
+        .coach-head {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .coach-now {
+          min-width: 0;
+          grid-template-columns: auto minmax(0, 1fr) minmax(44px, max-content);
+        }
+
+        .coach-now .coach-kicker {
+          grid-column: 1 / -1;
+        }
+
+        .home-strip {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .finger .finger-name {
+          font-size: 0.58rem;
+        }
+
+        .key-row {
+          gap: 4px;
+        }
+
+        .keyboard {
+          --key-height: 32px;
+        }
+
+        .key {
+          padding: 0;
+          border-bottom-width: 3px;
+          font-size: 0.78rem;
+        }
+
+        .trainer-note {
+          font-size: 0.78rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 1ms !important;
+          scroll-behavior: auto !important;
+          transition-duration: 1ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app" id="practicePage">
+      <header class="top-bar">
+        <div class="brand" aria-label="FingerType Quest">
+          <div class="brand-mark" aria-hidden="true">FT</div>
+          <div>
+            <h1>FingerType Quest</h1>
+            <p>Practice words with friendly finger feedback.</p>
+          </div>
+        </div>
+        <div class="top-actions" aria-label="Round controls">
+          <button class="btn" id="banksBtn" type="button">Banks</button>
+          <button class="btn primary" id="startBtn" type="button">Start</button>
+          <button class="btn" id="pauseBtn" type="button">Pause</button>
+          <button class="btn warn" id="resetBtn" type="button">Reset</button>
+        </div>
+      </header>
+
+      <section class="settings" aria-label="Practice settings">
+        <label class="field" for="bankSelect">
+          <span>Bank</span>
+          <select id="bankSelect">
+            <option value="grade:K">Kindergarten Words</option>
+            <option value="grade:1" selected>Grade 1 Words</option>
+            <option value="grade:2">Grade 2 Words</option>
+            <option value="grade:3">Grade 3 Words</option>
+            <option value="grade:4">Grade 4 Words</option>
+            <option value="grade:5">Grade 5 Words</option>
+            <option value="grade:6">Grade 6 Words</option>
+            <option value="grade:7">Grade 7 Words</option>
+            <option value="grade:8">Grade 8 Words</option>
+          </select>
+        </label>
+
+        <div class="mode-control" aria-label="Practice mode">
+          <div class="mode-label">Mode</div>
+          <div class="segmented">
+            <button class="active" type="button" data-mode="word">Word Practice</button>
+            <button type="button" data-mode="dictation">Dictation</button>
+            <button type="button" data-mode="sentence">Sentence Practice</button>
+          </div>
+        </div>
+
+        <label class="field" for="roundSelect">
+          <span>Round</span>
+          <select id="roundSelect">
+            <option value="10" selected>10 words</option>
+            <option value="20">20 words</option>
+            <option value="30">30 words</option>
+          </select>
+        </label>
+
+        <label class="toggle">
+          <span>Sound</span>
+          <input id="soundToggle" type="checkbox" checked />
+          <span class="switch-track" aria-hidden="true"></span>
+        </label>
+
+        <label class="toggle">
+          <span>Voice</span>
+          <input id="voiceToggle" type="checkbox" checked />
+          <span class="switch-track" aria-hidden="true"></span>
+        </label>
+      </section>
+
+      <section class="practice-row">
+        <section class="stage panel" id="stage" tabindex="0" aria-label="Typing stage">
+          <div class="badge-row">
+            <span class="badge" id="gradeBadge">Grade 1</span>
+            <span class="badge alt" id="modeBadge">Word Practice</span>
+          </div>
+          <h2 class="word" id="targetWord">ready</h2>
+          <div class="letter-rail" id="letterRail" aria-label="Letter progress"></div>
+          <p class="hint" id="hintMessage" aria-live="polite">
+            Press Start, then type on your keyboard.
+          </p>
+          <div class="word-actions">
+            <button class="btn" id="sayBtn" type="button">Say Word</button>
+            <button class="btn" id="skipBtn" type="button">Skip</button>
+          </div>
+        </section>
+
+        <aside class="stats panel" aria-label="Typing stats">
+          <h2>Stats</h2>
+          <div class="stat-grid">
+            <div class="stat">
+              <span id="unitStatLabel">Words</span>
+              <strong id="wordStat">0 / 10</strong>
+            </div>
+            <div class="stat">
+              <span>Accuracy</span>
+              <strong id="accuracyStat">100%</strong>
+            </div>
+            <div class="stat">
+              <span>WPM</span>
+              <strong id="wpmStat">0</strong>
+            </div>
+            <div class="stat">
+              <span>Mistakes</span>
+              <strong id="mistakeStat">0</strong>
+            </div>
+            <div class="stat">
+              <span>Streak</span>
+              <strong id="streakStat">0</strong>
+            </div>
+            <div class="stat">
+              <span>Best</span>
+              <strong id="bestStat">0 WPM</strong>
+            </div>
+          </div>
+          <div class="meter" aria-label="Round progress">
+            <div class="meter-fill" id="progressFill"></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="coach panel" id="coach" aria-label="Typing coach">
+        <div class="coach-head">
+          <div class="coach-title">
+            <span class="coach-kicker">Finger Guide + Keyboard</span>
+            <h2>Typing Coach</h2>
+            <p>Words guide ahead. Dictation listens. Sentences train capitals and punctuation.</p>
+          </div>
+          <div class="coach-now" aria-label="Current typing hint">
+            <span class="coach-kicker">Use</span>
+            <strong class="coach-finger" id="fingerName">Ready Fingers</strong>
+            <span class="coach-key" id="keyBadge">-</span>
+            <span class="coach-action" id="coachPhrase">Ready fingers</span>
+            <span class="coach-tip" id="coachTip">Home row: A S D F and J K L ;</span>
+          </div>
+        </div>
+
+        <div class="keyboard-wrap" id="keyboardWrap">
+          <div class="home-strip">
+            <span>Start on <strong>A S D F</strong> and <strong>J K L ;</strong></span>
+            <span>Thumbs rest on <strong>Space</strong></span>
+          </div>
+          <div class="typing-surface" id="typingSurface">
+            <div class="keyboard" id="keyboard" aria-label="On-screen keyboard"></div>
+            <div class="hand-layer" id="handLayer" aria-hidden="true">
+              <div class="finger" data-finger="left-pinky">
+                <span class="home-letter">A</span>
+                <span class="finger-name">Pinky</span>
+              </div>
+              <div class="finger" data-finger="left-ring">
+                <span class="home-letter">S</span>
+                <span class="finger-name">Ring</span>
+              </div>
+              <div class="finger" data-finger="left-middle">
+                <span class="home-letter">D</span>
+                <span class="finger-name">Middle</span>
+              </div>
+              <div class="finger" data-finger="left-index">
+                <span class="home-letter">F</span>
+                <span class="finger-name">Index</span>
+              </div>
+              <div class="finger thumb left-thumb" data-finger="left-thumb">
+                <span class="home-letter">Space</span>
+              </div>
+              <div class="finger thumb right-thumb" data-finger="right-thumb">
+                <span class="home-letter">Space</span>
+              </div>
+              <div class="finger" data-finger="right-index">
+                <span class="home-letter">J</span>
+                <span class="finger-name">Index</span>
+              </div>
+              <div class="finger" data-finger="right-middle">
+                <span class="home-letter">K</span>
+                <span class="finger-name">Middle</span>
+              </div>
+              <div class="finger" data-finger="right-ring">
+                <span class="home-letter">L</span>
+                <span class="finger-name">Ring</span>
+              </div>
+              <div class="finger" data-finger="right-pinky">
+                <span class="home-letter">;</span>
+                <span class="finger-name">Pinky</span>
+              </div>
+              <div class="target-ring" id="targetRing" hidden></div>
+            </div>
+          </div>
+          <p class="trainer-note">
+            Wrong keys make a hint sound. They do not get typed, and you do not need Backspace.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <main class="bank-page" id="bankPage" hidden>
+      <header class="bank-page-header">
+        <div class="bank-page-title">
+          <h1>Bank Library</h1>
+          <p>Manage word banks, sentence banks, and Markdown files in one place.</p>
+        </div>
+        <div class="bank-page-actions">
+          <button class="btn" id="reloadBankFilesBtn" type="button">Reload Banks</button>
+          <button class="btn primary" id="backToPracticeBtn" type="button">Practice</button>
+        </div>
+      </header>
+
+      <section class="local-library-toolbar" aria-label="Personal Markdown library">
+        <div class="local-library-summary">
+          <span class="editor-kicker">Personal Library</span>
+          <strong id="localFolderName">Browser storage</strong>
+          <p id="localFolderDetail">Choose a folder to keep your four custom Markdown banks on this device.</p>
+        </div>
+        <div class="local-library-actions">
+          <button class="btn primary" id="chooseLocalFolderBtn" type="button">Choose Folder</button>
+          <button class="btn" id="reloadLocalFolderBtn" type="button">Reload Folder</button>
+          <button class="btn warn" id="disconnectLocalFolderBtn" type="button">Disconnect</button>
+        </div>
+      </section>
+
+      <section class="library-layout" id="libraryLayout" aria-label="Bank library manager">
+        <aside class="library-panel library-sidebar" aria-label="Bank list">
+          <div>
+            <h2>Banks</h2>
+            <p class="library-note">Choose a bank to edit its Markdown.</p>
+          </div>
+          <div class="library-groups" id="libraryBankList"></div>
+        </aside>
+
+        <section class="library-panel library-editor" aria-label="Markdown bank editor">
+          <div class="editor-head">
+            <div>
+              <span class="editor-kicker" id="bankEditorType">Words</span>
+              <h2 id="bankEditorTitle">Current Word List</h2>
+            </div>
+            <span class="count-pill" id="bankEditorCount">0 words</span>
+          </div>
+          <div class="bank-file-row">
+            <span>File</span>
+            <code id="bankEditorFile">banks/custom-current.md</code>
+          </div>
+          <label class="screen-reader-only" for="bankMarkdownEditor">Bank Markdown</label>
+          <textarea
+            class="word-textarea markdown-editor"
+            id="bankMarkdownEditor"
+            spellcheck="false"
+          ></textarea>
+          <div class="editor-actions">
+            <button class="btn primary" id="saveMarkdownBankBtn" type="button">Save Bank</button>
+            <button class="btn" id="useBankBtn" type="button">Use in Practice</button>
+            <button class="btn" id="exportMarkdownBankBtn" type="button">Export Markdown</button>
+            <button class="btn warn" id="resetMarkdownBankBtn" type="button">Reset Browser Edits</button>
+          </div>
+          <p class="bank-status" id="bankStatus" aria-live="polite"></p>
+          <section class="library-import" id="libraryImport" aria-label="Import into selected bank" hidden>
+            <div>
+              <h2 id="importTitle">Add to Current Word List</h2>
+              <p class="import-note" id="importNote"></p>
+            </div>
+            <input
+              class="file-input"
+              id="sourceFileInput"
+              type="file"
+              accept="image/*,.pdf,.txt,.text,.md,text/plain,text/markdown,application/pdf"
+              aria-label="Upload a file to the selected bank"
+            />
+            <p class="import-status" id="importStatus" aria-live="polite"></p>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <div class="screen-reader-only" id="liveStatus" aria-live="assertive"></div>
+
+    <script>
+      const wordBanks = {
+        K: [
+          "am",
+          "an",
+          "at",
+          "be",
+          "go",
+          "he",
+          "in",
+          "is",
+          "it",
+          "me",
+          "my",
+          "no",
+          "on",
+          "so",
+          "to",
+          "up",
+          "we",
+          "cat",
+          "dog",
+          "sun",
+          "run",
+          "sit",
+          "big",
+          "red",
+          "blue",
+          "mom",
+          "dad",
+          "hop",
+          "map",
+          "cup",
+          "hat",
+          "pig"
+        ],
+        1: [
+          "after",
+          "again",
+          "also",
+          "away",
+          "because",
+          "could",
+          "every",
+          "find",
+          "first",
+          "from",
+          "give",
+          "goes",
+          "green",
+          "jump",
+          "little",
+          "look",
+          "make",
+          "many",
+          "play",
+          "read",
+          "right",
+          "said",
+          "school",
+          "show",
+          "take",
+          "thank",
+          "their",
+          "there",
+          "walk",
+          "where",
+          "would",
+          "write"
+        ],
+        2: [
+          "around",
+          "before",
+          "better",
+          "bring",
+          "change",
+          "city",
+          "clean",
+          "does",
+          "draw",
+          "family",
+          "father",
+          "friend",
+          "great",
+          "house",
+          "learn",
+          "money",
+          "morning",
+          "mother",
+          "number",
+          "people",
+          "plant",
+          "please",
+          "pretty",
+          "season",
+          "second",
+          "small",
+          "story",
+          "today",
+          "under",
+          "water",
+          "weather",
+          "world",
+          "young"
+        ],
+        3: [
+          "across",
+          "answer",
+          "between",
+          "careful",
+          "compare",
+          "complete",
+          "describe",
+          "early",
+          "earth",
+          "enough",
+          "example",
+          "favorite",
+          "finally",
+          "garden",
+          "healthy",
+          "important",
+          "inside",
+          "listen",
+          "measure",
+          "minute",
+          "natural",
+          "opinion",
+          "paragraph",
+          "problem",
+          "question",
+          "remember",
+          "science",
+          "sentence",
+          "special",
+          "together",
+          "usually",
+          "wonder"
+        ],
+        4: [
+          "analyze",
+          "author",
+          "classify",
+          "community",
+          "contrast",
+          "culture",
+          "detail",
+          "develop",
+          "effect",
+          "energy",
+          "evidence",
+          "explain",
+          "factor",
+          "feature",
+          "identify",
+          "increase",
+          "mainly",
+          "method",
+          "observe",
+          "organize",
+          "pattern",
+          "predict",
+          "reason",
+          "resource",
+          "section",
+          "similar",
+          "support",
+          "surface",
+          "symbol",
+          "system",
+          "volume"
+        ],
+        5: [
+          "accurate",
+          "adapt",
+          "advantage",
+          "affect",
+          "ancient",
+          "approach",
+          "calculate",
+          "cause",
+          "challenge",
+          "conclude",
+          "data",
+          "diagram",
+          "ecosystem",
+          "evaluate",
+          "fraction",
+          "function",
+          "generate",
+          "history",
+          "illustrate",
+          "infer",
+          "investigate",
+          "justify",
+          "locate",
+          "multiple",
+          "process",
+          "relationship",
+          "solution",
+          "strategy",
+          "tradition",
+          "variable",
+          "visible"
+        ],
+        6: [
+          "argument",
+          "central",
+          "claim",
+          "context",
+          "credible",
+          "debate",
+          "design",
+          "dimension",
+          "distribute",
+          "element",
+          "emphasis",
+          "equation",
+          "evolve",
+          "format",
+          "impact",
+          "interpret",
+          "logical",
+          "media",
+          "method",
+          "perspective",
+          "precise",
+          "primary",
+          "quote",
+          "region",
+          "relevant",
+          "research",
+          "respond",
+          "sequence",
+          "source",
+          "structure",
+          "summary",
+          "theme"
+        ],
+        7: [
+          "abstract",
+          "analyze",
+          "assume",
+          "attribute",
+          "bias",
+          "category",
+          "complex",
+          "concept",
+          "consistent",
+          "contrast",
+          "criteria",
+          "derive",
+          "device",
+          "emerge",
+          "evaluate",
+          "evidence",
+          "formula",
+          "function",
+          "hypothesis",
+          "imply",
+          "interact",
+          "interpret",
+          "justify",
+          "literal",
+          "modify",
+          "objective",
+          "parallel",
+          "reliable",
+          "symbolic",
+          "valid",
+          "variation"
+        ],
+        8: [
+          "acknowledge",
+          "advocate",
+          "alternative",
+          "ambiguous",
+          "annotate",
+          "assessment",
+          "coherent",
+          "collaborate",
+          "comprehensive",
+          "consequence",
+          "contradict",
+          "correlation",
+          "differentiate",
+          "distinguish",
+          "emphasis",
+          "evaluate",
+          "inference",
+          "integrate",
+          "justify",
+          "perspective",
+          "phenomenon",
+          "proportion",
+          "qualitative",
+          "quantitative",
+          "relevance",
+          "significant",
+          "synthesize",
+          "technical",
+          "transition",
+          "underlying",
+          "validity"
+        ]
+      };
+
+      const CUSTOM_BANKS_KEY = "fingerTypeQuest.customBanks";
+      const CUSTOM_CURRENT_WORDS_KEY = "fingerTypeQuest.customCurrentWords";
+      const CUSTOM_ALL_WORDS_KEY = "fingerTypeQuest.customAllWords";
+      const LEGACY_CUSTOM_SENTENCES_KEY = "fingerTypeQuest.customSentences";
+      const CUSTOM_CURRENT_SENTENCES_KEY = "fingerTypeQuest.customCurrentSentences";
+      const CUSTOM_ALL_SENTENCES_KEY = "fingerTypeQuest.customAllSentences";
+      const BANK_OVERRIDES_KEY = "fingerTypeQuest.bankOverrides.v2";
+      const CUSTOM_BANK_SEED_KEY = "fingerTypeQuest.customBankSeed";
+      const CUSTOM_BANK_SEED_VERSION = "unit-1-week-2-sentence-lists-2026-09-08";
+      const PERSONAL_BANK_DIRECTORY_DB = "fingerTypeQuest.personalBankDirectory.v1";
+      const PERSONAL_BANK_DIRECTORY_STORE = "handles";
+      const PERSONAL_BANK_DIRECTORY_KEY = "custom-bank-folder";
+      const PERSONAL_BANK_FILE_NAMES = Object.freeze({
+        "custom:current": "current-words.md",
+        "custom:all": "all-added-words.md",
+        "sentence:current": "current-sentences.md",
+        "sentence:all-imported": "all-imported-sentences.md"
+      });
+
+      const bankSources = [
+        {
+          id: "grade:K",
+          label: "Kindergarten Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-k.md"
+        },
+        {
+          id: "grade:1",
+          label: "Grade 1 Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-1.md"
+        },
+        {
+          id: "grade:2",
+          label: "Grade 2 Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-2.md"
+        },
+        {
+          id: "grade:3",
+          label: "Grade 3 Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-3.md"
+        },
+        {
+          id: "grade:4",
+          label: "Grade 4 Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-4.md"
+        },
+        {
+          id: "grade:5",
+          label: "Grade 5 Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-5.md"
+        },
+        {
+          id: "grade:6",
+          label: "Grade 6 Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-6.md"
+        },
+        {
+          id: "grade:7",
+          label: "Grade 7 Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-7.md"
+        },
+        {
+          id: "grade:8",
+          label: "Grade 8 Words",
+          type: "word",
+          group: "California K-8 Word Banks",
+          file: "banks/grade-8.md"
+        },
+        {
+          id: "custom:current",
+          label: "Current Word List",
+          type: "word",
+          group: "Custom Word Banks",
+          file: "banks/custom-current.md",
+          coversAll: true
+        },
+        {
+          id: "custom:all",
+          label: "All Added Words",
+          type: "word",
+          group: "Custom Word Banks",
+          file: "banks/custom-all.md",
+          coversAllUntil: 30
+        },
+        {
+          id: "sentence:current",
+          label: "Current Sentence List",
+          type: "sentence",
+          group: "Sentence Banks",
+          file: "banks/current-sentences.md",
+          coversAll: true
+        },
+        {
+          id: "sentence:all-imported",
+          label: "All Imported Sentence List",
+          type: "sentence",
+          group: "Sentence Banks",
+          file: "banks/all-imported-sentences.md",
+          coversAllUntil: 30
+        }
+      ];
+
+      const californiaVocabularyBank = {
+        K: [
+          "a",
+          "i",
+          "apple",
+          "ball",
+          "bear",
+          "bed",
+          "bird",
+          "black",
+          "book",
+          "box",
+          "brown",
+          "bus",
+          "can",
+          "car",
+          "chair",
+          "class",
+          "day",
+          "desk",
+          "do",
+          "duck",
+          "egg",
+          "fan",
+          "fast",
+          "fish",
+          "frog",
+          "fun",
+          "get",
+          "goat",
+          "green",
+          "happy",
+          "has",
+          "hen",
+          "jam",
+          "leg",
+          "lid",
+          "line",
+          "log",
+          "lunch",
+          "man",
+          "mat",
+          "milk",
+          "moon",
+          "net",
+          "orange",
+          "pan",
+          "pen",
+          "pet",
+          "pin",
+          "pink",
+          "pot",
+          "purple",
+          "rain",
+          "rat",
+          "rug",
+          "sad",
+          "school",
+          "see",
+          "slow",
+          "snow",
+          "star",
+          "teacher",
+          "the",
+          "tree",
+          "van",
+          "white",
+          "win",
+          "yellow",
+          "yes",
+          "you",
+          "yum"
+        ],
+        1: [
+          "about",
+          "all",
+          "any",
+          "ask",
+          "back",
+          "been",
+          "best",
+          "both",
+          "boy",
+          "call",
+          "came",
+          "cold",
+          "come",
+          "day",
+          "did",
+          "down",
+          "eat",
+          "end",
+          "fast",
+          "food",
+          "found",
+          "four",
+          "girl",
+          "good",
+          "help",
+          "here",
+          "home",
+          "into",
+          "just",
+          "keep",
+          "kind",
+          "know",
+          "let",
+          "live",
+          "long",
+          "made",
+          "more",
+          "must",
+          "name",
+          "new",
+          "night",
+          "old",
+          "once",
+          "open",
+          "over",
+          "part",
+          "put",
+          "round",
+          "same",
+          "saw",
+          "say",
+          "she",
+          "some",
+          "stop",
+          "than",
+          "them",
+          "then",
+          "think",
+          "three",
+          "time",
+          "two",
+          "use",
+          "very",
+          "want",
+          "warm",
+          "well",
+          "went",
+          "were",
+          "when",
+          "why",
+          "work",
+          "yellow"
+        ],
+        2: [
+          "able",
+          "above",
+          "act",
+          "almost",
+          "animal",
+          "another",
+          "answer",
+          "area",
+          "begin",
+          "behind",
+          "believe",
+          "body",
+          "build",
+          "care",
+          "carry",
+          "cause",
+          "center",
+          "certain",
+          "children",
+          "circle",
+          "clothes",
+          "complete",
+          "country",
+          "cover",
+          "different",
+          "direction",
+          "earth",
+          "enough",
+          "even",
+          "event",
+          "farmer",
+          "favorite",
+          "field",
+          "follow",
+          "forest",
+          "front",
+          "group",
+          "grow",
+          "happen",
+          "idea",
+          "important",
+          "inside",
+          "large",
+          "letter",
+          "light",
+          "main",
+          "matter",
+          "minute",
+          "mountain",
+          "near",
+          "object",
+          "outside",
+          "paper",
+          "place",
+          "possible",
+          "power",
+          "river",
+          "shape",
+          "short",
+          "sound",
+          "state",
+          "study",
+          "table",
+          "thought",
+          "through",
+          "together",
+          "toward",
+          "voice",
+          "whole",
+          "without"
+        ],
+        3: [
+          "action",
+          "addition",
+          "adventure",
+          "agree",
+          "amount",
+          "ancient",
+          "article",
+          "audience",
+          "balance",
+          "chapter",
+          "character",
+          "chart",
+          "citizen",
+          "climate",
+          "collect",
+          "conclusion",
+          "connect",
+          "continent",
+          "create",
+          "culture",
+          "decimal",
+          "details",
+          "difference",
+          "distance",
+          "divide",
+          "effect",
+          "energy",
+          "environment",
+          "equal",
+          "event",
+          "evidence",
+          "experiment",
+          "fraction",
+          "graph",
+          "habitat",
+          "include",
+          "increase",
+          "inform",
+          "insect",
+          "locate",
+          "material",
+          "multiply",
+          "notice",
+          "observe",
+          "organize",
+          "passage",
+          "planet",
+          "predict",
+          "prefix",
+          "produce",
+          "purpose",
+          "record",
+          "region",
+          "report",
+          "research",
+          "result",
+          "review",
+          "root",
+          "solution",
+          "subject",
+          "suffix",
+          "support",
+          "system",
+          "text",
+          "timeline",
+          "topic",
+          "tradition",
+          "vocabulary",
+          "weather"
+        ],
+        4: [
+          "academic",
+          "adaptation",
+          "angle",
+          "area",
+          "argument",
+          "artifact",
+          "average",
+          "benefit",
+          "biography",
+          "boundary",
+          "capacity",
+          "century",
+          "claim",
+          "compare",
+          "compound",
+          "condition",
+          "connection",
+          "construct",
+          "context",
+          "coordinate",
+          "cycle",
+          "defend",
+          "democracy",
+          "denominator",
+          "design",
+          "determine",
+          "diagram",
+          "discussion",
+          "economy",
+          "estimate",
+          "evaluate",
+          "examine",
+          "formation",
+          "function",
+          "government",
+          "grammar",
+          "heritage",
+          "hypothesis",
+          "immigrant",
+          "industry",
+          "interpret",
+          "landform",
+          "length",
+          "mainland",
+          "mission",
+          "multiply",
+          "narrative",
+          "numerator",
+          "organism",
+          "persuade",
+          "population",
+          "product",
+          "property",
+          "ratio",
+          "reference",
+          "relative",
+          "revolution",
+          "source",
+          "structure",
+          "summarize",
+          "technology",
+          "territory",
+          "thesis",
+          "transport",
+          "variable",
+          "wildlife"
+        ],
+        5: [
+          "absolute",
+          "accelerate",
+          "achieve",
+          "adapt",
+          "analyze",
+          "atmosphere",
+          "bias",
+          "biodiversity",
+          "campaign",
+          "chronology",
+          "civilization",
+          "classify",
+          "collaborate",
+          "compare",
+          "conductor",
+          "conflict",
+          "conservation",
+          "constitution",
+          "consumer",
+          "coordinate",
+          "criteria",
+          "debate",
+          "decimal",
+          "deduce",
+          "deforestation",
+          "demonstrate",
+          "density",
+          "deposit",
+          "derive",
+          "distribute",
+          "economics",
+          "ecosystem",
+          "editorial",
+          "electrical",
+          "equivalent",
+          "erosion",
+          "factor",
+          "figurative",
+          "force",
+          "geography",
+          "immigration",
+          "independent",
+          "inference",
+          "influence",
+          "innovation",
+          "interpret",
+          "justify",
+          "landmark",
+          "literature",
+          "migrate",
+          "molecule",
+          "natural",
+          "perspective",
+          "pollution",
+          "precipitation",
+          "producer",
+          "proportion",
+          "reaction",
+          "reliable",
+          "represent",
+          "resource",
+          "revolution",
+          "sequence",
+          "settlement",
+          "significant",
+          "society",
+          "specialize",
+          "summarize",
+          "survival",
+          "transfer",
+          "volume"
+        ],
+        6: [
+          "adaptation",
+          "advocate",
+          "analyze",
+          "approximate",
+          "assumption",
+          "attribute",
+          "barrier",
+          "calculate",
+          "category",
+          "cite",
+          "civil",
+          "commerce",
+          "complex",
+          "component",
+          "compose",
+          "compound",
+          "concept",
+          "conduct",
+          "conflict",
+          "consistent",
+          "consumer",
+          "contrast",
+          "convert",
+          "credible",
+          "culture",
+          "data",
+          "deduction",
+          "democracy",
+          "dependent",
+          "derive",
+          "domain",
+          "economy",
+          "element",
+          "equivalent",
+          "ethics",
+          "evaluate",
+          "factor",
+          "finance",
+          "formula",
+          "global",
+          "hypothesis",
+          "ideology",
+          "indicate",
+          "influence",
+          "integrate",
+          "investigate",
+          "isolate",
+          "legislation",
+          "literary",
+          "migration",
+          "objective",
+          "outcome",
+          "philosophy",
+          "policy",
+          "population",
+          "principle",
+          "ratio",
+          "region",
+          "resource",
+          "revise",
+          "scenario",
+          "significant",
+          "similarity",
+          "specific",
+          "statistics",
+          "strategy",
+          "structure",
+          "symbol",
+          "variable"
+        ],
+        7: [
+          "accuracy",
+          "advocacy",
+          "analogy",
+          "analyze",
+          "anticipate",
+          "bias",
+          "chronological",
+          "cite",
+          "coherent",
+          "colonial",
+          "complexity",
+          "connotation",
+          "consumer",
+          "contradict",
+          "correspond",
+          "criteria",
+          "debate",
+          "deductive",
+          "demonstrate",
+          "denotation",
+          "density",
+          "differentiate",
+          "dimension",
+          "ecosystem",
+          "elaborate",
+          "emphasis",
+          "equation",
+          "evaluate",
+          "evidence",
+          "explicit",
+          "factor",
+          "figurative",
+          "function",
+          "genre",
+          "heritage",
+          "hypothesis",
+          "implicit",
+          "infer",
+          "innovation",
+          "integrate",
+          "interaction",
+          "interpretation",
+          "legitimate",
+          "maintain",
+          "metaphor",
+          "migration",
+          "modify",
+          "narrative",
+          "objective",
+          "parameter",
+          "perspective",
+          "phenomenon",
+          "precise",
+          "primary",
+          "proportion",
+          "qualitative",
+          "relevant",
+          "repetition",
+          "represent",
+          "resolve",
+          "rhetoric",
+          "significance",
+          "simulate",
+          "slope",
+          "source",
+          "substantial",
+          "symbolic",
+          "synthesize",
+          "theme",
+          "validity"
+        ],
+        8: [
+          "abstract",
+          "acknowledge",
+          "advocacy",
+          "alternative",
+          "ambiguous",
+          "analysis",
+          "annotate",
+          "argumentation",
+          "assess",
+          "assumption",
+          "authority",
+          "bias",
+          "causation",
+          "chronology",
+          "cite",
+          "coherence",
+          "collaborate",
+          "commodity",
+          "comprehensive",
+          "consequence",
+          "constitutional",
+          "contextual",
+          "contradiction",
+          "correlation",
+          "credible",
+          "criterion",
+          "deduction",
+          "differentiate",
+          "dimension",
+          "discourse",
+          "distinguish",
+          "diverse",
+          "emphasis",
+          "empirical",
+          "evaluate",
+          "evolution",
+          "figurative",
+          "hypothesis",
+          "ideology",
+          "implication",
+          "inference",
+          "innovation",
+          "integrate",
+          "interpret",
+          "irony",
+          "justify",
+          "legislation",
+          "methodology",
+          "objective",
+          "paraphrase",
+          "perspective",
+          "phenomenon",
+          "precedent",
+          "precise",
+          "qualitative",
+          "quantitative",
+          "rational",
+          "relevance",
+          "represent",
+          "resolute",
+          "revision",
+          "rhetorical",
+          "significant",
+          "synthesize",
+          "technical",
+          "thematic",
+          "transition",
+          "underlying",
+          "validity",
+          "variable"
+        ]
+      };
+
+      Object.entries(californiaVocabularyBank).forEach(([grade, words]) => {
+        wordBanks[grade] = [...new Set([...(wordBanks[grade] || []), ...words])];
+      });
+
+      const sentenceBankFallbacks = {
+        "sentence:current": [],
+        "sentence:all-imported": []
+      };
+
+      const bankSourceById = new Map(bankSources.map((source) => [source.id, source]));
+      const bankLibrary = new Map();
+      let bankOverrides = {};
+      let selectedLibraryBankId = "custom:current";
+
+      const shiftedCharacterMap = {
+        "`": "~",
+        "1": "!",
+        "2": "@",
+        "3": "#",
+        "4": "$",
+        "5": "%",
+        "6": "^",
+        "7": "&",
+        "8": "*",
+        "9": "(",
+        "0": ")",
+        "-": "_",
+        "=": "+",
+        "[": "{",
+        "]": "}",
+        "\\": "|",
+        ";": ":",
+        "'": "\"",
+        ",": "<",
+        ".": ">",
+        "/": "?"
+      };
+
+      const baseCharacterMap = Object.fromEntries(
+        Object.entries(shiftedCharacterMap).map(([base, shifted]) => [shifted, base])
+      );
+
+      const namedKeyMap = {
+        Backspace: "backspace",
+        Tab: "tab",
+        CapsLock: "caps",
+        Enter: "enter",
+        Escape: "escape",
+        ArrowLeft: "arrowleft",
+        ArrowUp: "arrowup",
+        ArrowDown: "arrowdown",
+        ArrowRight: "arrowright"
+      };
+
+      const keyToFinger = {
+        "`": "left-pinky",
+        "1": "left-pinky",
+        "2": "left-ring",
+        "3": "left-middle",
+        "4": "left-index",
+        "5": "left-index",
+        "6": "right-index",
+        "7": "right-index",
+        "8": "right-middle",
+        "9": "right-ring",
+        "0": "right-pinky",
+        "-": "right-pinky",
+        "=": "right-pinky",
+        q: "left-pinky",
+        a: "left-pinky",
+        z: "left-pinky",
+        w: "left-ring",
+        s: "left-ring",
+        x: "left-ring",
+        e: "left-middle",
+        d: "left-middle",
+        c: "left-middle",
+        r: "left-index",
+        t: "left-index",
+        f: "left-index",
+        g: "left-index",
+        v: "left-index",
+        b: "left-index",
+        y: "right-index",
+        u: "right-index",
+        h: "right-index",
+        j: "right-index",
+        n: "right-index",
+        m: "right-index",
+        i: "right-middle",
+        k: "right-middle",
+        o: "right-ring",
+        l: "right-ring",
+        p: "right-pinky",
+        "[": "right-pinky",
+        "]": "right-pinky",
+        "\\": "right-pinky",
+        ";": "right-pinky",
+        "'": "right-pinky",
+        ",": "right-middle",
+        ".": "right-ring",
+        "/": "right-pinky",
+        " ": "thumb"
+      };
+
+      const fingerHomeKeys = {
+        "left-pinky": "a",
+        "left-ring": "s",
+        "left-middle": "d",
+        "left-index": "f",
+        "left-thumb": " ",
+        "right-thumb": " ",
+        "right-index": "j",
+        "right-middle": "k",
+        "right-ring": "l",
+        "right-pinky": ";"
+      };
+
+      const fingerInfo = {
+        "left-pinky": {
+          label: "Left Pinky",
+          tip: "Reach with your left little finger."
+        },
+        "left-ring": {
+          label: "Left Ring",
+          tip: "Use the finger next to your left pinky."
+        },
+        "left-middle": {
+          label: "Left Middle",
+          tip: "Use your tall left middle finger."
+        },
+        "left-index": {
+          label: "Left Index",
+          tip: "Use your left pointer finger."
+        },
+        "right-index": {
+          label: "Right Index",
+          tip: "Use your right pointer finger."
+        },
+        "right-middle": {
+          label: "Right Middle",
+          tip: "Use your tall right middle finger."
+        },
+        "right-ring": {
+          label: "Right Ring",
+          tip: "Use the finger next to your right pinky."
+        },
+        "right-pinky": {
+          label: "Right Pinky",
+          tip: "Reach with your right little finger."
+        },
+        "left-thumb": {
+          label: "Left Thumb",
+          tip: "Use your left thumb."
+        },
+        "right-thumb": {
+          label: "Right Thumb",
+          tip: "Use your right thumb."
+        },
+        thumb: {
+          label: "Thumbs",
+          tip: "Use either thumb."
+        }
+      };
+
+      const keyboardRows = [
+        {
+          className: "function",
+          columns: 58,
+          keys: [
+            functionKey("escape", "esc", 5, "left-pinky"),
+            functionKey("f1", "F1", 4, "left-pinky"),
+            functionKey("f2", "F2", 4, "left-ring"),
+            functionKey("f3", "F3", 4, "left-middle"),
+            functionKey("f4", "F4", 4, "left-index"),
+            functionKey("f5", "F5", 4, "left-index"),
+            functionKey("f6", "F6", 4, "right-index"),
+            functionKey("f7", "F7", 4, "right-index"),
+            functionKey("f8", "F8", 4, "right-middle"),
+            functionKey("f9", "F9", 4, "right-ring"),
+            functionKey("f10", "F10", 4, "right-pinky"),
+            functionKey("f11", "F11", 4, "right-pinky"),
+            functionKey("f12", "F12", 4, "right-pinky"),
+            functionKey("power", "Power", 5, "right-pinky")
+          ]
+        },
+        {
+          className: "number",
+          columns: 58,
+          keys: [
+            dualKey("`", "~", "`", 4, "left-pinky"),
+            dualKey("1", "!", "1", 4, "left-pinky"),
+            dualKey("2", "@", "2", 4, "left-ring"),
+            dualKey("3", "#", "3", 4, "left-middle"),
+            dualKey("4", "$", "4", 4, "left-index"),
+            dualKey("5", "%", "5", 4, "left-index"),
+            dualKey("6", "^", "6", 4, "right-index"),
+            dualKey("7", "&", "7", 4, "right-index"),
+            dualKey("8", "*", "8", 4, "right-middle"),
+            dualKey("9", "(", "9", 4, "right-ring"),
+            dualKey("0", ")", "0", 4, "right-pinky"),
+            dualKey("-", "_", "-", 4, "right-pinky"),
+            dualKey("=", "+", "=", 4, "right-pinky"),
+            functionKey("backspace", "Backspace", 6, "right-pinky")
+          ]
+        },
+        {
+          className: "top",
+          columns: 58,
+          keys: [
+            functionKey("tab", "Tab", 6, "left-pinky"),
+            letterKey("q"),
+            letterKey("w"),
+            letterKey("e"),
+            letterKey("r"),
+            letterKey("t"),
+            letterKey("y"),
+            letterKey("u"),
+            letterKey("i"),
+            letterKey("o"),
+            letterKey("p"),
+            dualKey("[", "{", "[", 4, "right-pinky"),
+            dualKey("]", "}", "]", 4, "right-pinky"),
+            dualKey("\\", "|", "\\", 4, "right-pinky")
+          ]
+        },
+        {
+          className: "home",
+          columns: 58,
+          keys: [
+            functionKey("caps", "Caps", 7, "left-pinky"),
+            letterKey("a"),
+            letterKey("s"),
+            letterKey("d"),
+            letterKey("f"),
+            letterKey("g"),
+            letterKey("h"),
+            letterKey("j"),
+            letterKey("k"),
+            letterKey("l"),
+            dualKey(";", ":", ";", 4, "right-pinky"),
+            dualKey("'", "\"", "'", 4, "right-pinky"),
+            functionKey("enter", "Enter", 7, "right-pinky")
+          ]
+        },
+        {
+          className: "bottom",
+          columns: 58,
+          keys: [
+            functionKey("shift-left", "Shift", 8, "left-pinky"),
+            letterKey("z"),
+            letterKey("x"),
+            letterKey("c"),
+            letterKey("v"),
+            letterKey("b"),
+            letterKey("n"),
+            letterKey("m"),
+            dualKey(",", "<", ",", 4, "right-middle"),
+            dualKey(".", ">", ".", 4, "right-ring"),
+            dualKey("/", "?", "/", 4, "right-pinky"),
+            functionKey("shift-right", "Shift", 10, "right-pinky")
+          ]
+        },
+        {
+          className: "space",
+          columns: 58,
+          keys: [
+            functionKey("fn", "fn", 4, "left-pinky"),
+            functionKey("control-left", "control", 4, "left-pinky"),
+            functionKey("option-left", "option", 4, "left-thumb"),
+            functionKey("command-left", "command", 5, "left-thumb"),
+            { key: " ", label: "Space", span: 16, finger: "thumb" },
+            functionKey("command-right", "command", 5, "right-thumb"),
+            functionKey("option-right", "option", 4, "right-thumb"),
+            functionKey("control-right", "control", 4, "right-pinky"),
+            functionKey("arrowleft", "◀", 4, "right-pinky"),
+            arrowStackKey(4),
+            functionKey("arrowright", "▶", 4, "right-pinky")
+          ]
+        }
+      ];
+
+      function functionKey(key, label, span, finger) {
+        return { key, label, span, finger, type: "function" };
+      }
+
+      function letterKey(letter) {
+        return { key: letter, label: letter, span: 4, type: "letter" };
+      }
+
+      function dualKey(key, topLabel, bottomLabel, span, finger) {
+        return { key, topLabel, bottomLabel, span, finger, type: "dual" };
+      }
+
+      function arrowStackKey(span) {
+        return { key: "arrow-stack", span, type: "arrow-stack" };
+      }
+
+      const gradeLabels = {
+        K: "Kindergarten",
+        1: "Grade 1",
+        2: "Grade 2",
+        3: "Grade 3",
+        4: "Grade 4",
+        5: "Grade 5",
+        6: "Grade 6",
+        7: "Grade 7",
+        8: "Grade 8"
+      };
+
+      const gradeOrder = ["K", "1", "2", "3", "4", "5", "6", "7", "8"];
+
+      const state = {
+        bankId: "grade:1",
+        mode: "word",
+        roundSize: 10,
+        queue: [],
+        wordIndex: 0,
+        charIndex: 0,
+        currentWord: "ready",
+        activeRoundSize: 10,
+        running: false,
+        paused: false,
+        correctChars: 0,
+        mistakes: 0,
+        completedWords: 0,
+        streak: 0,
+        startedAt: null,
+        pausedAt: null,
+        pausedMs: 0,
+        timerId: null,
+        advanceTimerId: null,
+        speechTimerIds: [],
+        audioContext: null,
+        shiftHeld: false,
+        capsOn: false
+      };
+
+      const pressedKeys = new Set();
+      let customCurrentWords = [];
+      let customAllWords = [];
+      let customCurrentSentenceItems = [];
+      let customAllSentenceItems = [];
+      let hasStoredCurrentWords = false;
+      let hasStoredAllWords = false;
+      let hasStoredCurrentSentences = false;
+      let hasStoredAllSentences = false;
+      let tesseractScriptPromise = null;
+      let pdfJsModulePromise = null;
+      let personalBankDirectoryHandle = null;
+      let personalBankDirectoryPermission = "none";
+
+      const els = {
+        practicePage: document.querySelector("#practicePage"),
+        bankPage: document.querySelector("#bankPage"),
+        bankSelect: document.querySelector("#bankSelect"),
+        roundSelect: document.querySelector("#roundSelect"),
+        modeButtons: [...document.querySelectorAll("[data-mode]")],
+        soundToggle: document.querySelector("#soundToggle"),
+        voiceToggle: document.querySelector("#voiceToggle"),
+        banksBtn: document.querySelector("#banksBtn"),
+        startBtn: document.querySelector("#startBtn"),
+        pauseBtn: document.querySelector("#pauseBtn"),
+        resetBtn: document.querySelector("#resetBtn"),
+        backToPracticeBtn: document.querySelector("#backToPracticeBtn"),
+        reloadBankFilesBtn: document.querySelector("#reloadBankFilesBtn"),
+        chooseLocalFolderBtn: document.querySelector("#chooseLocalFolderBtn"),
+        reloadLocalFolderBtn: document.querySelector("#reloadLocalFolderBtn"),
+        disconnectLocalFolderBtn: document.querySelector("#disconnectLocalFolderBtn"),
+        localFolderName: document.querySelector("#localFolderName"),
+        localFolderDetail: document.querySelector("#localFolderDetail"),
+        libraryBankList: document.querySelector("#libraryBankList"),
+        bankEditorType: document.querySelector("#bankEditorType"),
+        bankEditorTitle: document.querySelector("#bankEditorTitle"),
+        bankEditorCount: document.querySelector("#bankEditorCount"),
+        bankEditorFile: document.querySelector("#bankEditorFile"),
+        bankMarkdownEditor: document.querySelector("#bankMarkdownEditor"),
+        bankStatus: document.querySelector("#bankStatus"),
+        saveMarkdownBankBtn: document.querySelector("#saveMarkdownBankBtn"),
+        useBankBtn: document.querySelector("#useBankBtn"),
+        exportMarkdownBankBtn: document.querySelector("#exportMarkdownBankBtn"),
+        resetMarkdownBankBtn: document.querySelector("#resetMarkdownBankBtn"),
+        libraryLayout: document.querySelector("#libraryLayout"),
+        libraryImport: document.querySelector("#libraryImport"),
+        importTitle: document.querySelector("#importTitle"),
+        importNote: document.querySelector("#importNote"),
+        importStatus: document.querySelector("#importStatus"),
+        sourceFileInput: document.querySelector("#sourceFileInput"),
+        sayBtn: document.querySelector("#sayBtn"),
+        skipBtn: document.querySelector("#skipBtn"),
+        stage: document.querySelector("#stage"),
+        coach: document.querySelector("#coach"),
+        gradeBadge: document.querySelector("#gradeBadge"),
+        modeBadge: document.querySelector("#modeBadge"),
+        targetWord: document.querySelector("#targetWord"),
+        letterRail: document.querySelector("#letterRail"),
+        hintMessage: document.querySelector("#hintMessage"),
+        fingerName: document.querySelector("#fingerName"),
+        keyBadge: document.querySelector("#keyBadge"),
+        coachPhrase: document.querySelector("#coachPhrase"),
+        coachTip: document.querySelector("#coachTip"),
+        keyboardWrap: document.querySelector("#keyboardWrap"),
+        typingSurface: document.querySelector("#typingSurface"),
+        targetRing: document.querySelector("#targetRing"),
+        keyboard: document.querySelector("#keyboard"),
+        unitStatLabel: document.querySelector("#unitStatLabel"),
+        wordStat: document.querySelector("#wordStat"),
+        accuracyStat: document.querySelector("#accuracyStat"),
+        wpmStat: document.querySelector("#wpmStat"),
+        mistakeStat: document.querySelector("#mistakeStat"),
+        streakStat: document.querySelector("#streakStat"),
+        bestStat: document.querySelector("#bestStat"),
+        progressFill: document.querySelector("#progressFill"),
+        liveStatus: document.querySelector("#liveStatus")
+      };
+
+      function shuffle(items) {
+        const copy = [...items];
+        for (let index = copy.length - 1; index > 0; index -= 1) {
+          const otherIndex = Math.floor(Math.random() * (index + 1));
+          [copy[index], copy[otherIndex]] = [copy[otherIndex], copy[index]];
+        }
+        return copy;
+      }
+
+      function fillRound(words, size) {
+        if (!words.length) {
+          return [];
+        }
+
+        const result = [];
+        while (result.length < size) {
+          result.push(...shuffle(words));
+        }
+        return result.slice(0, size);
+      }
+
+      function buildRoundQueue(pool) {
+        const targetSize = getRoundTargetSize(pool);
+
+        if (!pool.length || targetSize <= 0) {
+          return [];
+        }
+
+        if (targetSize <= pool.length) {
+          return shuffle(pool).slice(0, targetSize);
+        }
+
+        return fillRound(pool, targetSize);
+      }
+
+      function selectedBankSource() {
+        return bankSourceById.get(state.bankId) || bankSourceById.get("grade:1");
+      }
+
+      function selectedBankType() {
+        return selectedBankSource()?.type || "word";
+      }
+
+      function isSentenceMode() {
+        return state.mode === "sentence";
+      }
+
+      function selectedGrade() {
+        return state.bankId.startsWith("grade:") ? state.bankId.replace("grade:", "") : "1";
+      }
+
+      function fallbackItemsForSource(source) {
+        if (!source) {
+          return [];
+        }
+
+        if (source.id.startsWith("grade:")) {
+          return wordBanks[source.id.replace("grade:", "")] || [];
+        }
+
+        if (source.id === "custom:current") {
+          return customCurrentWords;
+        }
+
+        if (source.id === "custom:all") {
+          return customAllWords;
+        }
+
+        if (source.id === "sentence:current") {
+          return customCurrentSentenceItems;
+        }
+
+        if (source.id === "sentence:all-imported") {
+          return customAllSentenceItems;
+        }
+
+        return sentenceBankFallbacks[source.id] || [];
+      }
+
+      function itemsForBankId(bankId) {
+        const source = bankSourceById.get(bankId);
+        const libraryEntry = bankLibrary.get(bankId);
+        if (libraryEntry?.items) {
+          return libraryEntry.items;
+        }
+        return fallbackItemsForSource(source);
+      }
+
+      function getCurrentPool() {
+        return itemsForBankId(state.bankId);
+      }
+
+      function bankCoversEveryItem(source, pool) {
+        if (!source) {
+          return false;
+        }
+
+        if (source.coversAll) {
+          return true;
+        }
+
+        return Boolean(source.coversAllUntil && pool.length <= source.coversAllUntil);
+      }
+
+      function getRoundTargetSize(pool) {
+        const source = selectedBankSource();
+        if (bankCoversEveryItem(source, pool)) {
+          return pool.length;
+        }
+
+        return state.roundSize;
+      }
+
+      function updateRoundControl(pool) {
+        const source = selectedBankSource();
+        const coversEveryItem = bankCoversEveryItem(source, pool);
+        const unit = selectedBankType() === "sentence" ? "sentences" : "words";
+
+        els.roundSelect.disabled = coversEveryItem;
+        els.roundSelect.title = coversEveryItem
+          ? `This bank covers every ${unit.slice(0, -1)}.`
+          : `Choose 10, 20, or 30 random ${unit}.`;
+
+        [...els.roundSelect.options].forEach((option) => {
+          option.textContent = `${option.value} ${unit}`;
+        });
+      }
+
+      function selectedBankLabel() {
+        return selectedBankSource()?.label || "Grade 1 Words";
+      }
+
+      function formatItemCount(count, type = selectedBankType()) {
+        const singular = type === "sentence" ? "sentence" : "word";
+        return `${count} ${count === 1 ? singular : `${singular}s`}`;
+      }
+
+      function unitLabel(count = 2) {
+        const singular = selectedBankType() === "sentence" ? "sentence" : "word";
+        return count === 1 ? singular : `${singular}s`;
+      }
+
+      function practiceReadyHint(pool) {
+        const source = selectedBankSource();
+        const unit = unitLabel(pool.length);
+
+        if (pool.length === 0) {
+          return selectedBankType() === "sentence"
+            ? "Add sentences in Banks before starting Sentence Practice."
+            : "Add words in Banks before starting this custom bank.";
+        }
+
+        if (bankCoversEveryItem(source, pool)) {
+          return `${selectedBankLabel()} has ${formatItemCount(pool.length)}. This round covers every ${unit} in a shuffled order.`;
+        }
+
+        return `${selectedBankLabel()} has ${formatItemCount(pool.length)}. Round chooses ${state.roundSize} shuffled random ${unitLabel(state.roundSize)}.`;
+      }
+
+      function loadCustomBanks() {
+        let migratedBanks = [];
+
+        try {
+          const storedCurrent = JSON.parse(localStorage.getItem(CUSTOM_CURRENT_WORDS_KEY));
+          hasStoredCurrentWords = Array.isArray(storedCurrent);
+          customCurrentWords = hasStoredCurrentWords ? parseWords(storedCurrent.join(" ")) : [];
+        } catch {
+          customCurrentWords = [];
+          hasStoredCurrentWords = false;
+        }
+
+        try {
+          const storedAll = JSON.parse(localStorage.getItem(CUSTOM_ALL_WORDS_KEY));
+          hasStoredAllWords = Array.isArray(storedAll);
+          customAllWords = hasStoredAllWords ? parseWords(storedAll.join(" ")) : [];
+        } catch {
+          customAllWords = [];
+          hasStoredAllWords = false;
+        }
+
+        try {
+          const storedCurrentSentences = JSON.parse(localStorage.getItem(CUSTOM_CURRENT_SENTENCES_KEY));
+          hasStoredCurrentSentences = Array.isArray(storedCurrentSentences);
+          customCurrentSentenceItems = hasStoredCurrentSentences
+            ? parseSentences(storedCurrentSentences.join("\n"))
+            : [];
+        } catch {
+          customCurrentSentenceItems = [];
+          hasStoredCurrentSentences = false;
+        }
+
+        try {
+          const storedAllSentences = JSON.parse(localStorage.getItem(CUSTOM_ALL_SENTENCES_KEY));
+          hasStoredAllSentences = Array.isArray(storedAllSentences);
+          customAllSentenceItems = hasStoredAllSentences
+            ? parseSentences(storedAllSentences.join("\n"))
+            : [];
+        } catch {
+          customAllSentenceItems = [];
+          hasStoredAllSentences = false;
+        }
+
+        try {
+          const storedBanks = JSON.parse(localStorage.getItem(CUSTOM_BANKS_KEY));
+          migratedBanks = Array.isArray(storedBanks)
+            ? storedBanks.filter((bank) => bank.name && Array.isArray(bank.words))
+            : [];
+        } catch {
+          migratedBanks = [];
+        }
+
+        if (migratedBanks.length > 0 && customAllWords.length === 0) {
+          customAllWords = parseWords(migratedBanks.flatMap((bank) => bank.words).join(" "));
+          hasStoredAllWords = true;
+        }
+
+        if (migratedBanks.length > 0 && customCurrentWords.length === 0) {
+          const latestBank = migratedBanks[migratedBanks.length - 1];
+          customCurrentWords = parseWords(latestBank.words.join(" "));
+          hasStoredCurrentWords = true;
+        }
+      }
+
+      function resetCustomBanksForSeed() {
+        if (localStorage.getItem(CUSTOM_BANK_SEED_KEY) === CUSTOM_BANK_SEED_VERSION) {
+          return;
+        }
+
+        [
+          CUSTOM_CURRENT_WORDS_KEY,
+          CUSTOM_ALL_WORDS_KEY,
+          LEGACY_CUSTOM_SENTENCES_KEY,
+          CUSTOM_CURRENT_SENTENCES_KEY,
+          CUSTOM_ALL_SENTENCES_KEY,
+          CUSTOM_BANKS_KEY
+        ].forEach((key) => localStorage.removeItem(key));
+
+        try {
+          const storedOverrides = JSON.parse(localStorage.getItem(BANK_OVERRIDES_KEY));
+          if (storedOverrides && typeof storedOverrides === "object" && !Array.isArray(storedOverrides)) {
+            delete storedOverrides["custom:current"];
+            delete storedOverrides["custom:all"];
+            delete storedOverrides["sentence:starter"];
+            delete storedOverrides["sentence:imported"];
+            delete storedOverrides["sentence:current"];
+            delete storedOverrides["sentence:all-imported"];
+            localStorage.setItem(BANK_OVERRIDES_KEY, JSON.stringify(storedOverrides));
+          }
+        } catch {
+          localStorage.removeItem(BANK_OVERRIDES_KEY);
+        }
+
+        localStorage.setItem(CUSTOM_BANK_SEED_KEY, CUSTOM_BANK_SEED_VERSION);
+      }
+
+      function saveCustomBanks() {
+        localStorage.setItem(CUSTOM_CURRENT_WORDS_KEY, JSON.stringify(customCurrentWords));
+        localStorage.setItem(CUSTOM_ALL_WORDS_KEY, JSON.stringify(customAllWords));
+        localStorage.setItem(CUSTOM_CURRENT_SENTENCES_KEY, JSON.stringify(customCurrentSentenceItems));
+        localStorage.setItem(CUSTOM_ALL_SENTENCES_KEY, JSON.stringify(customAllSentenceItems));
+      }
+
+      function loadBankOverrides() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(BANK_OVERRIDES_KEY));
+          bankOverrides = stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {};
+        } catch {
+          bankOverrides = {};
+        }
+      }
+
+      function saveBankOverrides() {
+        localStorage.setItem(BANK_OVERRIDES_KEY, JSON.stringify(bankOverrides));
+      }
+
+      function isPersonalBankSource(source) {
+        return Boolean(source && PERSONAL_BANK_FILE_NAMES[source.id]);
+      }
+
+      function personalBankFileName(source) {
+        return isPersonalBankSource(source) ? PERSONAL_BANK_FILE_NAMES[source.id] : "";
+      }
+
+      function supportsPersonalBankDirectory() {
+        return Boolean(
+          window.isSecureContext &&
+          typeof window.showDirectoryPicker === "function" &&
+          "indexedDB" in window
+        );
+      }
+
+      function openPersonalBankDirectoryDatabase() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(PERSONAL_BANK_DIRECTORY_DB, 1);
+          request.onupgradeneeded = () => {
+            const database = request.result;
+            if (!database.objectStoreNames.contains(PERSONAL_BANK_DIRECTORY_STORE)) {
+              database.createObjectStore(PERSONAL_BANK_DIRECTORY_STORE);
+            }
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error("Could not open personal library storage."));
+        });
+      }
+
+      async function readSavedPersonalBankDirectory() {
+        const database = await openPersonalBankDirectoryDatabase();
+        try {
+          return await new Promise((resolve, reject) => {
+            const request = database
+              .transaction(PERSONAL_BANK_DIRECTORY_STORE, "readonly")
+              .objectStore(PERSONAL_BANK_DIRECTORY_STORE)
+              .get(PERSONAL_BANK_DIRECTORY_KEY);
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error || new Error("Could not read the personal library folder."));
+          });
+        } finally {
+          database.close();
+        }
+      }
+
+      async function savePersonalBankDirectory(handle) {
+        const database = await openPersonalBankDirectoryDatabase();
+        try {
+          await new Promise((resolve, reject) => {
+            const request = database
+              .transaction(PERSONAL_BANK_DIRECTORY_STORE, "readwrite")
+              .objectStore(PERSONAL_BANK_DIRECTORY_STORE)
+              .put(handle, PERSONAL_BANK_DIRECTORY_KEY);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error || new Error("Could not save the personal library folder."));
+          });
+        } finally {
+          database.close();
+        }
+      }
+
+      async function forgetPersonalBankDirectory() {
+        if (!supportsPersonalBankDirectory()) {
+          return;
+        }
+
+        const database = await openPersonalBankDirectoryDatabase();
+        try {
+          await new Promise((resolve, reject) => {
+            const request = database
+              .transaction(PERSONAL_BANK_DIRECTORY_STORE, "readwrite")
+              .objectStore(PERSONAL_BANK_DIRECTORY_STORE)
+              .delete(PERSONAL_BANK_DIRECTORY_KEY);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error || new Error("Could not disconnect the personal library folder."));
+          });
+        } finally {
+          database.close();
+        }
+      }
+
+      async function requestPersonalBankDirectoryPermission(options = {}) {
+        if (!personalBankDirectoryHandle) {
+          return "none";
+        }
+
+        const mode = options.mode || "read";
+        try {
+          let permission = await personalBankDirectoryHandle.queryPermission({ mode });
+          if (permission === "prompt" && options.requestPermission) {
+            permission = await personalBankDirectoryHandle.requestPermission({ mode });
+          }
+          personalBankDirectoryPermission = permission;
+          return permission;
+        } catch {
+          personalBankDirectoryPermission = "prompt";
+          return "prompt";
+        }
+      }
+
+      function setPersonalBankItems(source, items) {
+        if (!source) {
+          return;
+        }
+
+        if (source.id === "custom:current") {
+          customCurrentWords = items;
+          hasStoredCurrentWords = true;
+        } else if (source.id === "custom:all") {
+          customAllWords = items;
+          hasStoredAllWords = true;
+        } else if (source.id === "sentence:current") {
+          customCurrentSentenceItems = items;
+          hasStoredCurrentSentences = true;
+        } else if (source.id === "sentence:all-imported") {
+          customAllSentenceItems = items;
+          hasStoredAllSentences = true;
+        }
+      }
+
+      function personalBankSourcesForWrite(source) {
+        if (!isPersonalBankSource(source)) {
+          return [];
+        }
+
+        if (source.id === "custom:current") {
+          return [source, bankSourceById.get("custom:all")];
+        }
+
+        if (source.id === "sentence:current") {
+          return [source, bankSourceById.get("sentence:all-imported")];
+        }
+
+        return [source];
+      }
+
+      async function writeMarkdownToPersonalFile(fileHandle, markdown) {
+        const writer = await fileHandle.createWritable();
+        await writer.write(markdown);
+        await writer.close();
+      }
+
+      async function loadPersonalBankDirectory(options = {}) {
+        if (!personalBankDirectoryHandle) {
+          return { loaded: 0, created: 0, permission: "none" };
+        }
+
+        const permission = await requestPersonalBankDirectoryPermission({
+          mode: "readwrite",
+          requestPermission: Boolean(options.requestPermission)
+        });
+        if (permission !== "granted") {
+          return { loaded: 0, created: 0, permission };
+        }
+
+        let loaded = 0;
+        let created = 0;
+        const sources = bankSources.filter(isPersonalBankSource);
+
+        for (const source of sources) {
+          let fileHandle;
+          let createdFile = false;
+          try {
+            fileHandle = await personalBankDirectoryHandle.getFileHandle(personalBankFileName(source));
+          } catch (error) {
+            if (!options.createMissing || error?.name !== "NotFoundError") {
+              continue;
+            }
+            fileHandle = await personalBankDirectoryHandle.getFileHandle(personalBankFileName(source), {
+              create: true
+            });
+            createdFile = true;
+            created += 1;
+          }
+
+          let markdown = await (await fileHandle.getFile()).text();
+          if (createdFile) {
+            markdown = formatBankMarkdown(source, itemsForBankId(source.id));
+            await writeMarkdownToPersonalFile(fileHandle, markdown);
+          }
+
+          const items = parseBankItems(source, markdown);
+          setPersonalBankItems(source, items);
+          registerBankItems(source, items, markdown, "personal-folder");
+          loaded += 1;
+        }
+
+        if (loaded > 0) {
+          saveCustomBanks();
+        }
+
+        return { loaded, created, permission };
+      }
+
+      async function writePersonalBankDirectory(source) {
+        const sources = personalBankSourcesForWrite(source);
+        if (!sources.length) {
+          return { written: 0, permission: "none" };
+        }
+
+        if (!personalBankDirectoryHandle) {
+          return { written: 0, permission: "none" };
+        }
+
+        const permission = await requestPersonalBankDirectoryPermission({
+          mode: "readwrite",
+          requestPermission: true
+        });
+        if (permission !== "granted") {
+          return { written: 0, permission };
+        }
+
+        for (const bankSource of sources) {
+          const fileHandle = await personalBankDirectoryHandle.getFileHandle(
+            personalBankFileName(bankSource),
+            { create: true }
+          );
+          await writeMarkdownToPersonalFile(
+            fileHandle,
+            formatBankMarkdown(bankSource, itemsForBankId(bankSource.id))
+          );
+        }
+
+        return { written: sources.length, permission };
+      }
+
+      async function syncPersonalBankDirectoryAfterSave(source) {
+        if (!isPersonalBankSource(source) || !personalBankDirectoryHandle) {
+          return "";
+        }
+
+        try {
+          const result = await writePersonalBankDirectory(source);
+          if (result.permission !== "granted") {
+            return " Saved in browser; folder access needs reconnecting.";
+          }
+          return result.written ? " Synced to your personal folder." : "";
+        } catch {
+          return " Saved in browser; the personal folder could not be updated.";
+        }
+      }
+
+      function renderPersonalBankDirectoryControls() {
+        const supported = supportsPersonalBankDirectory();
+        const connected = Boolean(personalBankDirectoryHandle);
+        const canRead = connected && personalBankDirectoryPermission === "granted";
+
+        els.chooseLocalFolderBtn.disabled = !supported;
+        els.reloadLocalFolderBtn.disabled = !canRead;
+        els.disconnectLocalFolderBtn.disabled = !connected;
+
+        if (!supported) {
+          els.localFolderName.textContent = "Browser storage";
+          els.localFolderDetail.textContent = "This browser keeps custom banks in browser storage. Markdown export remains available.";
+          return;
+        }
+
+        if (!connected) {
+          els.localFolderName.textContent = "Browser storage";
+          els.localFolderDetail.textContent = "Choose a folder to keep your four custom Markdown banks on this device.";
+          return;
+        }
+
+        els.localFolderName.textContent = personalBankDirectoryHandle.name;
+        els.localFolderDetail.textContent = canRead
+          ? "Four personal Markdown banks are connected. Saving and importing keeps the folder in sync."
+          : "Folder access needs permission again. Choose the folder to reconnect.";
+      }
+
+      function personalBankDisplayPath(source) {
+        if (isPersonalBankSource(source) && personalBankDirectoryHandle) {
+          return `Personal folder / ${personalBankFileName(source)}`;
+        }
+        return source.file;
+      }
+
+      async function restorePersonalBankDirectory() {
+        if (!supportsPersonalBankDirectory()) {
+          return;
+        }
+
+        try {
+          personalBankDirectoryHandle = await readSavedPersonalBankDirectory();
+          if (!personalBankDirectoryHandle) {
+            return;
+          }
+          const permission = await requestPersonalBankDirectoryPermission({ mode: "readwrite" });
+          if (permission === "granted") {
+            await loadPersonalBankDirectory();
+          }
+        } catch {
+          personalBankDirectoryHandle = null;
+          personalBankDirectoryPermission = "none";
+        }
+      }
+
+      async function choosePersonalBankDirectory() {
+        if (!supportsPersonalBankDirectory()) {
+          setBankStatus("This browser cannot connect a local folder. Browser storage and Markdown export are still available.", "error");
+          return;
+        }
+
+        try {
+          const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+          personalBankDirectoryHandle = handle;
+          const permission = await requestPersonalBankDirectoryPermission({
+            mode: "readwrite",
+            requestPermission: true
+          });
+          if (permission !== "granted") {
+            throw new Error("Folder access was not granted.");
+          }
+
+          await savePersonalBankDirectory(handle);
+          const result = await loadPersonalBankDirectory({ createMissing: true, requestPermission: true });
+          renderBankOptions();
+          previewRound();
+          renderLibraryPage();
+          const createdText = result.created ? ` Created ${result.created} Markdown file${result.created === 1 ? "" : "s"}.` : "";
+          setBankStatus(`Connected personal folder ${handle.name}.${createdText}`, "success");
+        } catch (error) {
+          if (error?.name === "AbortError") {
+            setBankStatus("Folder selection cancelled.");
+            return;
+          }
+          const message = error instanceof Error ? error.message : "Could not connect the personal folder.";
+          setBankStatus(message, "error");
+          renderPersonalBankDirectoryControls();
+        }
+      }
+
+      async function reloadPersonalBankDirectory() {
+        if (!personalBankDirectoryHandle) {
+          return;
+        }
+
+        try {
+          const result = await loadPersonalBankDirectory({ requestPermission: true });
+          if (result.permission !== "granted") {
+            setBankStatus("Folder access was not granted. Choose the folder to reconnect.", "error");
+            renderPersonalBankDirectoryControls();
+            return;
+          }
+          renderBankOptions();
+          previewRound();
+          renderLibraryPage();
+          setBankStatus(`Reloaded ${result.loaded} personal Markdown bank${result.loaded === 1 ? "" : "s"}.`, "success");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Could not reload the personal folder.";
+          setBankStatus(message, "error");
+        }
+      }
+
+      async function disconnectPersonalBankDirectory() {
+        try {
+          await forgetPersonalBankDirectory();
+          personalBankDirectoryHandle = null;
+          personalBankDirectoryPermission = "none";
+          renderLibraryPage();
+          setBankStatus("Disconnected personal folder. Your Markdown files were not changed.", "success");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Could not disconnect the personal folder.";
+          setBankStatus(message, "error");
+        }
+      }
+
+      function initializeBankLibraryFromFallbacks() {
+        bankSources.forEach((source) => {
+          registerBankItems(source, fallbackItemsForSource(source), "", "fallback");
+        });
+      }
+
+      function syncCustomBanksIntoLibrary() {
+        const currentSource = bankSourceById.get("custom:current");
+        const allSource = bankSourceById.get("custom:all");
+        const currentSentenceSource = bankSourceById.get("sentence:current");
+        const allSentenceSource = bankSourceById.get("sentence:all-imported");
+
+        if (hasStoredCurrentWords || customCurrentWords.length > 0) {
+          registerBankItems(
+            currentSource,
+            customCurrentWords,
+            formatBankMarkdown(currentSource, customCurrentWords),
+            "browser"
+          );
+        }
+
+        if (hasStoredAllWords || customAllWords.length > 0) {
+          registerBankItems(
+            allSource,
+            customAllWords,
+            formatBankMarkdown(allSource, customAllWords),
+            "browser"
+          );
+        }
+
+        if (hasStoredCurrentSentences || customCurrentSentenceItems.length > 0) {
+          registerBankItems(
+            currentSentenceSource,
+            customCurrentSentenceItems,
+            formatBankMarkdown(currentSentenceSource, customCurrentSentenceItems),
+            "browser"
+          );
+        }
+
+        if (hasStoredAllSentences || customAllSentenceItems.length > 0) {
+          registerBankItems(
+            allSentenceSource,
+            customAllSentenceItems,
+            formatBankMarkdown(allSentenceSource, customAllSentenceItems),
+            "browser"
+          );
+        }
+      }
+
+      function applyStoredOverrides() {
+        Object.entries(bankOverrides).forEach(([bankId, markdown]) => {
+          const source = bankSourceById.get(bankId);
+          if (!source || typeof markdown !== "string") {
+            return;
+          }
+          const items = parseBankItems(source, markdown);
+          registerBankItems(source, items, markdown, "browser");
+        });
+      }
+
+      async function loadMarkdownBankFiles(options = {}) {
+        const fetches = bankSources.map(async (source) => {
+          try {
+            const response = await fetch(`${source.file}?v=${Date.now()}`, { cache: "no-store" });
+            if (!response.ok) {
+              throw new Error("File not available");
+            }
+            const markdown = await response.text();
+            const items = parseBankItems(source, markdown);
+
+            if (source.id === "custom:current" && !hasStoredCurrentWords && items.length > 0) {
+              customCurrentWords = items;
+            }
+
+            if (source.id === "custom:all" && !hasStoredAllWords && items.length > 0) {
+              customAllWords = items;
+            }
+
+            if (source.id === "sentence:current" && !hasStoredCurrentSentences && items.length > 0) {
+              customCurrentSentenceItems = items;
+            }
+
+            if (source.id === "sentence:all-imported" && !hasStoredAllSentences && items.length > 0) {
+              customAllSentenceItems = items;
+            }
+
+            registerBankItems(source, items, markdown, "file");
+          } catch {
+            const fallback = fallbackItemsForSource(source);
+            const existing = bankLibrary.get(source.id);
+            if (!existing || options.force) {
+              registerBankItems(source, fallback, formatBankMarkdown(source, fallback), "fallback");
+            }
+          }
+        });
+
+        await Promise.all(fetches);
+        applyStoredOverrides();
+        syncCustomBanksIntoLibrary();
+      }
+
+      function renderBankOptions() {
+        const previous = state.bankId;
+        els.bankSelect.innerHTML = "";
+
+        const groups = [...new Set(bankSources.map((source) => source.group))];
+        groups.forEach((groupName) => {
+          const group = document.createElement("optgroup");
+          group.label = groupName;
+          bankSources
+            .filter((source) => source.group === groupName)
+            .forEach((source) => {
+              const option = document.createElement("option");
+              option.value = source.id;
+              option.textContent = source.label;
+              group.appendChild(option);
+            });
+          els.bankSelect.appendChild(group);
+        });
+
+        const hasPrevious = [...els.bankSelect.options].some((option) => option.value === previous);
+        state.bankId = hasPrevious ? previous : state.mode === "sentence" ? "sentence:current" : "grade:1";
+        ensureBankMatchesMode();
+        els.bankSelect.value = state.bankId;
+      }
+
+      function parseWords(text) {
+        const words = String(text)
+          .toLowerCase()
+          .match(/[a-z]+/g);
+
+        if (!words) {
+          return [];
+        }
+
+        return [...new Set(words)]
+          .filter((word) => word.length >= 1 && word.length <= 16);
+      }
+
+      function setBankStatus(message, tone = "") {
+        els.bankStatus.className = `bank-status ${tone}`.trim();
+        els.bankStatus.textContent = message;
+      }
+
+      function stripMarkdownControlLines(text) {
+        return String(text)
+          .split(/\r?\n/)
+          .filter((line) => {
+            const trimmed = line.trim();
+            return !(
+              trimmed.startsWith("#") ||
+              trimmed.startsWith("<!--") ||
+              /^(id|type|label|file|notes?):/i.test(trimmed)
+            );
+          })
+          .map((line) => line.replace(/^\s*(?:[-*+]|\d+[.)])\s+/, ""))
+          .join("\n");
+      }
+
+      function parseBankItems(source, markdown) {
+        const content = stripMarkdownControlLines(markdown);
+        return source.type === "sentence" ? parseSentences(content) : parseWords(content);
+      }
+
+      function normalizePracticeSentence(sentence) {
+        return String(sentence)
+          .replace(/[“”]/g, "\"")
+          .replace(/[‘’]/g, "'")
+          .replace(/[–—]/g, "-")
+          .replace(/\s+/g, " ")
+          .replace(/\s+([,.?!;:])/g, "$1")
+          .replace(/([({["'])\s+/g, "$1")
+          .replace(/[^A-Za-z0-9 .,!?'";:\-()]/g, "")
+          .trim();
+      }
+
+      function parseSentences(text) {
+        const normalized = normalizePracticeSentence(text);
+        if (!normalized) {
+          return [];
+        }
+
+        const roughSentences = normalized.match(/[^.!?]+[.!?]+["')]*|[^.!?]+$/g) || [];
+        const cleanSentences = roughSentences
+          .map(normalizePracticeSentence)
+          .filter((sentence) => {
+            const letterCount = (sentence.match(/[A-Za-z]/g) || []).length;
+            return sentence.length >= 12 && sentence.length <= 160 && letterCount >= 5;
+          });
+
+        return [...new Set(cleanSentences)];
+      }
+
+      function formatBankMarkdown(source, items) {
+        const itemType = source.type === "sentence" ? "sentences" : "words";
+        return [
+          `# ${source.label}`,
+          "",
+          `id: ${source.id}`,
+          `type: ${itemType}`,
+          `label: ${source.label}`,
+          "",
+          ...items.map((item) => `- ${item}`),
+          ""
+        ].join("\n");
+      }
+
+      function registerBankItems(source, items, markdown, origin) {
+        if (!source) {
+          return;
+        }
+
+        const cleanItems = source.type === "sentence"
+          ? parseSentences(items.join("\n"))
+          : parseWords(items.join(" "));
+
+        bankLibrary.set(source.id, {
+          source,
+          items: cleanItems,
+          markdown: markdown || formatBankMarkdown(source, cleanItems),
+          origin
+        });
+      }
+
+      function ensureBankMatchesMode() {
+        const source = selectedBankSource();
+
+        if (state.mode === "sentence" && source?.type !== "sentence") {
+          state.bankId = "sentence:current";
+          return;
+        }
+
+        if (state.mode !== "sentence" && source?.type === "sentence") {
+          state.bankId = "grade:1";
+        }
+      }
+
+      function renderLibraryPage() {
+        renderPersonalBankDirectoryControls();
+        renderLibraryBankList();
+        renderLibraryEditor();
+        renderLibraryImport();
+      }
+
+      function renderLibraryBankList() {
+        els.libraryBankList.innerHTML = "";
+
+        const groups = [...new Set(bankSources.map((source) => source.group))];
+        groups.forEach((groupName) => {
+          const group = document.createElement("section");
+          group.className = "library-group";
+
+          const title = document.createElement("div");
+          title.className = "library-group-title";
+          title.textContent = groupName;
+          group.appendChild(title);
+
+          bankSources
+            .filter((source) => source.group === groupName)
+            .forEach((source) => {
+              const button = document.createElement("button");
+              const itemCount = itemsForBankId(source.id).length;
+              button.type = "button";
+              button.className = "library-bank-button";
+              button.classList.toggle("active", source.id === selectedLibraryBankId);
+              button.dataset.bankId = source.id;
+              button.innerHTML = `<strong></strong><span>${formatItemCount(itemCount, source.type)}</span>`;
+              button.querySelector("strong").textContent = source.label;
+              button.addEventListener("click", () => {
+                selectedLibraryBankId = source.id;
+                renderLibraryPage();
+                setBankStatus("");
+              });
+              group.appendChild(button);
+            });
+
+          els.libraryBankList.appendChild(group);
+        });
+      }
+
+      function renderLibraryEditor() {
+        const source = bankSourceById.get(selectedLibraryBankId) || bankSourceById.get("custom:current");
+        const entry = bankLibrary.get(source.id);
+        const items = itemsForBankId(source.id);
+
+        selectedLibraryBankId = source.id;
+        els.bankEditorType.textContent = source.type === "sentence" ? "Sentences" : "Words";
+        els.bankEditorTitle.textContent = source.label;
+        els.bankEditorCount.textContent = formatItemCount(items.length, source.type);
+        els.bankEditorFile.textContent = personalBankDisplayPath(source);
+        els.bankMarkdownEditor.value = entry?.markdown || formatBankMarkdown(source, items);
+      }
+
+      function canImportFileInto(source) {
+        return source?.id === "custom:current" || source?.id === "sentence:current";
+      }
+
+      function setImportStatus(message, tone = "") {
+        els.importStatus.className = `import-status ${tone}`.trim();
+        els.importStatus.textContent = message;
+      }
+
+      function renderLibraryImport() {
+        const source = bankSourceById.get(selectedLibraryBankId);
+        const canImport = canImportFileInto(source);
+        els.libraryImport.hidden = !canImport;
+
+        if (!canImport) {
+          return;
+        }
+
+        const isSentenceList = source.type === "sentence";
+        els.importTitle.textContent = isSentenceList
+          ? "Add to Current Sentence List"
+          : "Add to Current Word List";
+        els.importNote.textContent = isSentenceList
+          ? "Upload an image, PDF, TXT, or Markdown file. It replaces this list and also adds its sentences to All Imported Sentence List."
+          : "Upload an image, PDF, TXT, or Markdown file. It replaces this list and also adds its words to All Added Words.";
+        els.sourceFileInput.value = "";
+        setImportStatus("");
+      }
+
+      async function loadTesseract() {
+        if (window.Tesseract) {
+          return window.Tesseract;
+        }
+
+        if (!tesseractScriptPromise) {
+          tesseractScriptPromise = new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+            script.async = true;
+            script.onload = () => window.Tesseract
+              ? resolve(window.Tesseract)
+              : reject(new Error("OCR library did not load."));
+            script.onerror = () => reject(new Error("Could not load the OCR library. Check the internet connection and try again."));
+            document.head.appendChild(script);
+          }).catch((error) => {
+            tesseractScriptPromise = null;
+            throw error;
+          });
+        }
+
+        return tesseractScriptPromise;
+      }
+
+      async function createOcrWorker() {
+        const Tesseract = await loadTesseract();
+        setImportStatus("Preparing English text recognition…");
+        const worker = await Tesseract.createWorker("eng", 1, {
+          logger: ({ status, progress }) => {
+            if (typeof progress === "number") {
+              setImportStatus(`${status} ${Math.round(progress * 100)}%`);
+            }
+          }
+        });
+        await worker.setParameters({
+          tessedit_pageseg_mode: "11",
+          preserve_interword_spaces: "1"
+        });
+        return worker;
+      }
+
+      async function recognizeVisualSource(source, worker, recoverShortWords = false) {
+        setImportStatus("Reading text from the image…");
+        const primaryResult = await worker.recognize(source);
+        const primaryText = primaryResult.data.text || "";
+
+        if (!recoverShortWords) {
+          return primaryText;
+        }
+
+        await worker.setParameters({ tessedit_pageseg_mode: "3" });
+        const recoveryResult = await worker.recognize(source);
+        await worker.setParameters({ tessedit_pageseg_mode: "11" });
+        return `${primaryText}\n[[OCR short-word recovery]]\n${recoveryResult.data.text || ""}`;
+      }
+
+      async function createWordListCrop(file) {
+        const bitmap = await createImageBitmap(file);
+        try {
+          const cropTop = Math.floor(bitmap.height * 0.36);
+          const canvas = document.createElement("canvas");
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height - cropTop;
+          const context = canvas.getContext("2d");
+          if (!context) {
+            throw new Error("Could not prepare the image for text recognition.");
+          }
+          context.drawImage(
+            bitmap,
+            0,
+            cropTop,
+            bitmap.width,
+            bitmap.height - cropTop,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+          return canvas;
+        } finally {
+          bitmap.close?.();
+        }
+      }
+
+      async function extractImageText(file, recoverShortWords = false) {
+        const worker = await createOcrWorker();
+        try {
+          const recognizedText = await recognizeVisualSource(file, worker, recoverShortWords);
+          if (!recoverShortWords) {
+            return recognizedText;
+          }
+
+          const [primaryText, recoveryText = ""] = recognizedText.split("\n[[OCR short-word recovery]]\n");
+          const wordListCrop = await createWordListCrop(file);
+          const cropText = await recognizeVisualSource(wordListCrop, worker);
+          return `${primaryText}\n[[OCR word-list crop]]\n${cropText}\n[[OCR short-word recovery]]\n${recoveryText}`;
+        } finally {
+          await worker.terminate();
+        }
+      }
+
+      async function loadPdfJs() {
+        if (!pdfJsModulePromise) {
+          pdfJsModulePromise = import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.mjs")
+            .then((pdfjs) => {
+              pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs";
+              return pdfjs;
+            })
+            .catch((error) => {
+              pdfJsModulePromise = null;
+              throw new Error(`Could not load the PDF reader: ${error.message}`);
+            });
+        }
+
+        return pdfJsModulePromise;
+      }
+
+      async function extractPdfText(file) {
+        const pdfjs = await loadPdfJs();
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const loadingTask = pdfjs.getDocument({ data: bytes });
+        const pdf = await loadingTask.promise;
+        const pages = [];
+
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          setImportStatus(`Reading PDF page ${pageNumber} of ${pdf.numPages}…`);
+          const page = await pdf.getPage(pageNumber);
+          const textContent = await page.getTextContent();
+          pages.push(textContent.items.map((item) => item.str).join(" "));
+        }
+
+        const extractedText = pages.join("\n").trim();
+        if ((extractedText.match(/[A-Za-z]/g) || []).length >= 20) {
+          return extractedText;
+        }
+
+        const worker = await createOcrWorker();
+        try {
+          const scannedPages = [];
+          for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+            setImportStatus(`Recognizing scanned PDF page ${pageNumber} of ${pdf.numPages}…`);
+            const page = await pdf.getPage(pageNumber);
+            const viewport = page.getViewport({ scale: 1.8 });
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.ceil(viewport.width);
+            canvas.height = Math.ceil(viewport.height);
+            const context = canvas.getContext("2d");
+            await page.render({ canvasContext: context, viewport }).promise;
+            scannedPages.push(await recognizeVisualSource(canvas, worker));
+          }
+          return scannedPages.join("\n");
+        } finally {
+          await worker.terminate();
+        }
+      }
+
+      function isImageFile(file) {
+        return file.type.startsWith("image/") || /\.(?:avif|bmp|gif|jpe?g|png|tiff?|webp)$/i.test(file.name);
+      }
+
+      function isPdfFile(file) {
+        return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      }
+
+      function isTextFile(file) {
+        return file.type.startsWith("text/") || /\.(?:md|text|txt)$/i.test(file.name);
+      }
+
+      async function extractUploadedFileText(file, source) {
+        if (isImageFile(file)) {
+          return extractImageText(file, source?.type === "word");
+        }
+
+        if (isPdfFile(file)) {
+          return extractPdfText(file);
+        }
+
+        if (isTextFile(file)) {
+          return file.text();
+        }
+
+        throw new Error("Choose an image, PDF, TXT, or Markdown file.");
+      }
+
+      function parseUploadedWordList(text) {
+        const rawText = String(text);
+        const [textWithCrops, recoveryText = ""] = rawText.split("\n[[OCR short-word recovery]]\n");
+        const isOcrResult = rawText.includes("[[OCR ");
+        const headingWords = new Set([
+          "spelling",
+          "vocabulary",
+          "word",
+          "words",
+          "high",
+          "frequency",
+          "review",
+          "kickin",
+          "kreations"
+        ]);
+        const words = textWithCrops
+          .split("\n[[OCR word-list crop]]\n")
+          .flatMap((segment) => {
+            const importText = stripMarkdownControlLines(segment);
+            const vocabularySection = importText.match(/\b(?:spelling|vocabulary)\s+words?\b([\s\S]*)/i);
+            const candidate = vocabularySection ? vocabularySection[1] : importText;
+            return parseWords(candidate).filter((word) => {
+              if (headingWords.has(word)) {
+                return false;
+              }
+              return !isOcrResult || word.length > 1 || word === "a" || word === "i";
+            });
+          })
+          .filter((word, index, items) => items.indexOf(word) === index);
+        const recoveredShortWords = parseWords(recoveryText)
+          .filter((word) => (word === "a" || word === "i") && !words.includes(word));
+        return [...words, ...recoveredShortWords];
+      }
+
+      function parseUploadedSentenceList(text) {
+        return parseSentences(stripMarkdownControlLines(text));
+      }
+
+      async function saveImportedItems(source, items, fileName) {
+        if (source.id === "custom:current") {
+          customCurrentWords = items;
+          customAllWords = parseWords([...customAllWords, ...items].join(" "));
+          hasStoredCurrentWords = true;
+          hasStoredAllWords = true;
+          state.mode = "word";
+        } else {
+          customCurrentSentenceItems = items;
+          customAllSentenceItems = parseSentences([...customAllSentenceItems, ...items].join("\n"));
+          hasStoredCurrentSentences = true;
+          hasStoredAllSentences = true;
+          state.mode = "sentence";
+        }
+
+        state.bankId = source.id;
+        selectedLibraryBankId = source.id;
+        saveCustomBanks();
+        syncCustomBanksIntoLibrary();
+        const folderStatus = await syncPersonalBankDirectoryAfterSave(source);
+        renderBankOptions();
+        applyModeButtons();
+        previewRound();
+        renderLibraryPage();
+
+        const allSource = source.type === "sentence"
+          ? bankSourceById.get("sentence:all-imported")
+          : bankSourceById.get("custom:all");
+        const allCount = itemsForBankId(allSource.id).length;
+        const action = `Replaced ${source.label} with ${formatItemCount(items.length, source.type)} from ${fileName}.`;
+        setBankStatus(`${action} ${allSource.label} now has ${formatItemCount(allCount, source.type)}.${folderStatus}`, "success");
+        setImportStatus("Import complete.", "success");
+      }
+
+      async function importSelectedFile() {
+        const source = bankSourceById.get(selectedLibraryBankId);
+        const file = els.sourceFileInput.files?.[0];
+        if (!source || !canImportFileInto(source) || !file) {
+          return;
+        }
+
+        els.sourceFileInput.disabled = true;
+        try {
+          setImportStatus(`Reading ${file.name}…`);
+          const text = await extractUploadedFileText(file, source);
+          const items = source.type === "sentence"
+            ? parseUploadedSentenceList(text)
+            : parseUploadedWordList(text);
+
+          if (items.length === 0) {
+            throw new Error(source.type === "sentence"
+              ? "No complete English sentences were found in this file."
+              : "No English words were found in this file.");
+          }
+
+          await saveImportedItems(source, items, file.name);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "The file could not be imported.";
+          setImportStatus(message, "error");
+          setBankStatus(message, "error");
+        } finally {
+          els.sourceFileInput.disabled = false;
+          els.sourceFileInput.value = "";
+        }
+      }
+
+      async function saveSelectedMarkdownBank() {
+        const source = bankSourceById.get(selectedLibraryBankId);
+        if (!source) {
+          return;
+        }
+
+        const markdown = els.bankMarkdownEditor.value;
+        const items = parseBankItems(source, markdown);
+
+        if (items.length === 0) {
+          setBankStatus(`Add at least one ${source.type === "sentence" ? "sentence" : "word"}.`, "error");
+          return;
+        }
+
+        if (source.id === "custom:current") {
+          customCurrentWords = items;
+          customAllWords = parseWords([...customAllWords, ...items].join(" "));
+          hasStoredCurrentWords = true;
+          hasStoredAllWords = true;
+          saveCustomBanks();
+          syncCustomBanksIntoLibrary();
+        } else if (source.id === "custom:all") {
+          customAllWords = items;
+          hasStoredAllWords = true;
+          saveCustomBanks();
+          syncCustomBanksIntoLibrary();
+        } else if (source.id === "sentence:current") {
+          customCurrentSentenceItems = items;
+          customAllSentenceItems = parseSentences([...customAllSentenceItems, ...items].join("\n"));
+          hasStoredCurrentSentences = true;
+          hasStoredAllSentences = true;
+          saveCustomBanks();
+          syncCustomBanksIntoLibrary();
+        } else if (source.id === "sentence:all-imported") {
+          customAllSentenceItems = items;
+          hasStoredAllSentences = true;
+          saveCustomBanks();
+          syncCustomBanksIntoLibrary();
+        } else {
+          bankOverrides[source.id] = formatBankMarkdown(source, items);
+          saveBankOverrides();
+          registerBankItems(source, items, bankOverrides[source.id], "browser");
+        }
+
+        state.bankId = source.id;
+        if (source.type === "sentence") {
+          state.mode = "sentence";
+        } else if (state.mode === "sentence") {
+          state.mode = "word";
+        }
+        const folderStatus = await syncPersonalBankDirectoryAfterSave(source);
+        renderBankOptions();
+        applyModeButtons();
+        previewRound();
+        renderLibraryPage();
+        setBankStatus(`Saved ${source.label} with ${formatItemCount(items.length, source.type)}.${folderStatus}`, "success");
+      }
+
+      function useSelectedBankInPractice() {
+        const source = bankSourceById.get(selectedLibraryBankId);
+        if (!source) {
+          return;
+        }
+
+        state.bankId = source.id;
+        state.mode = source.type === "sentence" ? "sentence" : state.mode === "sentence" ? "word" : state.mode;
+        renderBankOptions();
+        applyModeButtons();
+        persistSettings();
+        closeBankPage();
+        previewRound();
+      }
+
+      function exportSelectedMarkdownBank() {
+        const source = bankSourceById.get(selectedLibraryBankId);
+        if (!source) {
+          return;
+        }
+
+        const markdown = els.bankMarkdownEditor.value || formatBankMarkdown(source, itemsForBankId(source.id));
+        const blob = new Blob([markdown], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = source.file.split("/").pop() || "bank.md";
+        link.click();
+        URL.revokeObjectURL(url);
+        setBankStatus(`Exported ${source.label}.`, "success");
+      }
+
+      async function resetSelectedMarkdownBank() {
+        const source = bankSourceById.get(selectedLibraryBankId);
+        if (!source) {
+          return;
+        }
+
+        delete bankOverrides[source.id];
+        saveBankOverrides();
+
+        if (source.id === "custom:current") {
+          localStorage.removeItem(CUSTOM_CURRENT_WORDS_KEY);
+          customCurrentWords = [];
+          hasStoredCurrentWords = false;
+        }
+
+        if (source.id === "custom:all") {
+          localStorage.removeItem(CUSTOM_ALL_WORDS_KEY);
+          customAllWords = [];
+          hasStoredAllWords = false;
+        }
+
+        if (source.id === "sentence:current") {
+          localStorage.removeItem(CUSTOM_CURRENT_SENTENCES_KEY);
+          customCurrentSentenceItems = [];
+          hasStoredCurrentSentences = false;
+        }
+
+        if (source.id === "sentence:all-imported") {
+          localStorage.removeItem(CUSTOM_ALL_SENTENCES_KEY);
+          customAllSentenceItems = [];
+          hasStoredAllSentences = false;
+        }
+
+        await loadMarkdownBankFiles({ force: true });
+        const folderResult = await loadPersonalBankDirectory();
+        renderBankOptions();
+        previewRound();
+        renderLibraryPage();
+        const folderText = folderResult.loaded ? " Reloaded personal folder data." : "";
+        setBankStatus(`Reset browser edits for ${source.label}.${folderText}`, "success");
+      }
+
+      async function reloadBankFilesFromPage() {
+        await loadMarkdownBankFiles({ force: true });
+        const folderResult = await loadPersonalBankDirectory({ requestPermission: true });
+        renderBankOptions();
+        previewRound();
+        renderLibraryPage();
+        const folderText = folderResult.loaded ? " Personal folder data was reloaded too." : "";
+        setBankStatus(`Reloaded Markdown files.${folderText}`, "success");
+      }
+
+      function openBankPage() {
+        clearSpeechQueue();
+        selectedLibraryBankId = state.bankId;
+        document.body.classList.add("bank-view");
+        els.practicePage.hidden = true;
+        els.bankPage.hidden = false;
+        renderLibraryPage();
+        setBankStatus("");
+        if (location.hash !== "#banks") {
+          history.pushState(null, "", "#banks");
+        }
+      }
+
+      function closeBankPage() {
+        document.body.classList.remove("bank-view");
+        els.bankPage.hidden = true;
+        els.practicePage.hidden = false;
+        if (location.hash === "#banks") {
+          history.pushState(null, "", location.pathname + location.search);
+        }
+        requestAnimationFrame(updateMotionCue);
+      }
+
+      function syncPageFromHash() {
+        if (location.hash === "#banks") {
+          openBankPage();
+        } else {
+          closeBankPage();
+        }
+      }
+
+      function makeSpacer() {
+        const spacer = document.createElement("div");
+        spacer.className = "row-spacer";
+        spacer.setAttribute("aria-hidden", "true");
+        return spacer;
+      }
+
+      function renderKeyboard() {
+        els.keyboard.innerHTML = "";
+
+        keyboardRows.forEach((row) => {
+          const rowEl = document.createElement("div");
+          rowEl.className = `key-row ${row.className}`;
+          rowEl.style.setProperty("--columns", row.columns || row.keys.length);
+
+          row.keys.forEach((keyDefinition) => {
+            if (keyDefinition === null) {
+              rowEl.appendChild(makeSpacer());
+              return;
+            }
+
+            const keyData =
+              typeof keyDefinition === "string"
+                ? { key: keyDefinition, label: keyDefinition, span: 1 }
+                : keyDefinition;
+
+            if (keyData.type === "arrow-stack") {
+              rowEl.appendChild(makeArrowStack(keyData.span || 4));
+              return;
+            }
+
+            const keyValue = keyData.key;
+            const fingerId = keyData.finger || keyToFinger[keyValue];
+            const key = document.createElement("button");
+            key.type = "button";
+            key.className = "key";
+            key.dataset.key = keyValue;
+            key.dataset.type = keyData.type || "character";
+            key.style.gridColumn = `span ${keyData.span || 1}`;
+
+            if (keyData.topLabel || keyData.bottomLabel) {
+              key.classList.add("dual-label", "dual-key");
+              key.dataset.topLabel = keyData.topLabel || "";
+              key.dataset.bottomLabel = keyData.bottomLabel || keyValue;
+              const top = document.createElement("span");
+              top.className = "key-shift";
+              top.textContent = keyData.topLabel || "";
+              const bottom = document.createElement("span");
+              bottom.className = "key-main";
+              bottom.textContent = keyData.bottomLabel || keyValue;
+              key.append(top, bottom);
+            } else {
+              key.textContent = keyData.label || (keyValue === " " ? "Space" : keyValue);
+            }
+
+            if (keyData.type === "letter") {
+              key.classList.add("letter-key");
+            }
+
+            if (fingerId) {
+              key.dataset.finger = fingerId;
+            }
+
+            if (keyData.type === "function") {
+              key.classList.add("function-key");
+              key.title = `${key.textContent} key`;
+            } else if (/^\d$/.test(keyValue)) {
+              key.classList.add("number-key");
+              key.title = `${keyValue} key, ${fingerInfo[fingerId].label}`;
+            } else if (keyValue === " ") {
+              key.classList.add("space-key", "home-key");
+              key.title = "Space key, thumbs rest here";
+            } else {
+              key.title = `${keyValue.toUpperCase()} key, ${fingerInfo[fingerId].label}`;
+            }
+
+            if ("asdfjkl;".includes(keyValue)) {
+              key.classList.add("home-key");
+            }
+
+            bindVirtualKey(key, keyValue);
+            rowEl.appendChild(key);
+          });
+
+          els.keyboard.appendChild(rowEl);
+        });
+        updateKeyboardLayer();
+      }
+
+      function makeArrowStack(span) {
+        const stack = document.createElement("div");
+        stack.className = "arrow-stack";
+        stack.style.gridColumn = `span ${span}`;
+
+        [
+          { key: "arrowup", label: "▲" },
+          { key: "arrowdown", label: "▼" }
+        ].forEach(({ key, label }) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "key function-key";
+          button.dataset.key = key;
+          button.dataset.type = "function";
+          button.dataset.finger = "right-pinky";
+          button.textContent = label;
+          button.title = `${key.replace("arrow", "Arrow ")} key`;
+          bindVirtualKey(button, key);
+          stack.appendChild(button);
+        });
+
+        return stack;
+      }
+
+      function bindVirtualKey(keyEl, keyId) {
+        keyEl.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          keyEl.setPointerCapture?.(event.pointerId);
+          pressKey(keyId, { source: "virtual" });
+        });
+
+        keyEl.addEventListener("pointerup", (event) => {
+          event.preventDefault();
+          releaseKey(keyId);
+        });
+
+        keyEl.addEventListener("pointercancel", () => releaseKey(keyId));
+        keyEl.addEventListener("lostpointercapture", () => releaseKey(keyId));
+        keyEl.addEventListener("click", (event) => event.preventDefault());
+      }
+
+      function keyElement(keyId) {
+        return [...document.querySelectorAll(".key")].find((key) => key.dataset.key === keyId);
+      }
+
+      function isShiftKey(keyId) {
+        return keyId === "shift-left" || keyId === "shift-right";
+      }
+
+      function isCapsKey(keyId) {
+        return keyId === "caps";
+      }
+
+      function isHoldKey(keyId) {
+        return (
+          isShiftKey(keyId) ||
+          keyId.startsWith("control-") ||
+          keyId.startsWith("option-") ||
+          keyId.startsWith("command-") ||
+          keyId === "fn"
+        );
+      }
+
+      function isPrintableKey(keyId) {
+        return (
+          /^[a-z]$/.test(keyId) ||
+          keyId === " " ||
+          Object.prototype.hasOwnProperty.call(shiftedCharacterMap, keyId)
+        );
+      }
+
+      function currentLetterIsUppercase() {
+        return state.capsOn !== state.shiftHeld;
+      }
+
+      function currentTargetText() {
+        return String(state.currentWord || "");
+      }
+
+      function currentTargetChar() {
+        return currentTargetText()[state.charIndex] || "";
+      }
+
+      function keyIdForCharacter(character) {
+        if (!character) {
+          return "";
+        }
+
+        if (character === " ") {
+          return " ";
+        }
+
+        const lowerCharacter = character.toLowerCase();
+        if (/^[a-z]$/.test(lowerCharacter)) {
+          return lowerCharacter;
+        }
+
+        return baseCharacterMap[character] || character;
+      }
+
+      function labelForCharacter(character) {
+        if (character === " ") {
+          return "Space";
+        }
+
+        return character || "-";
+      }
+
+      function characterNeedsShift(character) {
+        return /^[A-Z]$/.test(character) || Object.values(shiftedCharacterMap).includes(character);
+      }
+
+      function shiftKeyForTargetKey(keyId) {
+        const fingerId = fingerIdForKey(keyId);
+        return fingerId.startsWith("left") ? "shift-right" : "shift-left";
+      }
+
+      function currentTargetShiftKey() {
+        const character = currentTargetChar();
+        const keyId = keyIdForCharacter(character);
+        return characterNeedsShift(character) && keyId ? shiftKeyForTargetKey(keyId) : "";
+      }
+
+      function characterForKeyId(keyId) {
+        const keyEl = keyElement(keyId);
+
+        if (/^[a-z]$/.test(keyId)) {
+          return currentLetterIsUppercase() ? keyId.toUpperCase() : keyId;
+        }
+
+        if (keyId === " ") {
+          return " ";
+        }
+
+        if (keyEl?.dataset.type === "dual") {
+          return state.shiftHeld
+            ? keyEl.dataset.topLabel || keyId
+            : keyEl.dataset.bottomLabel || keyId;
+        }
+
+        return "";
+      }
+
+      function characterFromKeyboardEvent(event, keyId) {
+        if (keyId === " ") {
+          return " ";
+        }
+
+        if (event.key && event.key.length === 1) {
+          return normalizePracticeSentence(event.key);
+        }
+
+        return "";
+      }
+
+      function readCapsLockState(event) {
+        if (typeof event.getModifierState !== "function") {
+          return null;
+        }
+
+        try {
+          const capsOn = event.getModifierState("CapsLock");
+          return typeof capsOn === "boolean" ? capsOn : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function syncCapsLockFromEvent(event, options = {}) {
+        const capsOn = readCapsLockState(event);
+
+        if (typeof capsOn !== "boolean") {
+          return false;
+        }
+
+        if (state.capsOn !== capsOn) {
+          state.capsOn = capsOn;
+          if (options.update !== false) {
+            updateKeyboardLayer();
+          }
+        }
+
+        return true;
+      }
+
+      function displayLabelForKey(keyId) {
+        const keyEl = keyElement(keyId);
+
+        if (/^[a-z]$/.test(keyId)) {
+          return currentLetterIsUppercase() ? keyId.toUpperCase() : keyId;
+        }
+
+        if (keyEl?.dataset.type === "dual") {
+          return state.shiftHeld
+            ? keyEl.dataset.topLabel || keyId
+            : keyEl.dataset.bottomLabel || keyId;
+        }
+
+        if (keyId === " ") {
+          return "Space";
+        }
+
+        return keyEl?.textContent.trim() || keyId;
+      }
+
+      function fingerIdForKey(keyId) {
+        return keyElement(keyId)?.dataset.finger || keyToFinger[keyId] || "";
+      }
+
+      function displayFingerForKey(keyId) {
+        const fingerId = fingerIdForKey(keyId);
+        return fingerId ? fingerInfo[fingerId]?.label || "Finger" : "Key";
+      }
+
+      function heldKeyForFinger(fingerId) {
+        const directHeldKey = [...pressedKeys].reverse().find((keyId) => {
+          if (!isHoldKey(keyId)) {
+            return false;
+          }
+
+          return fingerIdForKey(keyId) === fingerId;
+        });
+
+        if (directHeldKey) {
+          return directHeldKey;
+        }
+
+        const hasKnownShift = [...pressedKeys].some((pressedKey) => isShiftKey(pressedKey));
+        if (state.shiftHeld && !hasKnownShift) {
+          if (fingerId === "left-pinky") {
+            return "shift-left";
+          }
+          if (fingerId === "right-pinky") {
+            return "shift-right";
+          }
+        }
+
+        return "";
+      }
+
+      function showPressedCoach(keyId, tone = "typed", typedChar = "") {
+        const label = typedChar ? labelForCharacter(typedChar) : displayLabelForKey(keyId);
+        const fingerId = fingerIdForKey(keyId);
+        const finger = fingerId ? fingerInfo[fingerId]?.label || "Finger" : "Key";
+        const tip = fingerId
+          ? fingerInfo[fingerId]?.tip || "Press this key with the highlighted finger."
+          : "This key is shown on the keyboard.";
+
+        els.fingerName.textContent = finger;
+        els.keyBadge.textContent = label;
+        els.coachPhrase.textContent = tone === "wrong" ? `Tried ${label}` : `Pressed ${label}`;
+        els.coachTip.textContent = tip;
+      }
+
+      function updateKeyboardLayer() {
+        const showUppercase = currentLetterIsUppercase();
+        const shiftTarget = state.running && !state.paused ? currentTargetShiftKey() : "";
+        els.keyboard.classList.toggle("shift-layer", state.shiftHeld);
+        els.keyboard.classList.toggle("caps-layer", state.capsOn);
+
+        document.querySelectorAll(".key.letter-key").forEach((key) => {
+          key.textContent = showUppercase
+            ? key.dataset.key.toUpperCase()
+            : key.dataset.key;
+        });
+
+        document.querySelectorAll(".key").forEach((key) => {
+          const keyId = key.dataset.key;
+          const hasPressedShift = [...pressedKeys].some((pressedKey) => isShiftKey(pressedKey));
+          const isPressed =
+            pressedKeys.has(keyId) ||
+            (isShiftKey(keyId) && state.shiftHeld && !hasPressedShift);
+          key.classList.toggle("pressed", isPressed);
+          key.classList.toggle("locked", keyId === "caps" && state.capsOn);
+          key.classList.toggle("shift-required", keyId === shiftTarget && state.mode === "sentence");
+        });
+      }
+
+      function normalizeKeyboardEvent(event) {
+        const key = event.key;
+
+        if (key === " ") {
+          return " ";
+        }
+
+        if (key === "Shift") {
+          return event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT
+            ? "shift-right"
+            : "shift-left";
+        }
+
+        if (key === "Control") {
+          return event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT
+            ? "control-right"
+            : "control-left";
+        }
+
+        if (key === "Alt" || key === "Option") {
+          return event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT
+            ? "option-right"
+            : "option-left";
+        }
+
+        if (key === "Meta" || key === "OS") {
+          return event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT
+            ? "command-right"
+            : "command-left";
+        }
+
+        if (key === "Fn") {
+          return "fn";
+        }
+
+        if (/^F(?:[1-9]|1[0-2])$/.test(key)) {
+          return key.toLowerCase();
+        }
+
+        if (namedKeyMap[key]) {
+          return namedKeyMap[key];
+        }
+
+        if (key.length === 1) {
+          const lowerKey = key.toLowerCase();
+          if (/^[a-z]$/.test(lowerKey)) {
+            return lowerKey;
+          }
+          return baseCharacterMap[key] || key;
+        }
+
+        return "";
+      }
+
+      function pressKey(keyId, options = {}) {
+        if (!keyId || !keyElement(keyId)) {
+          return;
+        }
+
+        if (isCapsKey(keyId)) {
+          if (!options.repeat) {
+            pressedKeys.add(keyId);
+            if (options.source === "physical" && typeof options.nativeCapsOn === "boolean") {
+              state.capsOn = options.nativeCapsOn === state.capsOn
+                ? !state.capsOn
+                : options.nativeCapsOn;
+            } else {
+              state.capsOn = !state.capsOn;
+            }
+            updateKeyboardLayer();
+            flashKeyFeedback(keyId, "typed");
+            setHint(`Caps Lock ${state.capsOn ? "on" : "off"}.`);
+          }
+          return;
+        }
+
+        pressedKeys.add(keyId);
+
+        if (isShiftKey(keyId)) {
+          state.shiftHeld = true;
+          updateKeyboardLayer();
+          if (!options.repeat) {
+            flashKeyFeedback(keyId, "typed");
+            setHint("Shift is held. Letters show uppercase, and symbols move to the top.");
+          }
+          return;
+        }
+
+        updateKeyboardLayer();
+
+        if (options.source === "virtual" && !isHoldKey(keyId)) {
+          window.setTimeout(() => releaseKey(keyId), 160);
+        }
+
+        const typedChar = options.typedChar ?? characterForKeyId(keyId);
+
+        if (state.running && !state.paused) {
+          handlePracticeKey(keyId, { typedChar });
+          return;
+        }
+
+        flashKeyFeedback(keyId, "typed", typedChar);
+        const label = typedChar ? labelForCharacter(typedChar) : displayLabelForKey(keyId);
+        setHint(`Pressed ${label} with ${displayFingerForKey(keyId)}.`);
+      }
+
+      function releaseKey(keyId) {
+        if (!keyId) {
+          return;
+        }
+
+        pressedKeys.delete(keyId);
+        if (isShiftKey(keyId)) {
+          state.shiftHeld = [...pressedKeys].some((pressedKey) => isShiftKey(pressedKey));
+        }
+        if (isHoldKey(keyId)) {
+          requestAnimationFrame(updateMotionCue);
+        }
+        updateKeyboardLayer();
+      }
+
+      function flashKeyFeedback(keyId, tone = "typed", typedChar = "") {
+        const keyEl = keyElement(keyId);
+        if (!keyEl) {
+          return;
+        }
+
+        showPressedCoach(keyId, tone, typedChar);
+        const className = tone === "wrong" ? "wrong" : "typed";
+        keyEl.classList.add(className);
+        setTimeout(() => keyEl.classList.remove(className), 260);
+        animateFingerForKey(keyId, tone);
+      }
+
+      function animateFingerForKey(keyId, tone = "typed") {
+        const keyEl = keyElement(keyId);
+        const fingerId = keyEl?.dataset.finger || keyToFinger[keyId];
+        if (!keyEl || !fingerId) {
+          return;
+        }
+
+        const fingerIds = fingerId === "thumb" ? ["left-thumb", "right-thumb"] : [fingerId];
+        const surfaceRect = els.typingSurface.getBoundingClientRect();
+        const centers = placeHomeFingers();
+        const targetCenter = keyCenter(keyEl, surfaceRect);
+        const className = tone === "wrong" ? "miss" : "typed";
+
+        fingerIds.forEach((id) => {
+          const fingerEl = document.querySelector(`.finger[data-finger="${id}"]`);
+          const homeCenter = centers[id];
+          const heldKey = heldKeyForFinger(id);
+
+          if (!fingerEl || !homeCenter) {
+            return;
+          }
+
+          if (heldKey && heldKey !== keyId) {
+            return;
+          }
+
+          const targetPoint = id.includes("thumb")
+            ? keyCenter(keyEl, surfaceRect)
+            : keyFingerTip(keyEl, surfaceRect);
+          fingerEl.style.setProperty("--move-x", `${Math.round(targetPoint.x - homeCenter.x)}px`);
+          fingerEl.style.setProperty("--move-y", `${Math.round(targetPoint.y - homeCenter.y)}px`);
+          fingerEl.classList.add(className);
+          setTimeout(() => fingerEl.classList.remove("typed", "miss"), 280);
+        });
+
+        els.targetRing.hidden = false;
+        els.targetRing.style.setProperty("--ring-left", `${Math.round(targetCenter.x)}px`);
+        els.targetRing.style.setProperty("--ring-top", `${Math.round(targetCenter.y)}px`);
+
+        setTimeout(() => {
+          if (state.running && !state.paused && state.mode !== "dictation") {
+            updateHighlights();
+          } else {
+            els.targetRing.hidden = true;
+            placeHomeFingers();
+          }
+        }, 290);
+      }
+
+      function renderWord() {
+        const isDictation = state.mode === "dictation";
+        const isSentence = state.mode === "sentence";
+        els.targetWord.textContent = isDictation
+          ? state.running && !state.paused
+            ? "listen"
+            : "ready"
+          : state.currentWord;
+        els.targetWord.classList.toggle("sentence-target", isSentence);
+        els.letterRail.innerHTML = "";
+        els.letterRail.classList.toggle("dictation-progress", isDictation);
+        els.letterRail.classList.toggle("sentence-progress", isSentence);
+
+        if (isDictation) {
+          [...state.currentWord].slice(0, state.charIndex).forEach((letter) => {
+            const item = document.createElement("span");
+            item.className = "letter done";
+            item.textContent = letter;
+            els.letterRail.appendChild(item);
+          });
+          return;
+        }
+
+        let currentLetterItem = null;
+        [...state.currentWord].forEach((letter, index) => {
+          const item = document.createElement("span");
+          item.className = "letter";
+          item.dataset.index = String(index);
+          item.classList.toggle("space-letter", letter === " ");
+          item.classList.toggle("punctuation-letter", /[^\w\s]/.test(letter));
+          if (index < state.charIndex) {
+            item.classList.add("done");
+          }
+          if (index === state.charIndex && state.running && !state.paused) {
+            item.classList.add("next");
+            currentLetterItem = item;
+          }
+          item.textContent = letter === " " ? "space" : letter;
+          els.letterRail.appendChild(item);
+        });
+
+        if (isSentence && currentLetterItem) {
+          requestAnimationFrame(() => {
+            currentLetterItem.scrollIntoView({ block: "nearest", inline: "center" });
+          });
+        }
+      }
+
+      function currentTargetKey() {
+        return keyIdForCharacter(currentTargetChar());
+      }
+
+      function setHint(message, tone = "") {
+        els.hintMessage.className = `hint ${tone}`.trim();
+        els.hintMessage.innerHTML = message;
+      }
+
+      function updateBadges() {
+        els.gradeBadge.textContent = selectedBankLabel();
+        els.modeBadge.textContent =
+          state.mode === "sentence"
+            ? "Sentence Practice"
+            : state.mode === "word"
+              ? "Word Practice"
+              : "Dictation";
+        els.sayBtn.textContent = state.mode === "sentence" ? "Say Sentence" : "Say Word";
+      }
+
+      function updateHighlights() {
+        const target = currentTargetKey();
+        const fingerId = fingerIdForKey(target);
+        const showsTargetCue = state.mode !== "dictation";
+        const isActive = Boolean(target && fingerId && state.running && !state.paused && showsTargetCue);
+
+        document.querySelectorAll(".key").forEach((key) => {
+          key.classList.toggle("target", key.dataset.key === target && isActive);
+        });
+
+        document.querySelectorAll(".finger[data-finger]").forEach((finger) => {
+          const isHeldFinger = Boolean(heldKeyForFinger(finger.dataset.finger));
+          finger.classList.toggle(
+            "active",
+            !isHeldFinger && finger.dataset.finger === fingerId && isActive
+          );
+        });
+
+        if (isActive) {
+          const finger = fingerInfo[fingerId];
+          const targetLabel = state.mode === "sentence"
+            ? labelForCharacter(currentTargetChar())
+            : displayLabelForKey(target);
+          const shiftKey = state.mode === "sentence" ? currentTargetShiftKey() : "";
+          const shiftLabel = shiftKey ? displayLabelForKey(shiftKey) : "";
+          els.fingerName.textContent = finger.label;
+          els.keyBadge.textContent = targetLabel;
+          els.coachPhrase.textContent = shiftKey
+            ? `${finger.label} taps ${targetLabel} with ${shiftLabel}`
+            : `${finger.label} taps ${targetLabel}`;
+          els.coachTip.textContent = shiftKey ? `Hold ${shiftLabel} for this character.` : finger.tip;
+          requestAnimationFrame(updateMotionCue);
+        } else if (state.mode === "dictation" && state.running && !state.paused) {
+          els.fingerName.textContent = "Listen";
+          els.keyBadge.textContent = "-";
+          els.coachPhrase.textContent = "Type what you hear";
+          els.coachTip.textContent = "The keyboard reacts after each key.";
+          requestAnimationFrame(updateMotionCue);
+        } else {
+          els.fingerName.textContent = state.paused ? "Paused" : "Ready Fingers";
+          els.keyBadge.textContent = "-";
+          els.coachPhrase.textContent = state.paused ? "Paused" : "Ready fingers";
+          els.coachTip.textContent = state.paused
+            ? "Press Resume when you are ready."
+            : "Home row: A S D F and J K L ;";
+          requestAnimationFrame(updateMotionCue);
+        }
+      }
+
+      function updateMotionCue() {
+        if (!els.typingSurface) {
+          return;
+        }
+
+        if (state.mode === "dictation") {
+          placeHomeFingers();
+          els.targetRing.hidden = true;
+          return;
+        }
+
+        const target = currentTargetKey();
+        const fingerId = fingerIdForKey(target);
+        const isActive = Boolean(target && fingerId && state.running && !state.paused);
+        const centers = placeHomeFingers();
+        const keyEl = document.querySelector(keySelector(target));
+
+        if (!isActive || !keyEl || !centers[fingerId] || heldKeyForFinger(fingerId)) {
+          els.targetRing.hidden = true;
+          return;
+        }
+
+        const surfaceRect = els.typingSurface.getBoundingClientRect();
+        const targetCenter = keyCenter(keyEl, surfaceRect);
+        const targetTip = keyFingerTip(keyEl, surfaceRect);
+        const homeCenter = centers[fingerId];
+        const activeFinger = document.querySelector(`.finger[data-finger="${fingerId}"]`);
+        const moveX = targetTip.x - homeCenter.x;
+        const moveY = targetTip.y - homeCenter.y;
+
+        if (activeFinger) {
+          activeFinger.style.setProperty("--move-x", `${Math.round(moveX)}px`);
+          activeFinger.style.setProperty("--move-y", `${Math.round(moveY)}px`);
+        }
+
+        els.targetRing.hidden = false;
+        els.targetRing.style.setProperty("--ring-left", `${Math.round(targetCenter.x)}px`);
+        els.targetRing.style.setProperty("--ring-top", `${Math.round(targetCenter.y)}px`);
+      }
+
+      function placeHomeFingers() {
+        const surfaceRect = els.typingSurface.getBoundingClientRect();
+        const centers = {};
+
+        Object.entries(fingerHomeKeys).forEach(([fingerId, key]) => {
+          const finger = document.querySelector(`.finger[data-finger="${fingerId}"]`);
+          const heldKey = heldKeyForFinger(fingerId);
+          const keyEl = document.querySelector(keySelector(heldKey || key));
+
+          if (!finger || !keyEl) {
+            return;
+          }
+
+          const center = fingerId.includes("thumb")
+            ? keyCenter(keyEl, surfaceRect)
+            : keyFingerTip(keyEl, surfaceRect);
+          const thumbOffset = heldKey
+            ? 0
+            : fingerId === "left-thumb"
+              ? -52
+              : fingerId === "right-thumb"
+                ? 52
+                : 0;
+          const home = {
+            x: center.x + thumbOffset,
+            y: fingerId.includes("thumb") ? center.y + 2 : center.y
+          };
+
+          centers[fingerId] = home;
+          finger.style.left = `${Math.round(home.x)}px`;
+          finger.style.top = `${Math.round(home.y)}px`;
+          finger.style.setProperty("--move-x", "0px");
+          finger.style.setProperty("--move-y", "0px");
+          finger.classList.toggle("holding", Boolean(heldKey));
+        });
+
+        return centers;
+      }
+
+      function keyCenter(keyEl, surfaceRect) {
+        const rect = keyEl.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2 - surfaceRect.left,
+          y: rect.top + rect.height / 2 - surfaceRect.top
+        };
+      }
+
+      function keyFingerTip(keyEl, surfaceRect) {
+        const rect = keyEl.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2 - surfaceRect.left,
+          y: rect.top + rect.height * 0.16 - surfaceRect.top
+        };
+      }
+
+      function keySelector(value) {
+        return `.key[data-key="${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`;
+      }
+
+      function elapsedMs() {
+        if (!state.startedAt) {
+          return 0;
+        }
+        const end = state.paused ? state.pausedAt : performance.now();
+        return Math.max(0, end - state.startedAt - state.pausedMs);
+      }
+
+      function calculateStats() {
+        const attempts = state.correctChars + state.mistakes;
+        const accuracy = attempts === 0 ? 100 : Math.round((state.correctChars / attempts) * 100);
+        const minutes = elapsedMs() / 60000;
+        const wpm = minutes > 0 ? Math.round(state.correctChars / 5 / minutes) : 0;
+        return { accuracy, wpm };
+      }
+
+      function bestKey() {
+        return `fingerTypeQuest.best.${state.bankId}.${state.mode}`;
+      }
+
+      function readBest() {
+        try {
+          return JSON.parse(localStorage.getItem(bestKey())) || { wpm: 0, accuracy: 100 };
+        } catch {
+          return { wpm: 0, accuracy: 100 };
+        }
+      }
+
+      function writeBest(roundStats) {
+        const best = readBest();
+        if (
+          roundStats.wpm > best.wpm ||
+          (roundStats.wpm === best.wpm && roundStats.accuracy > best.accuracy)
+        ) {
+          localStorage.setItem(
+            bestKey(),
+            JSON.stringify({
+              wpm: roundStats.wpm,
+              accuracy: roundStats.accuracy
+            })
+          );
+        }
+      }
+
+      function updateStats() {
+        const roundStats = calculateStats();
+        const best = readBest();
+        const totalWords = Number.isFinite(state.activeRoundSize)
+          ? state.activeRoundSize
+          : state.roundSize;
+        els.unitStatLabel.textContent = selectedBankType() === "sentence" ? "Sentences" : "Words";
+        els.wordStat.textContent = `${state.completedWords} / ${totalWords}`;
+        els.accuracyStat.textContent = `${roundStats.accuracy}%`;
+        els.wpmStat.textContent = String(roundStats.wpm);
+        els.mistakeStat.textContent = String(state.mistakes);
+        els.streakStat.textContent = String(state.streak);
+        els.bestStat.textContent = `${best.wpm || 0} WPM`;
+        els.progressFill.style.width = `${Math.min(
+          100,
+          totalWords > 0 ? (state.completedWords / totalWords) * 100 : 0
+        )}%`;
+      }
+
+      function persistSettings() {
+        const settings = {
+          bankId: state.bankId,
+          mode: state.mode,
+          roundSize: state.roundSize,
+          sound: els.soundToggle.checked,
+          voice: els.voiceToggle.checked
+        };
+        localStorage.setItem("fingerTypeQuest.settings", JSON.stringify(settings));
+      }
+
+      function loadSettings() {
+        try {
+          const settings = JSON.parse(localStorage.getItem("fingerTypeQuest.settings"));
+          if (!settings) {
+            return;
+          }
+          if (typeof settings.bankId === "string") {
+            state.bankId = settings.bankId;
+          } else if (gradeLabels[settings.grade]) {
+            state.bankId = `grade:${settings.grade}`;
+          }
+          if (settings.mode === "finger") {
+            state.mode = "dictation";
+          } else if (["word", "dictation", "sentence"].includes(settings.mode)) {
+            state.mode = settings.mode;
+          }
+          if ([10, 20, 30].includes(Number(settings.roundSize))) {
+            state.roundSize = Number(settings.roundSize);
+            els.roundSelect.value = String(settings.roundSize);
+          }
+          if (typeof settings.sound === "boolean") {
+            els.soundToggle.checked = settings.sound;
+          }
+          if (typeof settings.voice === "boolean") {
+            els.voiceToggle.checked = settings.voice;
+          }
+        } catch {
+          return;
+        }
+      }
+
+      function applyModeButtons() {
+        const isSentence = state.mode === "sentence";
+        els.practicePage.classList.toggle("sentence-mode", isSentence);
+        els.stage.classList.toggle("sentence-stage", isSentence);
+        els.modeButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.mode === state.mode);
+        });
+      }
+
+      function previewRound() {
+        clearTimeout(state.advanceTimerId);
+        clearInterval(state.timerId);
+        clearSpeechQueue();
+        ensureBankMatchesMode();
+        const pool = getCurrentPool();
+        updateRoundControl(pool);
+        state.queue = buildRoundQueue(pool);
+        state.activeRoundSize = state.queue.length;
+        state.wordIndex = 0;
+        state.charIndex = 0;
+        state.currentWord = state.queue[0] || "ready";
+        state.running = false;
+        state.paused = false;
+        state.correctChars = 0;
+        state.mistakes = 0;
+        state.completedWords = 0;
+        state.streak = 0;
+        state.startedAt = null;
+        state.pausedAt = null;
+        state.pausedMs = 0;
+        els.pauseBtn.textContent = "Pause";
+        updateBadges();
+        renderWord();
+        updateHighlights();
+        updateStats();
+        setHint(practiceReadyHint(pool), pool.length > 0 ? "" : "error");
+      }
+
+      function startRound() {
+        clearTimeout(state.advanceTimerId);
+        clearInterval(state.timerId);
+        clearSpeechQueue();
+        ensureBankMatchesMode();
+        const pool = getCurrentPool();
+        const roundTargetSize = getRoundTargetSize(pool);
+
+        if (pool.length === 0) {
+          previewRound();
+          setHint(practiceReadyHint(pool), "error");
+          return;
+        }
+
+        state.queue = buildRoundQueue(pool);
+        state.activeRoundSize = state.queue.length || roundTargetSize;
+        state.wordIndex = 0;
+        state.charIndex = 0;
+        state.currentWord = state.queue[0];
+        state.running = true;
+        state.paused = false;
+        state.correctChars = 0;
+        state.mistakes = 0;
+        state.completedWords = 0;
+        state.streak = 0;
+        state.startedAt = performance.now();
+        state.pausedAt = null;
+        state.pausedMs = 0;
+        els.pauseBtn.textContent = "Pause";
+        updateBadges();
+        renderWord();
+        updateHighlights();
+        updateStats();
+        announceTarget();
+        speakCurrentWord();
+        els.stage.focus({ preventScroll: true });
+        state.timerId = setInterval(updateStats, 500);
+      }
+
+      function shouldIgnoreGlobalKey(event) {
+        if (!els.bankPage.hidden) {
+          return true;
+        }
+
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return false;
+        }
+
+        return Boolean(target.closest("input, textarea, select, button, [contenteditable='true']"));
+      }
+
+      function announceTarget() {
+        const target = currentTargetKey();
+        const fingerId = fingerIdForKey(target);
+        if (!target || !fingerId) {
+          return;
+        }
+        if (state.mode === "dictation") {
+          setHint("Listen, then type the word. Correct letters will appear.");
+          return;
+        }
+        const finger = fingerInfo[fingerId].label;
+        const label = state.mode === "sentence"
+          ? labelForCharacter(currentTargetChar())
+          : displayLabelForKey(target);
+        const shiftKey = state.mode === "sentence" ? currentTargetShiftKey() : "";
+        const shiftText = shiftKey ? ` Hold <strong>${displayLabelForKey(shiftKey)}</strong> first.` : "";
+        setHint(`Next: press <strong>${label}</strong> with your <strong>${finger}</strong>.${shiftText}`);
+      }
+
+      function pauseRound() {
+        if (!state.running) {
+          setHint("Press Start to begin.");
+          return;
+        }
+
+        if (state.paused) {
+          state.paused = false;
+          state.pausedMs += performance.now() - state.pausedAt;
+          state.pausedAt = null;
+          els.pauseBtn.textContent = "Pause";
+          renderWord();
+          updateHighlights();
+          announceTarget();
+          speakCurrentWord();
+          els.stage.focus({ preventScroll: true });
+          return;
+        }
+
+        state.paused = true;
+        state.pausedAt = performance.now();
+        els.pauseBtn.textContent = "Resume";
+        clearSpeechQueue();
+        renderWord();
+        updateHighlights();
+        setHint("Paused. Press Resume when you are ready.");
+      }
+
+      function resetRound() {
+        previewRound();
+      }
+
+      function skipWord() {
+        if (!state.running || state.paused) {
+          return;
+        }
+        clearSpeechQueue();
+        state.streak = 0;
+        state.wordIndex += 1;
+        if (state.wordIndex >= state.activeRoundSize) {
+          finishRound();
+          return;
+        }
+        state.currentWord = state.queue[state.wordIndex];
+        state.charIndex = 0;
+        renderWord();
+        updateHighlights();
+        updateStats();
+        announceTarget();
+        speakCurrentWord();
+      }
+
+      function handlePracticeKey(key, options = {}) {
+        const target = currentTargetKey();
+        const targetChar = currentTargetChar();
+        const typedChar = options.typedChar || characterForKeyId(key);
+
+        if (key === "backspace") {
+          flashKeyFeedback(key, "typed");
+          setHint(
+            state.mode === "dictation"
+              ? "No need to delete. Listen and try again."
+              : `No need to delete. Try <strong>${state.mode === "sentence" ? labelForCharacter(targetChar) : displayLabelForKey(target)}</strong> again.`,
+            "error"
+          );
+          return;
+        }
+
+        if (!isPrintableKey(key)) {
+          flashKeyFeedback(key, "typed");
+          setHint(`Pressed ${displayLabelForKey(key)}. Keep going.`);
+          return;
+        }
+
+        if (state.mode === "sentence" && typedChar === targetChar) {
+          flashKeyFeedback(key, "typed", typedChar);
+          handleCorrectKey();
+          return;
+        }
+
+        if (state.mode !== "sentence" && /^[a-z]$/.test(key) && key === target) {
+          flashKeyFeedback(key, "typed", typedChar);
+          handleCorrectKey();
+          return;
+        }
+
+        flashKeyFeedback(key, "wrong", typedChar);
+        handleWrongKey(key, target, typedChar);
+      }
+
+      function handleCorrectKey() {
+        state.correctChars += 1;
+        state.charIndex += 1;
+
+        if (state.charIndex >= currentTargetText().length) {
+          state.completedWords += 1;
+          state.streak += 1;
+          renderWord();
+          updateHighlights();
+          updateStats();
+
+          if (state.completedWords >= state.activeRoundSize) {
+            finishRound();
+            return;
+          }
+
+          setHint(`Nice typing. Get ready for the next ${unitLabel(1)}.`, "success");
+          state.advanceTimerId = setTimeout(() => {
+            state.wordIndex += 1;
+            state.currentWord = state.queue[state.wordIndex];
+            state.charIndex = 0;
+            renderWord();
+            updateHighlights();
+            updateStats();
+            announceTarget();
+            speakCurrentWord();
+          }, 450);
+          return;
+        }
+
+        renderWord();
+        updateHighlights();
+        updateStats();
+        announceTarget();
+      }
+
+      function handleWrongKey(key, target, typedChar = "") {
+        state.mistakes += 1;
+        state.streak = 0;
+        updateStats();
+        playErrorSound();
+        flashCoach();
+
+        if (state.mode === "dictation") {
+          setHint("Not that letter. Listen and try again.", "error");
+          els.liveStatus.textContent = "Wrong key. Listen and try again.";
+          return;
+        }
+
+        const fingerId = fingerIdForKey(target);
+        const finger = fingerId ? fingerInfo[fingerId].label : "right finger";
+        const targetLabel = state.mode === "sentence"
+          ? labelForCharacter(currentTargetChar())
+          : displayLabelForKey(target);
+        setHint(
+          `Try again: press <strong>${targetLabel}</strong> with your <strong>${finger}</strong>.`,
+          "error"
+        );
+        els.liveStatus.textContent = `Wrong key. Try ${targetLabel} with your ${finger}.`;
+      }
+
+      function flashCoach() {
+        els.stage.classList.remove("shake");
+        els.coach.classList.remove("shake");
+        void els.stage.offsetWidth;
+        els.stage.classList.add("shake");
+        els.coach.classList.add("shake");
+      }
+
+      function playErrorSound() {
+        if (!els.soundToggle.checked) {
+          return;
+        }
+
+        try {
+          if (!state.audioContext) {
+            state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          }
+
+          const now = state.audioContext.currentTime;
+          const oscillator = state.audioContext.createOscillator();
+          const gain = state.audioContext.createGain();
+
+          oscillator.type = "triangle";
+          oscillator.frequency.setValueAtTime(180, now);
+          oscillator.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.11, now + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+
+          oscillator.connect(gain);
+          gain.connect(state.audioContext.destination);
+          oscillator.start(now);
+          oscillator.stop(now + 0.15);
+        } catch {
+          return;
+        }
+      }
+
+      function speakCurrentWord() {
+        if (!els.voiceToggle.checked || !("speechSynthesis" in window)) {
+          return;
+        }
+        clearSpeechQueue();
+
+        const repeatCount = state.mode === "dictation" ? 3 : 1;
+        for (let index = 0; index < repeatCount; index += 1) {
+          const word = state.currentWord;
+          const timerId = setTimeout(() => {
+            state.speechTimerIds = state.speechTimerIds.filter((queuedId) => queuedId !== timerId);
+            speakWordOnce(word);
+          }, index * 3000);
+          state.speechTimerIds.push(timerId);
+        }
+      }
+
+      function speakWordOnce(word) {
+        if (!els.voiceToggle.checked || !("speechSynthesis" in window) || !word) {
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = "en-US";
+        utterance.rate = 0.84;
+        utterance.pitch = 1.05;
+        window.speechSynthesis.speak(utterance);
+      }
+
+      function clearSpeechQueue() {
+        state.speechTimerIds.forEach((timerId) => clearTimeout(timerId));
+        state.speechTimerIds = [];
+        if ("speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+        }
+      }
+
+      function finishRound() {
+        state.running = false;
+        state.paused = false;
+        clearTimeout(state.advanceTimerId);
+        clearInterval(state.timerId);
+        clearSpeechQueue();
+        const roundStats = calculateStats();
+        writeBest(roundStats);
+        updateStats();
+        clearHighlights();
+        els.targetWord.textContent = "great work";
+        els.letterRail.innerHTML = "";
+        setHint(
+          `Round complete. You typed ${state.completedWords} ${unitLabel(state.completedWords)} with ${roundStats.accuracy}% accuracy.`,
+          "success"
+        );
+        els.fingerName.textContent = "Round Done";
+        els.keyBadge.textContent = "-";
+        els.coachPhrase.textContent = "Great work";
+        els.coachTip.textContent = "Press Start to play another round.";
+        els.targetRing.hidden = true;
+      }
+
+      function clearHighlights() {
+        document.querySelectorAll(".key.target, .key.shift-required").forEach((key) =>
+          key.classList.remove("target", "shift-required")
+        );
+        document.querySelectorAll(".key.typed, .key.wrong").forEach((key) =>
+          key.classList.remove("typed", "wrong")
+        );
+        document.querySelectorAll(".finger.active, .finger.typed, .finger.miss").forEach((finger) =>
+          finger.classList.remove("active", "typed", "miss")
+        );
+      }
+
+      function bindEvents() {
+        els.bankSelect.addEventListener("change", () => {
+          state.bankId = els.bankSelect.value;
+          const source = selectedBankSource();
+          if (source?.type === "sentence") {
+            state.mode = "sentence";
+          } else if (state.mode === "sentence") {
+            state.mode = "word";
+          }
+          applyModeButtons();
+          persistSettings();
+          previewRound();
+        });
+
+        els.banksBtn.addEventListener("click", openBankPage);
+        els.backToPracticeBtn.addEventListener("click", closeBankPage);
+        els.reloadBankFilesBtn.addEventListener("click", reloadBankFilesFromPage);
+        els.chooseLocalFolderBtn.addEventListener("click", choosePersonalBankDirectory);
+        els.reloadLocalFolderBtn.addEventListener("click", reloadPersonalBankDirectory);
+        els.disconnectLocalFolderBtn.addEventListener("click", disconnectPersonalBankDirectory);
+        els.saveMarkdownBankBtn.addEventListener("click", async () => {
+          await saveSelectedMarkdownBank();
+        });
+        els.useBankBtn.addEventListener("click", useSelectedBankInPractice);
+        els.exportMarkdownBankBtn.addEventListener("click", exportSelectedMarkdownBank);
+        els.resetMarkdownBankBtn.addEventListener("click", resetSelectedMarkdownBank);
+
+        els.sourceFileInput.addEventListener("change", async () => {
+          await importSelectedFile();
+        });
+
+        els.startBtn.addEventListener("click", startRound);
+        els.pauseBtn.addEventListener("click", pauseRound);
+        els.resetBtn.addEventListener("click", resetRound);
+        els.sayBtn.addEventListener("click", speakCurrentWord);
+        els.skipBtn.addEventListener("click", skipWord);
+
+        els.roundSelect.addEventListener("change", () => {
+          state.roundSize = Number(els.roundSelect.value);
+          persistSettings();
+          previewRound();
+        });
+
+        els.modeButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            state.mode = button.dataset.mode;
+            ensureBankMatchesMode();
+            renderBankOptions();
+            applyModeButtons();
+            persistSettings();
+            previewRound();
+          });
+        });
+
+        els.soundToggle.addEventListener("change", persistSettings);
+        els.voiceToggle.addEventListener("change", () => {
+          if (!els.voiceToggle.checked) {
+            clearSpeechQueue();
+          }
+          persistSettings();
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (shouldIgnoreGlobalKey(event)) {
+            return;
+          }
+
+          const keyId = normalizeKeyboardEvent(event);
+          if (!keyId || !keyElement(keyId)) {
+            return;
+          }
+
+          const nativeCapsOn = readCapsLockState(event);
+          if (!isCapsKey(keyId)) {
+            syncCapsLockFromEvent(event, { update: false });
+          }
+          if (event.shiftKey && !isShiftKey(keyId)) {
+            state.shiftHeld = true;
+          }
+
+          event.preventDefault();
+          const typedChar = characterFromKeyboardEvent(event, keyId);
+          pressKey(keyId, { source: "physical", repeat: event.repeat, nativeCapsOn, typedChar });
+        });
+
+        document.addEventListener("keyup", (event) => {
+          if (shouldIgnoreGlobalKey(event)) {
+            return;
+          }
+
+          const keyId = normalizeKeyboardEvent(event);
+          if (!keyId || !keyElement(keyId)) {
+            return;
+          }
+
+          event.preventDefault();
+          releaseKey(keyId);
+          if (!event.shiftKey && ![...pressedKeys].some((pressedKey) => isShiftKey(pressedKey))) {
+            state.shiftHeld = false;
+          }
+          const nativeCapsOn = readCapsLockState(event);
+          if (typeof nativeCapsOn === "boolean") {
+            state.capsOn = nativeCapsOn;
+          }
+          updateKeyboardLayer();
+        });
+
+        document.addEventListener("pointerdown", (event) => {
+          if (event.target.closest?.(".key")) {
+            return;
+          }
+          syncCapsLockFromEvent(event);
+        }, { capture: true, passive: true });
+
+        window.addEventListener("blur", () => {
+          if (pressedKeys.size > 0 || state.shiftHeld) {
+            pressedKeys.clear();
+            state.shiftHeld = false;
+            updateKeyboardLayer();
+            requestAnimationFrame(updateMotionCue);
+          }
+        });
+
+        window.addEventListener("resize", () => {
+          requestAnimationFrame(updateMotionCue);
+        });
+
+        window.addEventListener("hashchange", syncPageFromHash);
+      }
+
+      async function init() {
+        resetCustomBanksForSeed();
+        loadCustomBanks();
+        loadBankOverrides();
+        initializeBankLibraryFromFallbacks();
+        loadSettings();
+        renderKeyboard();
+        await loadMarkdownBankFiles();
+        await restorePersonalBankDirectory();
+        ensureBankMatchesMode();
+        renderBankOptions();
+        applyModeButtons();
+        renderLibraryPage();
+        previewRound();
+        bindEvents();
+
+        if (!("speechSynthesis" in window)) {
+          els.voiceToggle.checked = false;
+          els.voiceToggle.disabled = true;
+          els.sayBtn.disabled = true;
+        }
+
+        syncPageFromHash();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
