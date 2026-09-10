@@ -29,21 +29,20 @@ Then visit [http://localhost:8000/index.html](http://localhost:8000/index.html).
 ### Test cloud voice locally
 
 The simple server above is enough for browser voice, but it cannot run the
-Cloudflare `/api/tts` Function. To test Qwen voice locally, copy the template,
-add your key, and run the Pages development server instead:
+Cloudflare `/api/tts` Worker route. To test Qwen voice locally, copy the
+template, add your key, and run the Worker development server instead:
 
 ```bash
 cp .dev.vars.example .dev.vars
 # Edit .dev.vars and replace the placeholder with your Qwen key.
-npx wrangler pages dev . --port 8788
+npx wrangler dev --local --port 8788
 ```
 
 Then open [http://localhost:8788](http://localhost:8788). The `.dev.vars` file
 is intentionally ignored by Git, while the template is safe to share.
 
-The project also includes a Pages Advanced Mode `_worker.js`. It explicitly
-routes `/api/tts` to the cloud voice handler and sends every other request to
-the static game assets.
+The Worker configuration routes `/api/tts` to the cloud voice handler and
+serves all other requests from the static game assets.
 
 ## How to play
 
