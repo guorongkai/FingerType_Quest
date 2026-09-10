@@ -1,5 +1,5 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "clear-dictionary-v16";
+const TTS_PROFILE_VERSION = "clear-dictionary-v17";
 const TTS_SEED = 1;
 const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
@@ -31,7 +31,10 @@ async function digest(text) {
 
 function standaloneWordAudioLimit(word) {
   const letterCount = (word.match(/[a-z]/gi) || []).length;
-  const seconds = Math.min(1.65, Math.max(1.1, 0.9 + letterCount * 0.1));
+  // Two- and three-letter words can legitimately take over one second when
+  // Breeze speaks every sound clearly. Keep this floor high enough for a
+  // complete word while the 1.65-second ceiling still rejects continuations.
+  const seconds = Math.min(1.65, Math.max(1.4, 0.9 + letterCount * 0.1));
   return Math.floor(seconds * PCM_BYTES_PER_SECOND);
 }
 
