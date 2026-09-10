@@ -2,9 +2,11 @@
 
 ## 1. 版本关系
 
-本文件描述当前版本：`index.html`。
+本文件描述当前 Alpha 版本：`index.html` 与其 Cloudflare Worker 语音路由。
 
-当前版本使用 `index.html`、`DESIGN.md` 和根目录的 `banks/*.md`。为了读取旁边的 Markdown 词库文件，推荐通过本地静态服务打开 `index.html`。
+当前版本使用 `index.html`、`DESIGN.md`、根目录的 `banks/*.md`，以及仅用于 Qwen TTS 的 Worker。为了读取旁边的 Markdown 词库文件，推荐通过本地静态服务打开 `index.html`；若需要测试云端语音，则运行 Worker 本地开发服务器。
+
+维护规则：任何影响用户可见行为、数据流、部署方式或外部服务的功能更新，必须在同一次更新中同步修改本设计文档和验收记录。
 
 ## 2. 本次升级目标
 
@@ -25,6 +27,11 @@
 Typing Game/
 ├── index.html
 ├── DESIGN.md
+├── tts-handler.js
+├── worker/
+│   └── index.js
+├── wrangler.jsonc
+├── .dev.vars.example
 └── banks/
     ├── grade-k.md
     ├── grade-1.md
@@ -313,7 +320,7 @@ My FingerType Banks/
 - 听写进行中会显示 `Hold to Show`；按住鼠标左键（或键盘 Space/Enter）时才临时显示完整当前单词，松开后立即回到 `listen`。暂停、切换下一题、完成回合或浏览器失焦时也会隐藏。
 - 当前词下方会以黑色、逗号分隔的文字显示本轮此前已经完成或用 `Next` 跳过的听写词。历史区独占下方整行，并在可用高度内自动缩小字号以完整显示；窄屏会按设备高度收紧历史区预算，让操作按钮仍保持在首屏。只有超过最小可读字号时才在此区域纵向查看全部记录，因此不会被已输入字母遮挡或挤出按钮。记录只属于当前回合，在重新开始、重置或切换模式时清空。
 - 正确输入的绿色字块与 `Listen` 同行显示在右侧；按住 `Hold to Show` 显示完整单词时，绿色字块会完全隐藏，松开后恢复。听写运行期间不显示刚按下的键、按键动画或右侧的键名反馈。
-- 朗读在系统提供 `Samantha` 时优先使用该英文声音；其他设备则优先选择 Natural、Neural、Premium、Enhanced 或现代英文声音。当前单词播放三遍，每遍开始间隔至少 3 秒。输入完成或使用 `Next` 后，已经开始的朗读一定会播完，再等待 1 秒才进入下一词，避免旧词被截断或新词过早开始。
+- `Voice` 开启时当前词优先由 Qwen TTS 朗读，云端暂时不可用时才使用浏览器英文语音保底。当前单词播放三遍，每遍开始间隔至少 3 秒。输入完成或使用 `Next` 后，已经开始的朗读一定会播完，再等待 1 秒才进入下一词，避免旧词被截断或新词过早开始。
 - 正确输入后逐字显示。
 - 不提前暴露目标字母、目标键、目标手指或总长度。
 - 错键不写入。
@@ -453,6 +460,44 @@ K-8 年级词库按 `Round` 随机抽取：
 - 输入 `/` 会错。
 - 目标空格必须按 `Space`。
 
+### 9.4 Voice 与 Qwen TTS
+
+`Voice` 开启时，Word Practice、Dictation 和 Sentence Practice 都优先通过 `/api/tts` 使用 Qwen Breeze 语音；浏览器 `SpeechSynthesis` 只作为 Qwen 临时不可用时的保底。
+
+#### 请求与密钥边界
+
+- 浏览器只发送 `{ input, mode, format: "pcm" }` 到同源 `/api/tts`，绝不持有或显示 Qwen Key。
+- Cloudflare Worker 在 `worker/index.js` 中仅把 `/api/tts` 交给共享的 `tts-handler.js`；其他页面和 Markdown 文件由静态资源绑定 `ASSETS` 返回。
+- `QWEN_API_KEY` 必须作为 Worker Production 环境的 `Secret` 保存，不提交到 Git，也不写入 `wrangler.jsonc`、浏览器代码或日志。
+- Worker 调用 Qwen 的 `breeze-tts-2`、`voice: "breeze"`、PCM 或 WAV 输出。公开接口没有可选的命名女声音色；因此采用固定 seed、最高指令约束和统一的“正式成年美式女声”描述来尽量稳定声线。
+
+#### 单词与听写的防扩读策略
+
+Qwen 是生成式 TTS，单个词有继续扩读成短语或句子的风险。单词和听写使用以下叠加保护：
+
+1. Worker 将单词作为独立、带终止句点的词条发送，例如 `Old.`，而不是把它放入提示语或句子中。
+2. 专用指令要求固定的正式成年女声、干净录音环境、稳定音量和语速、词典词条式发音、下降收尾，并要求只读一次后立刻停止。
+3. 浏览器以 24 kHz 单声道 PCM 流播放；单词音频按词长设置硬上限，最短 0.95 秒、最长 2.2 秒。超出上限的流会被取消，因此即使服务继续生成，后续句子不会被播放。
+4. 单次页面会话内，已完整播放过的同一词会保留 PCM 音频并直接复用。听写的第 2、3 次朗读因此使用同一段声音，不重新生成。
+5. 不预取下一词。Qwen 服务 Key 同时只允许一条生成；预取会与正在读的词竞争并导致 429 或无声。
+
+句子练习不采用单词时长上限，以免截断合法长句，但仍使用“逐字读一次、不要添加内容”的约束。
+
+#### 播放、降级与延迟
+
+- PCM 在生成过程中即可开始播放；前端先缓冲约 0.1 秒音频，避免等待整段 WAV 完成。
+- Qwen 正常返回的同一内容会由浏览器会话缓存复用；Worker 也按语音配置、格式、模式和文本建立边缘缓存键。边缘缓存按 Cloudflare 数据中心独立保存，因此不能作为单页稳定性的唯一保障。
+- Qwen 的 429、网络问题、502 或 504 只让当次朗读降级为浏览器语音；下一次仍会自动尝试 Qwen。
+- 配置、鉴权或路由类错误（例如缺失 Secret、401、404）才会将本页 Qwen 标为不可用，之后使用浏览器语音。
+- `onend` / `onerror` 回调保持原有接口，听写三次朗读、暂停、完成当前朗读后再切词的逻辑不因更换播放器而改变。
+
+#### 本地与线上测试
+
+- 本地仅测试网页和浏览器语音时，可使用任意静态服务器。
+- 本地测试 Qwen 时，复制 `.dev.vars.example` 为 `.dev.vars`，仅在其中填写 `QWEN_API_KEY`，然后运行 `npx wrangler dev --local --port 8788` 并访问 `http://localhost:8788`。
+- 线上使用 `wrangler.jsonc`：静态资源目录为项目根目录，只有 `/api/*` 先进入 Worker；GitHub 推送触发 Cloudflare Workers 自动部署。
+- 语音改动的验收至少包括：`/api/tts` 返回 `audio/pcm` 或 WAV、Word/Dictation 仍由 Qwen 发声、单词不会播放超出时长上限的续读、听写三次可复用同一音频，以及 Qwen 故障时浏览器保底可用。
+
 字符到键位映射：
 
 - 字母映射到对应小写键位。
@@ -505,14 +550,17 @@ K-8 年级词库按 `Round` 随机抽取：
 - File System Access API（可选增强）
 - Web Audio API
 - SpeechSynthesis API
+- Cloudflare Workers Static Assets
+- Cloudflare Worker Secret（仅 `QWEN_API_KEY`）
+- Qwen Breeze TTS HTTP API（仅经 Worker 调用）
 
 没有使用：
 
-- 后端服务
 - 数据库
 - 登录系统
 - 外部 JavaScript 库
-- 网络 API
+
+Worker 只代理语音生成，不保存用户账号、练习记录或个人词库；词库和成绩仍保存在浏览器或用户明确授权的本地文件夹中。
 
 注意：
 
@@ -571,6 +619,10 @@ K-8 年级词库按 `Round` 随机抽取：
 - `characterFromKeyboardEvent()`：实体键盘读取真实输入字符。
 - `currentTargetShiftKey()`：判断当前目标是否需要 Shift。
 - `handlePracticeKey()`：统一处理单词、听写和句子输入。
+- `speakWordOnce()`：统一入口；调用 Qwen PCM 播放器并保留原有朗读结束回调。
+- `speakQwenWordOnce()`：请求 `/api/tts`、复用页面内 PCM，并在失败时使用浏览器保底。
+- `playQwenPcmResponse()`：按流播放 24 kHz PCM；单词模式执行时长上限并取消多余流。
+- `standaloneWordPlaybackLimit()`：依据词中字母数给出 0.95–2.2 秒的单词播放上限。
 
 ## 16. 验收记录
 
@@ -608,6 +660,8 @@ K-8 年级词库按 `Round` 随机抽取：
 - 导入区可以把粘贴文本生成 Imported Sentences。
 - 导入区会过滤过短片段。
 - 已支持个人资料库文件夹：四个自定义 bank 可读取和写回用户选择的本地 Markdown 文件；不支持该 API 的浏览器会保留浏览器保存和导出路径。
+- 已接入 Qwen Breeze TTS：Worker Secret 不会暴露到浏览器；本地与线上均可测试 `/api/tts`。
+- 已验证 Qwen 对孤立词偶尔会生成异常长音频；Word/Dictation 已采用独立词条指令、固定语音配置、会话内复用和客户端播放上限，阻止续读内容被播放。
 
 仍可继续优化：
 
