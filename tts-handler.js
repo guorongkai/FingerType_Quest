@@ -1,5 +1,5 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "clear-dictionary-v17";
+const TTS_PROFILE_VERSION = "clear-dictionary-v18";
 const TTS_SEED = 1;
 const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
@@ -12,6 +12,8 @@ const SENTENCE_INSTRUCTIONS = "A clear, formal adult female American English nar
 // These hints exist only in the server-to-Qwen request; the exercise text and
 // answer checking always retain the original word.
 const WORD_PRONUNCIATION_HINTS = new Map([
+  // Lowercase "go" can be treated as an instruction and trigger continuation.
+  ["go", "Go"],
   ["napkin", "nap-kin"],
 ]);
 
