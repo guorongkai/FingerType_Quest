@@ -1,7 +1,7 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
 const TTS_PROFILE_VERSION = "isolated-word-guard-v7";
 const TTS_SEED = 1;
-const TTS_RECOVERY_SEED = 2;
+const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
 const WORD_RESPONSE_TIMEOUT_MS = 8000;
 
