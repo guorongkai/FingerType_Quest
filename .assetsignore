@@ -1,0 +1,4 @@
+# These files are bundled as server-side Pages Advanced Mode code, not public assets.
+_worker.js
+tts-handler.js
+functions/**
