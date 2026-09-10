@@ -98,7 +98,7 @@ export async function handleTts(request, env, waitUntil) {
       "Content-Type": format === "pcm"
         ? "audio/pcm; rate=24000; channels=1"
         : upstream.headers.get("Content-Type") || "audio/wav",
-      "Cache-Control": "public, max-age=2592000",
+      "Cache-Control": "public, max-age=2592000, s-maxage=2592000",
       "X-TTS-Cache": "MISS",
     },
   });

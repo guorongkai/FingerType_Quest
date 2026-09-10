@@ -3856,6 +3856,7 @@
       const gradeOrder = ["K", "1", "2", "3", "4", "5", "6", "7", "8"];
       const TTS_PCM_SAMPLE_RATE = 24000;
       const TTS_PCM_INITIAL_BUFFER_BYTES = 4800;
+      const TTS_MEMORY_CACHE_LIMIT = 30;
 
       const state = {
         bankId: "grade:1",
@@ -3885,6 +3886,8 @@
         qwenAudio: null,
         qwenAudioUrl: "",
         qwenPcmPlayback: null,
+        qwenPcmCache: new Map(),
+        qwenPcmPreloads: new Map(),
         pendingDictationTransition: "",
         audioContext: null,
         shiftHeld: false,
@@ -6703,6 +6706,7 @@
             return;
           }
 
+          warmNextQwenTts();
           setHint(`Nice typing. Get ready for the next ${unitLabel(1)}.`, "success");
           state.advanceTimerId = setTimeout(() => {
             state.advanceTimerId = null;
@@ -6866,6 +6870,9 @@
           return;
         }
 
+        if (transition === "next") {
+          warmNextQwenTts();
+        }
         state.pendingDictationTransition = transition;
         clearSpeechTimers();
         updateDictationRevealControl();
@@ -6967,6 +6974,72 @@
         return Boolean(window.AudioContext || window.webkitAudioContext);
       }
 
+      function qwenPcmCacheKey(word, mode = state.mode) {
+        return `${mode === "sentence" ? "sentence" : "word"}:${word.trim().toLowerCase()}`;
+      }
+
+      function rememberQwenPcm(key, audioBytes) {
+        if (!audioBytes?.byteLength) {
+          return;
+        }
+        state.qwenPcmCache.delete(key);
+        state.qwenPcmCache.set(key, audioBytes.slice());
+        while (state.qwenPcmCache.size > TTS_MEMORY_CACHE_LIMIT) {
+          state.qwenPcmCache.delete(state.qwenPcmCache.keys().next().value);
+        }
+      }
+
+      function joinAudioChunks(chunks, byteLength) {
+        const audioBytes = new Uint8Array(byteLength);
+        let offset = 0;
+        chunks.forEach((chunk) => {
+          audioBytes.set(chunk, offset);
+          offset += chunk.byteLength;
+        });
+        return audioBytes;
+      }
+
+      function warmQwenTts(word, mode = state.mode) {
+        if (
+          !els.voiceToggle.checked ||
+          !supportsPcmStreaming() ||
+          state.qwenTtsAvailable === false ||
+          !word
+        ) {
+          return;
+        }
+
+        const key = qwenPcmCacheKey(word, mode);
+        if (state.qwenPcmCache.has(key) || state.qwenPcmPreloads.has(key)) {
+          return;
+        }
+
+        const preload = fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: word, mode, format: "pcm" })
+        })
+          .then(async (response) => {
+            if (!response.ok) {
+              return null;
+            }
+            const audioBytes = new Uint8Array(await response.arrayBuffer());
+            rememberQwenPcm(key, audioBytes);
+            return audioBytes;
+          })
+          .catch(() => null);
+
+        state.qwenPcmPreloads.set(key, preload);
+        void preload.then(() => state.qwenPcmPreloads.delete(key));
+      }
+
+      function warmNextQwenTts() {
+        const nextWord = state.queue[state.wordIndex + 1];
+        if (nextWord) {
+          warmQwenTts(nextWord);
+        }
+      }
+
       function appendAudioBytes(left, right) {
         const combined = new Uint8Array(left.byteLength + right.byteLength);
         combined.set(left);
@@ -7037,6 +7110,8 @@
 
         let initialBytes = new Uint8Array(0);
         let playbackStarted = false;
+        const receivedChunks = [];
+        let receivedByteLength = 0;
         try {
           while (true) {
             const { done, value } = await reader.read();
@@ -7045,13 +7120,15 @@
               playback.stopped ||
               state.speechSessionId !== sessionId
             ) {
-              return false;
+              return { completed: false, audioBytes: null };
             }
             if (done) {
               break;
             }
 
             const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+            receivedChunks.push(chunk.slice());
+            receivedByteLength += chunk.byteLength;
             if (!playbackStarted) {
               initialBytes = appendAudioBytes(initialBytes, chunk);
               if (initialBytes.byteLength < TTS_PCM_INITIAL_BUFFER_BYTES) {
@@ -7080,7 +7157,10 @@
               resolve();
             }
           });
-          return !playback.stopped;
+          return {
+            completed: !playback.stopped,
+            audioBytes: joinAudioChunks(receivedChunks, receivedByteLength)
+          };
         } finally {
           if (state.qwenPcmPlayback === playback) {
             state.qwenPcmPlayback = null;
@@ -7094,14 +7174,29 @@
         const controller = new AbortController();
         state.qwenSpeechController = controller;
         const format = supportsPcmStreaming() ? "pcm" : "wav";
+        const mode = state.mode === "sentence" ? "sentence" : "word";
+        const cacheKey = qwenPcmCacheKey(word, mode);
 
         try {
-          const response = await fetch("/api/tts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ input: word, mode: state.mode, format }),
-            signal: controller.signal
-          });
+          let response;
+          const cachedAudio = format === "pcm" ? state.qwenPcmCache.get(cacheKey) : null;
+          if (cachedAudio) {
+            response = new Response(cachedAudio);
+          } else {
+            const preload = format === "pcm" ? state.qwenPcmPreloads.get(cacheKey) : null;
+            const preloadedAudio = preload ? await preload : null;
+            if (controller.signal.aborted || state.speechSessionId !== sessionId) {
+              return;
+            }
+            response = preloadedAudio
+              ? new Response(preloadedAudio)
+              : await fetch("/api/tts", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ input: word, mode, format }),
+                  signal: controller.signal
+                });
+          }
 
           if (!response.ok) {
             throw new Error(await qwenTtsErrorMessage(response));
@@ -7109,7 +7204,7 @@
 
           state.qwenTtsAvailable = true;
           if (format === "pcm") {
-            const completed = await playQwenPcmResponse(response, controller, sessionId);
+            const { completed, audioBytes } = await playQwenPcmResponse(response, controller, sessionId);
             if (
               !completed ||
               controller.signal.aborted ||
@@ -7117,6 +7212,7 @@
             ) {
               return;
             }
+            rememberQwenPcm(cacheKey, audioBytes);
             if (state.qwenSpeechController === controller) {
               state.qwenSpeechController = null;
             }
