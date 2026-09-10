@@ -3858,6 +3858,7 @@
       const TTS_PCM_INITIAL_BUFFER_BYTES = 4800;
       const TTS_MEMORY_CACHE_LIMIT = 30;
       const DICTATION_REPEAT_SILENCE_MS = 3000;
+      const QWEN_PLAYBACK_RATE = 0.92;
 
       const state = {
         bankId: "grade:1",
@@ -7049,6 +7050,7 @@
 
         const source = playback.context.createBufferSource();
         source.buffer = buffer;
+        source.playbackRate.value = playback.playbackRate;
         source.connect(playback.context.destination);
         source.onended = () => {
           playback.sources.delete(source);
@@ -7059,7 +7061,7 @@
 
         const startAt = Math.max(playback.nextStartAt, playback.context.currentTime + 0.02);
         source.start(startAt);
-        playback.nextStartAt = startAt + buffer.duration;
+        playback.nextStartAt = startAt + buffer.duration / playback.playbackRate;
         playback.scheduledFrames += frameCount;
         if (frameCount < completeByteLength / 2) {
           playback.cutoffReached = true;
@@ -7087,6 +7089,7 @@
           context,
           reader,
           sources: new Set(),
+          playbackRate: QWEN_PLAYBACK_RATE,
           trailingBytes: new Uint8Array(0),
           nextStartAt: context.currentTime + 0.03,
           maxFrames: Number.isFinite(maxPlaybackSeconds)
