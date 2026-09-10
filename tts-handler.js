@@ -1,5 +1,5 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "isolated-word-guard-v8";
+const TTS_PROFILE_VERSION = "isolated-word-guard-v9";
 const TTS_SEED = 1;
 const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
@@ -21,7 +21,7 @@ async function digest(text) {
 
 function standaloneWordAudioLimit(word) {
   const letterCount = (word.match(/[a-z]/gi) || []).length;
-  const seconds = Math.min(1.1, Math.max(0.72, 0.42 + letterCount * 0.08));
+  const seconds = Math.min(1.35, Math.max(0.9, 0.58 + letterCount * 0.11));
   return Math.floor(seconds * PCM_BYTES_PER_SECOND);
 }
 
