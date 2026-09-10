@@ -1,5 +1,5 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "isolated-word-guard-v11";
+const TTS_PROFILE_VERSION = "isolated-word-guard-v12";
 const TTS_SEED = 1;
 const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
@@ -24,10 +24,6 @@ function standaloneWordAudioLimit(word) {
   const letterCount = (word.match(/[a-z]/gi) || []).length;
   const seconds = Math.min(1.35, Math.max(0.9, 0.58 + letterCount * 0.11));
   return Math.floor(seconds * PCM_BYTES_PER_SECOND);
-}
-
-function titleCaseWord(word) {
-  return `${word.charAt(0).toUpperCase()}${word.slice(1)}`;
 }
 
 function joinAudioChunks(chunks, byteLength) {
@@ -203,16 +199,6 @@ export async function handleTts(request, env, waitUntil) {
       await new Promise((resolve) => setTimeout(resolve, 250));
       wordAudio = await fetchValidatedWordPcm(env, input, {
         ...requestBody,
-        seed: TTS_RECOVERY_SEED,
-        instructions: WORD_RECOVERY_INSTRUCTIONS,
-      });
-    }
-    if (!wordAudio.ok && wordAudio.status === 422) {
-      recoveryAttempt = 2;
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      wordAudio = await fetchValidatedWordPcm(env, input, {
-        ...requestBody,
-        input: titleCaseWord(input),
         seed: TTS_RECOVERY_SEED,
         instructions: WORD_RECOVERY_INSTRUCTIONS,
       });
