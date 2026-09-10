@@ -6974,7 +6974,7 @@
           });
 
           if (!response.ok) {
-            throw new Error(`Qwen TTS returned ${response.status}`);
+            throw new Error(await qwenTtsErrorMessage(response));
           }
 
           const audioBlob = await response.blob();
@@ -7012,7 +7012,11 @@
             settled = true;
             releaseAudio();
             if (state.speechSessionId === sessionId) {
-              useBrowserVoiceFallback(word, callbacks);
+              useBrowserVoiceFallback(
+                word,
+                callbacks,
+                "Qwen returned audio that this browser could not play."
+              );
             }
           };
 
@@ -7026,14 +7030,29 @@
           if (state.qwenSpeechController === controller) {
             state.qwenSpeechController = null;
           }
-          useBrowserVoiceFallback(word, callbacks);
+          useBrowserVoiceFallback(word, callbacks, error.message);
         }
       }
 
-      function useBrowserVoiceFallback(word, callbacks) {
+      async function qwenTtsErrorMessage(response) {
+        try {
+          const data = await response.json();
+          if (typeof data.error === "string" && data.error) {
+            return data.error;
+          }
+        } catch {
+          // A missing Pages Function may respond with HTML rather than JSON.
+        }
+        return `The /api/tts endpoint returned HTTP ${response.status}.`;
+      }
+
+      function useBrowserVoiceFallback(word, callbacks, reason = "Qwen TTS is unavailable.") {
         if (state.qwenTtsAvailable !== false) {
           state.qwenTtsAvailable = false;
-          setHint("Qwen voice is unavailable. Using your browser voice instead.", "error");
+          setHint(
+            `Qwen voice is unavailable (${reason}) Using your browser voice instead.`,
+            "error"
+          );
         }
         speakBrowserWordOnce(word, callbacks);
       }

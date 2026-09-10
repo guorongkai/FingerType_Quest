@@ -23,6 +23,12 @@ export async function onRequestPost(context) {
     return json(403, { error: "Cross-site requests are not allowed." });
   }
 
+  if (!env.QWEN_API_KEY) {
+    return json(500, {
+      error: "Server setup error: the QWEN_API_KEY secret is missing."
+    });
+  }
+
   let body;
   try {
     body = await request.json();
@@ -65,8 +71,9 @@ export async function onRequestPost(context) {
   });
 
   if (!upstream.ok) {
-    return json(upstream.status === 429 ? 429 : 502, {
-      error: "Speech generation is temporarily unavailable.",
+    const status = upstream.status;
+    return json(status, {
+      error: `Qwen TTS request failed with HTTP ${status}.`,
     });
   }
 

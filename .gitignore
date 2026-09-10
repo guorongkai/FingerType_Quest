@@ -10,3 +10,9 @@ Demo/
 # Common local tooling directories
 node_modules/
 .venv/
+.wrangler/
+
+# Local Cloudflare Pages secrets. Keep the example file so setup stays documented.
+.dev.vars
+.dev.vars.*
+!.dev.vars.example

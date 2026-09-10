@@ -26,6 +26,21 @@ python3 -m http.server 8000
 
 Then visit [http://localhost:8000/index.html](http://localhost:8000/index.html).
 
+### Test cloud voice locally
+
+The simple server above is enough for browser voice, but it cannot run the
+Cloudflare `/api/tts` Function. To test Qwen voice locally, copy the template,
+add your key, and run the Pages development server instead:
+
+```bash
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars and replace the placeholder with your Qwen key.
+npx wrangler pages dev . --port 8788
+```
+
+Then open [http://localhost:8788](http://localhost:8788). The `.dev.vars` file
+is intentionally ignored by Git, while the template is safe to share.
+
 ## How to play
 
 1. Choose a bank, mode, and round length.
