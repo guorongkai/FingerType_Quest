@@ -154,8 +154,8 @@ Bank Library 包含一个个人资料库工具栏和两列管理区：
 | `grade:8` | word | `banks/grade-8.md` | 按 Round 随机抽取 |
 | `custom:current` | word | `banks/custom-current.md` | 每轮覆盖全部 |
 | `custom:all` | word | `banks/custom-all.md` | 30 个以内覆盖全部，超过 30 个按 Round |
-| `sentence:current` | sentence | `banks/current-sentences.md` | 每轮覆盖全部 |
-| `sentence:all-imported` | sentence | `banks/all-imported-sentences.md` | 30 句以内覆盖全部，超过 30 句按 Round |
+| `sentence:current` | sentence | `banks/current-sentences.md` | 每轮按文件顺序覆盖全部 |
+| `sentence:all-imported` | sentence | `banks/all-imported-sentences.md` | 30 句以内按文件顺序覆盖全部，超过 30 句取前 Round 数量 |
 
 ## 6. Markdown 格式
 
@@ -413,21 +413,20 @@ K-8 年级词库按 `Round` 随机抽取：
 
 ### 11.4 Starter Sentences
 
-默认按 Round 随机抽取：
+严格按 Markdown 句库中的原始顺序练习：
 
 - 10 sentences
 - 20 sentences
 - 30 sentences
 
-如果句子数不足，会循环填充打乱后的句子，保证一轮长度和 Round 一致。
+句子数不足 Round 时，该词库会覆盖全部现有句子，不重复补充条目，确保故事顺序不被打乱。
 
 ### 11.5 Imported Sentences
 
-导入句子库：
+导入句子库严格保持 Markdown 中的句子顺序：
 
-- 30 句以内覆盖全部。
-- 超过 30 句时按 Round 随机抽取。
-- 每轮先随机打乱。
+- 30 句以内按文件顺序覆盖全部。
+- 超过 30 句时，从文件开头按 Round 数量依序练习。
 
 ## 12. 键盘与字符判断
 
@@ -611,7 +610,7 @@ Worker 只代理语音生成，不保存用户账号、练习记录或个人词�
 - `ensureBankMatchesMode()`：保证句子库和句子模式同步。
 - `getCurrentPool()`：从统一 bank 缓存取当前练习条目。
 - `getRoundTargetSize()`：计算本轮长度。
-- `buildRoundQueue()`：生成随机队列。
+- `buildRoundQueue()`：词库生成随机队列；句库保持 Markdown 原始顺序。
 - `currentTargetText()`：当前完整目标文本。
 - `currentTargetChar()`：当前目标字符。
 - `keyIdForCharacter()`：把目标字符映射到键位。

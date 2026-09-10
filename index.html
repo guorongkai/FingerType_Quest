@@ -4007,6 +4007,10 @@
           return [];
         }
 
+        if (selectedBankType() === "sentence") {
+          return pool.slice(0, targetSize);
+        }
+
         if (targetSize <= pool.length) {
           return shuffle(pool).slice(0, targetSize);
         }
@@ -4100,7 +4104,9 @@
         els.roundSelect.disabled = coversEveryItem;
         els.roundSelect.title = coversEveryItem
           ? `This bank covers every ${unit.slice(0, -1)}.`
-          : `Choose 10, 20, or 30 random ${unit}.`;
+          : selectedBankType() === "sentence"
+            ? `Choose 10, 20, or 30 ${unit} in library order.`
+            : `Choose 10, 20, or 30 random ${unit}.`;
 
         [...els.roundSelect.options].forEach((option) => {
           option.textContent = `${option.value} ${unit}`;
@@ -4132,10 +4138,14 @@
         }
 
         if (bankCoversEveryItem(source, pool)) {
-          return `${selectedBankLabel()} has ${formatItemCount(pool.length)}. This round covers every ${unit} in a shuffled order.`;
+          return selectedBankType() === "sentence"
+            ? `${selectedBankLabel()} has ${formatItemCount(pool.length)}. This round follows the library order.`
+            : `${selectedBankLabel()} has ${formatItemCount(pool.length)}. This round covers every ${unit} in a shuffled order.`;
         }
 
-        return `${selectedBankLabel()} has ${formatItemCount(pool.length)}. Round chooses ${state.roundSize} shuffled random ${unitLabel(state.roundSize)}.`;
+        return selectedBankType() === "sentence"
+          ? `${selectedBankLabel()} has ${formatItemCount(pool.length)}. Round uses the first ${state.roundSize} ${unitLabel(state.roundSize)} in library order.`
+          : `${selectedBankLabel()} has ${formatItemCount(pool.length)}. Round chooses ${state.roundSize} shuffled random ${unitLabel(state.roundSize)}.`;
       }
 
       function loadCustomBanks() {
