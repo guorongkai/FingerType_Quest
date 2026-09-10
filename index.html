@@ -3859,7 +3859,8 @@
       const TTS_MEMORY_CACHE_LIMIT = 30;
       const DICTATION_REPEAT_SILENCE_MS = 3000;
       const QWEN_PLAYBACK_RATE = 0.92;
-      const QWEN_PCM_LEAD_IN_SECONDS = 0.08;
+      const QWEN_PCM_LEAD_IN_SECONDS = 0.15;
+      const QWEN_PCM_TAIL_OUT_SECONDS = 0.18;
 
       const state = {
         bankId: "grade:1",
@@ -7100,7 +7101,11 @@
           nextStartAt: context.currentTime + 0.03,
           maxFrames: Number.isFinite(maxPlaybackSeconds)
             ? Math.floor(
-              (maxPlaybackSeconds + QWEN_PCM_LEAD_IN_SECONDS) * TTS_PCM_SAMPLE_RATE
+              (
+                maxPlaybackSeconds +
+                QWEN_PCM_LEAD_IN_SECONDS +
+                QWEN_PCM_TAIL_OUT_SECONDS
+              ) * TTS_PCM_SAMPLE_RATE
             )
             : Infinity,
           scheduledFrames: 0,
@@ -7156,6 +7161,15 @@
           }
           if (!playbackStarted || !playback.lastSource) {
             throw new Error("Qwen returned empty audio.");
+          }
+
+          if (!playback.cutoffReached) {
+            schedulePcmBytes(
+              playback,
+              new Uint8Array(
+                Math.floor(QWEN_PCM_TAIL_OUT_SECONDS * TTS_PCM_SAMPLE_RATE * 2)
+              )
+            );
           }
 
           playback.finished = true;
