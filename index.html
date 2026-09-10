@@ -3882,7 +3882,6 @@
         speechTimerIds: [],
         speechSessionId: 0,
         speechInFlight: false,
-        qwenTtsAvailable: null,
         qwenSpeechController: null,
         qwenAudio: null,
         qwenAudioUrl: "",
@@ -6981,11 +6980,6 @@
           return;
         }
 
-        if (state.qwenTtsAvailable === false) {
-          speakBrowserWordOnce(word, callbacks);
-          return;
-        }
-
         void speakQwenWordOnce(word, callbacks);
       }
 
@@ -7209,7 +7203,6 @@
             throw error;
           }
 
-          state.qwenTtsAvailable = true;
           if (format === "pcm") {
             const { completed, audioBytes } = await playQwenPcmResponse(
               response,
@@ -7284,9 +7277,7 @@
           if (state.qwenSpeechController === controller) {
             state.qwenSpeechController = null;
           }
-          useBrowserVoiceFallback(word, callbacks, error.message, {
-            disableQwen: shouldDisableQwenTts(error)
-          });
+          useBrowserVoiceFallback(word, callbacks, error.message);
         }
       }
 
@@ -7302,31 +7293,15 @@
         return `The /api/tts endpoint returned HTTP ${response.status}.`;
       }
 
-      function shouldDisableQwenTts(error) {
-        return (
-          [400, 401, 403, 404, 405].includes(error?.status) ||
-          /QWEN_API_KEY secret is missing/i.test(error?.message || "")
-        );
-      }
-
       function useBrowserVoiceFallback(
         word,
         callbacks,
-        reason = "Qwen TTS is unavailable.",
-        { disableQwen = false } = {}
+        reason = "Qwen TTS is unavailable."
       ) {
-        if (disableQwen && state.qwenTtsAvailable !== false) {
-          state.qwenTtsAvailable = false;
-          setHint(
-            `Qwen voice is unavailable (${reason}) Using your browser voice instead.`,
-            "error"
-          );
-        } else if (!disableQwen && state.qwenTtsAvailable !== false) {
-          setHint(
-            `Cloud voice is temporarily busy (${reason}) Using your browser voice for this reading.`,
-            "error"
-          );
-        }
+        setHint(
+          `Cloud voice failed for this reading (${reason}) Using your browser voice; the next word will retry Qwen.`,
+          "error"
+        );
         speakBrowserWordOnce(word, callbacks);
       }
 
