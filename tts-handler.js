@@ -1,5 +1,5 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "clear-dictionary-v15";
+const TTS_PROFILE_VERSION = "clear-dictionary-v16";
 const TTS_SEED = 1;
 const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
@@ -7,6 +7,13 @@ const WORD_RESPONSE_TIMEOUT_MS = 8000;
 const WORD_INSTRUCTIONS = "A clear, formal adult female American English dictionary voice. Read the supplied word once, carefully and naturally. Pronounce every sound, especially initial consonants. Do not add or repeat words.";
 const WORD_RECOVERY_INSTRUCTIONS = "A clear formal adult female American English dictionary voice. Read the supplied word once only, with every sound audible. Do not add, repeat, or continue words.";
 const SENTENCE_INSTRUCTIONS = "A clear, formal adult female American English narrator with a steady natural pace and consistent voice. Read the supplied sentence once exactly as written. Do not add or repeat words.";
+
+// Breeze occasionally guesses a wrong phoneme sequence for an isolated word.
+// These hints exist only in the server-to-Qwen request; the exercise text and
+// answer checking always retain the original word.
+const WORD_PRONUNCIATION_HINTS = new Map([
+  ["napkin", "nap-kin"],
+]);
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), {
@@ -26,6 +33,13 @@ function standaloneWordAudioLimit(word) {
   const letterCount = (word.match(/[a-z]/gi) || []).length;
   const seconds = Math.min(1.65, Math.max(1.1, 0.9 + letterCount * 0.1));
   return Math.floor(seconds * PCM_BYTES_PER_SECOND);
+}
+
+function speechInputFor(mode, input) {
+  if (mode !== "word") {
+    return input;
+  }
+  return WORD_PRONUNCIATION_HINTS.get(input.toLowerCase()) || input;
 }
 
 function joinAudioChunks(chunks, byteLength) {
@@ -154,7 +168,7 @@ export async function handleTts(request, env, waitUntil) {
     : "";
   const mode = body.mode === "sentence" ? "sentence" : "word";
   const format = body.format === "pcm" ? "pcm" : "wav";
-  const speechInput = input;
+  const speechInput = speechInputFor(mode, input);
 
   if (!input || input.length > 1000) {
     return json(400, { error: "Input must be 1–1,000 characters." });
