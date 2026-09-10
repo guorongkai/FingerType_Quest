@@ -1,5 +1,5 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "isolated-word-guard-v13";
+const TTS_PROFILE_VERSION = "isolated-word-guard-v14";
 const TTS_SEED = 1;
 const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
@@ -185,7 +185,7 @@ export async function handleTts(request, env, waitUntil) {
     instructions:
       mode === "sentence"
         ? "Use one unchanging formal adult woman narrator identity for every request: neutral General American English, dry studio sound, steady volume, calm pace, and stable pitch. Do not alter the speaker's age, gender, accent, emotion, or delivery between sentences. Read the supplied English sentence verbatim once, with no introduction or closing, then stop. Do not add, omit, repeat, continue, explain, label, or improvise words."
-        : "Read the isolated English headword in the input once. Use one unchanging formal adult woman narrator: neutral General American English, dry studio sound, steady volume and pitch, deliberate dictionary pace. Do not rush or compress sounds. Use citation pronunciation, never connected-speech reduction. Articulate every phoneme and initial/final consonant. End low and neutral, never question, greeting, or continuation intonation. Never repeat, add, omit, or improvise.",
+        : "Read the isolated English headword in the input once. Use one unchanging formal adult woman narrator: neutral General American English, dry studio sound, steady volume and pitch, deliberate dictionary pace. Do not rush or compress sounds. Use citation pronunciation, never connected-speech reduction. Articulate every phoneme and initial/final consonant. Use a natural dictionary-headword contour, never an exaggerated question, greeting, or continuation tone. Never repeat, add, omit, or improvise.",
     response_format: format,
     seed: TTS_SEED,
     cfg_scale: 4,
