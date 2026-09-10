@@ -44,10 +44,11 @@ is intentionally ignored by Git, while the template is safe to share.
 The Worker configuration routes `/api/tts` to the cloud voice handler and
 serves all other requests from the static game assets. Cloud voice uses Qwen's
 single public Breeze profile with a fixed seed and a formal adult-female delivery
-instruction for Sentence Practice. Dictation and Word Practice use the browser's
-fixed English voice so a target word is always spoken exactly as supplied. Qwen
-streams PCM audio for faster sentence playback; browser voice remains the
-automatic fallback if cloud voice is temporarily unavailable.
+instruction. Word and Dictation requests are sent as isolated, terminally
+punctuated headwords and their playback is capped to prevent a generated
+continuation from being heard. Qwen streams PCM audio for faster playback;
+browser voice remains the automatic fallback if cloud voice is temporarily
+unavailable.
 
 ## How to play
 

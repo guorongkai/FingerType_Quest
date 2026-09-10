@@ -1,6 +1,6 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "formal-female-v2";
-const TTS_SEED = 20260910;
+const TTS_PROFILE_VERSION = "formal-female-v3";
+const TTS_SEED = 420420;
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), {
@@ -45,6 +45,9 @@ export async function handleTts(request, env, waitUntil) {
     : "";
   const mode = body.mode === "sentence" ? "sentence" : "word";
   const format = body.format === "pcm" ? "pcm" : "wav";
+  const speechInput = mode === "word"
+    ? `${input.replace(/[.?!]+$/, "")}.`
+    : input;
 
   if (!input || input.length > 1000) {
     return json(400, { error: "Input must be 1–1,000 characters." });
@@ -76,11 +79,11 @@ export async function handleTts(request, env, waitUntil) {
     body: JSON.stringify({
       model: "breeze-tts-2",
       voice: "breeze",
-      input,
+      input: speechInput,
       instructions:
         mode === "sentence"
-          ? "Use one consistent, professional adult female voice with neutral American English. This is an exact-reading task: speak the supplied English sentence verbatim, once, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise any words. Do not use an introduction or closing."
-          : "Use one consistent, professional adult female voice with neutral American English. This is an exact-reading task: speak the supplied English word verbatim, once, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise any words. Do not use an introduction or closing.",
+          ? "Use one consistent professional adult female narrator with neutral American English. Keep the same timbre, pitch, volume, studio microphone sound, and calm measured pace for every request. This is an exact-reading task: speak the supplied English sentence verbatim, once, with no introduction or closing, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise words."
+          : "Use one consistent professional adult female American-English dictionary narrator. Keep exactly the same timbre, pitch, volume, dry studio sound, and calm pace for every request. The supplied text is one isolated vocabulary headword, never part of a sentence. Pronounce that headword once with a clear falling final intonation, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise words. No background sound, no introduction, and no closing.",
       response_format: format,
       seed: TTS_SEED,
       cfg_scale: 4,

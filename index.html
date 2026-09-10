@@ -6967,14 +6967,6 @@
           return;
         }
 
-        // Dictation must never turn a target word into additional spoken text.
-        // Native speech synthesizers receive only the text we supply, unlike a
-        // generative cloud model that can occasionally continue a phrase.
-        if (state.mode === "dictation" || state.mode === "word") {
-          speakBrowserWordOnce(word, callbacks);
-          return;
-        }
-
         if (state.qwenTtsAvailable === false) {
           speakBrowserWordOnce(word, callbacks);
           return;
@@ -7019,6 +7011,11 @@
         return combined;
       }
 
+      function standaloneWordPlaybackLimit(word) {
+        const letterCount = (word.match(/[a-z]/gi) || []).length;
+        return Math.min(2.2, Math.max(0.95, 0.68 + letterCount * 0.08));
+      }
+
       function schedulePcmBytes(playback, bytes) {
         const combined = appendAudioBytes(playback.trailingBytes, bytes);
         const completeByteLength = combined.byteLength - (combined.byteLength % 2);
@@ -7027,7 +7024,14 @@
           return;
         }
 
-        const frameCount = completeByteLength / 2;
+        const availableFrames = Number.isFinite(playback.maxFrames)
+          ? Math.max(0, playback.maxFrames - playback.scheduledFrames)
+          : completeByteLength / 2;
+        const frameCount = Math.min(completeByteLength / 2, availableFrames);
+        if (!frameCount) {
+          playback.cutoffReached = true;
+          return;
+        }
         const buffer = playback.context.createBuffer(1, frameCount, TTS_PCM_SAMPLE_RATE);
         const samples = buffer.getChannelData(0);
         const view = new DataView(combined.buffer, combined.byteOffset, completeByteLength);
@@ -7048,11 +7052,15 @@
         const startAt = Math.max(playback.nextStartAt, playback.context.currentTime + 0.02);
         source.start(startAt);
         playback.nextStartAt = startAt + buffer.duration;
+        playback.scheduledFrames += frameCount;
+        if (frameCount < completeByteLength / 2) {
+          playback.cutoffReached = true;
+        }
         playback.lastSource = source;
         playback.sources.add(source);
       }
 
-      async function playQwenPcmResponse(response, controller, sessionId) {
+      async function playQwenPcmResponse(response, controller, sessionId, maxPlaybackSeconds = Infinity) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         const reader = response.body?.getReader();
         if (!AudioContextClass || !reader) {
@@ -7073,6 +7081,11 @@
           sources: new Set(),
           trailingBytes: new Uint8Array(0),
           nextStartAt: context.currentTime + 0.03,
+          maxFrames: Number.isFinite(maxPlaybackSeconds)
+            ? Math.floor(maxPlaybackSeconds * TTS_PCM_SAMPLE_RATE)
+            : Infinity,
+          scheduledFrames: 0,
+          cutoffReached: false,
           lastSource: null,
           finished: false,
           stopped: false,
@@ -7112,6 +7125,10 @@
             } else {
               schedulePcmBytes(playback, chunk);
             }
+            if (playback.cutoffReached) {
+              await reader.cancel();
+              break;
+            }
           }
 
           if (!playbackStarted && initialBytes.byteLength) {
@@ -7148,6 +7165,7 @@
         const format = supportsPcmStreaming() ? "pcm" : "wav";
         const mode = state.mode === "sentence" ? "sentence" : "word";
         const cacheKey = qwenPcmCacheKey(word, mode);
+        const maxPlaybackSeconds = mode === "word" ? standaloneWordPlaybackLimit(word) : Infinity;
 
         try {
           let response;
@@ -7171,7 +7189,12 @@
 
           state.qwenTtsAvailable = true;
           if (format === "pcm") {
-            const { completed, audioBytes } = await playQwenPcmResponse(response, controller, sessionId);
+            const { completed, audioBytes } = await playQwenPcmResponse(
+              response,
+              controller,
+              sessionId,
+              maxPlaybackSeconds
+            );
             if (
               !completed ||
               controller.signal.aborted ||
