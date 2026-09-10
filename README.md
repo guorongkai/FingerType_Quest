@@ -41,6 +41,10 @@ npx wrangler pages dev . --port 8788
 Then open [http://localhost:8788](http://localhost:8788). The `.dev.vars` file
 is intentionally ignored by Git, while the template is safe to share.
 
+The project also includes a Pages Advanced Mode `_worker.js`. It explicitly
+routes `/api/tts` to the cloud voice handler and sends every other request to
+the static game assets.
+
 ## How to play
 
 1. Choose a bank, mode, and round length.
