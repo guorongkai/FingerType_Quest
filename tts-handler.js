@@ -1,6 +1,7 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "isolated-word-guard-v6";
+const TTS_PROFILE_VERSION = "isolated-word-guard-v7";
 const TTS_SEED = 1;
+const TTS_RECOVERY_SEED = 2;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
 const WORD_RESPONSE_TIMEOUT_MS = 8000;
 
@@ -76,6 +77,51 @@ async function collectValidatedWordPcm(stream, maxBytes) {
   return { ok: true, audio: joinAudioChunks(chunks, byteLength) };
 }
 
+async function fetchValidatedWordPcm(env, input, requestBody) {
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(
+    () => abortController.abort(),
+    WORD_RESPONSE_TIMEOUT_MS
+  );
+  try {
+    const upstream = await fetch(QWEN_TTS_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.QWEN_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+      signal: abortController.signal,
+    });
+    if (!upstream.ok) {
+      return {
+        ok: false,
+        status: upstream.status,
+        reason: `Qwen TTS request failed with HTTP ${upstream.status}.`
+      };
+    }
+
+    const wordAudio = await collectValidatedWordPcm(
+      upstream.body,
+      standaloneWordAudioLimit(input)
+    );
+    if (!wordAudio.ok) {
+      return { ok: false, status: 422, reason: wordAudio.reason };
+    }
+    return wordAudio;
+  } catch (error) {
+    return {
+      ok: false,
+      status: error?.name === "AbortError" ? 504 : 502,
+      reason: error?.name === "AbortError"
+        ? "Qwen word generation timed out."
+        : "Qwen word audio could not be fetched."
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export async function handleTts(request, env, waitUntil) {
   if (request.method !== "POST") {
     return json(405, { error: "Use POST for /api/tts." });
@@ -131,10 +177,50 @@ export async function handleTts(request, env, waitUntil) {
     });
   }
 
-  const abortController = new AbortController();
-  const timeoutId = mode === "word" && format === "pcm"
-    ? setTimeout(() => abortController.abort(), WORD_RESPONSE_TIMEOUT_MS)
-    : null;
+  const requestBody = {
+    model: "breeze-tts-2",
+    voice: "breeze",
+    input: speechInput,
+    instructions:
+      mode === "sentence"
+        ? "Use one consistent professional adult female narrator with neutral American English. Keep the same timbre, pitch, volume, studio microphone sound, and calm measured pace for every request. This is an exact-reading task: speak the supplied English sentence verbatim, once, with no introduction or closing, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise words."
+        : "Speak exactly the one English dictionary headword in the input, once only. Use a single formal adult woman's voice with neutral General American pronunciation, clear consonants, dry studio sound, steady volume, and a natural falling ending. The input is never part of a sentence. Do not add, omit, repeat, continue, explain, label, or improvise any words. Do not add background sound, an introduction, or a closing.",
+    response_format: format,
+    seed: TTS_SEED,
+    cfg_scale: 4,
+  };
+
+  if (mode === "word" && format === "pcm") {
+    let wordAudio = await fetchValidatedWordPcm(env, input, requestBody);
+    let usedRecoverySeed = false;
+    if (!wordAudio.ok && wordAudio.status === 422) {
+      usedRecoverySeed = true;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      wordAudio = await fetchValidatedWordPcm(env, input, {
+        ...requestBody,
+        seed: TTS_RECOVERY_SEED,
+      });
+    }
+    if (!wordAudio.ok) {
+      return json(wordAudio.status, { error: wordAudio.reason });
+    }
+
+    const response = new Response(wordAudio.audio, {
+      headers: {
+        "Content-Type": "audio/pcm; rate=24000; channels=1",
+        "Cache-Control": "public, max-age=2592000, s-maxage=2592000",
+        "X-TTS-Cache": "MISS",
+        "X-TTS-Recovery": usedRecoverySeed ? "1" : "0",
+      },
+    });
+    waitUntil?.(
+      caches.default.put(cacheKey, response.clone()).catch((error) => {
+        console.error("Unable to cache TTS audio.", error);
+      })
+    );
+    return response;
+  }
+
   let upstream;
   try {
     upstream = await fetch(QWEN_TTS_URL, {
@@ -143,52 +229,19 @@ export async function handleTts(request, env, waitUntil) {
         Authorization: `Bearer ${env.QWEN_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "breeze-tts-2",
-        voice: "breeze",
-        input: speechInput,
-        instructions:
-          mode === "sentence"
-            ? "Use one consistent professional adult female narrator with neutral American English. Keep the same timbre, pitch, volume, studio microphone sound, and calm measured pace for every request. This is an exact-reading task: speak the supplied English sentence verbatim, once, with no introduction or closing, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise words."
-            : "Speak exactly the one English dictionary headword in the input, once only. Use a single formal adult woman's voice with neutral General American pronunciation, clear consonants, dry studio sound, steady volume, and a natural falling ending. The input is never part of a sentence. Do not add, omit, repeat, continue, explain, label, or improvise any words. Do not add background sound, an introduction, or a closing.",
-        response_format: format,
-        seed: TTS_SEED,
-        cfg_scale: 4,
-      }),
-      signal: abortController.signal,
+      body: JSON.stringify(requestBody),
     });
-  } catch (error) {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
+  } catch {
     return json(504, { error: "Qwen TTS did not start in time." });
   }
 
   if (!upstream.ok) {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
     return json(upstream.status, {
       error: `Qwen TTS request failed with HTTP ${upstream.status}.`,
     });
   }
 
-  let audioBody = upstream.body;
-  if (mode === "word" && format === "pcm") {
-    const wordAudio = await collectValidatedWordPcm(
-      upstream.body,
-      standaloneWordAudioLimit(input)
-    );
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    if (!wordAudio.ok) {
-      return json(422, { error: wordAudio.reason });
-    }
-    audioBody = wordAudio.audio;
-  }
-
-  const response = new Response(audioBody, {
+  const response = new Response(upstream.body, {
     headers: {
       "Content-Type": format === "pcm"
         ? "audio/pcm; rate=24000; channels=1"

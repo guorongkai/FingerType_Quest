@@ -47,10 +47,11 @@ single public Breeze profile with a fixed seed and a formal adult-female deliver
 instruction. Word and Dictation requests accept exactly one English headword.
 Before returning PCM to the page, the Worker verifies that Qwen completed a
 short, isolated-word response; overlong, empty, or timed-out audio is cancelled
-at the source and never cached. The page retains a matching playback cap as a
-second safeguard. Qwen streams PCM audio for faster playback; browser voice
-remains the automatic fallback for that one reading if cloud voice is
-temporarily unavailable or fails this safety check.
+at the source and retried once with a second fixed seed, then never cached if
+still unsafe. The page retains a matching playback cap as a second safeguard.
+Qwen streams PCM audio for faster playback; browser voice remains the automatic
+fallback for that one reading if cloud voice is temporarily unavailable or both
+safe Qwen attempts fail.
 
 ## How to play
 
