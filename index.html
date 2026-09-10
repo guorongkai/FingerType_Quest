@@ -3887,7 +3887,7 @@
         qwenAudioUrl: "",
         qwenPcmPlayback: null,
         qwenPcmCache: new Map(),
-        qwenPcmPreloads: new Map(),
+        browserVoiceKey: "",
         pendingDictationTransition: "",
         audioContext: null,
         shiftHeld: false,
@@ -6706,7 +6706,6 @@
             return;
           }
 
-          warmNextQwenTts();
           setHint(`Nice typing. Get ready for the next ${unitLabel(1)}.`, "success");
           state.advanceTimerId = setTimeout(() => {
             state.advanceTimerId = null;
@@ -6870,9 +6869,6 @@
           return;
         }
 
-        if (transition === "next") {
-          warmNextQwenTts();
-        }
         state.pendingDictationTransition = transition;
         clearSpeechTimers();
         updateDictationRevealControl();
@@ -6932,10 +6928,17 @@
           return null;
         }
 
+        const voiceKey = (voice) => voice.voiceURI || `${voice.name}:${voice.lang}`;
+        const rememberedVoice = voices.find((voice) => voiceKey(voice) === state.browserVoiceKey);
+        if (rememberedVoice) {
+          return rememberedVoice;
+        }
+
         const samantha = voices.find(
           (voice) => /^samantha\b/i.test(voice.name) && /^en-us/i.test(voice.lang)
         );
         if (samantha) {
+          state.browserVoiceKey = voiceKey(samantha);
           return samantha;
         }
 
@@ -6943,8 +6946,8 @@
           const name = voice.name.toLowerCase();
           let score = /^en-us/i.test(voice.lang) ? 30 : 0;
           if (/(natural|neural|premium|enhanced|siri)/i.test(name)) score += 240;
-          if (/(ava|flo|shelley|sandy)/i.test(name)) score += 160;
-          if (/(samantha|allison|zoe|karen|moira|tessa|nicky)/i.test(name)) score += 180;
+          if (/(ava|flo|shelley|sandy|jenny|aria|emma|libby|sonia|michelle|catherine|hazel|zira)/i.test(name)) score += 160;
+          if (/(samantha|allison|zoe|karen|moira|tessa|nicky|heera|susan|natasha)/i.test(name)) score += 180;
           if (/(alex|eddy|reed|daniel|david|guy|james|oliver|ryan|thomas)/i.test(name)) score -= 500;
           if (/online/i.test(name)) score += 30;
           if (voice.localService) score += 10;
@@ -6953,12 +6956,22 @@
           return score;
         };
 
-        return voices.sort((left, right) => scoreVoice(right) - scoreVoice(left))[0];
+        const selected = voices.sort((left, right) => scoreVoice(right) - scoreVoice(left))[0];
+        state.browserVoiceKey = voiceKey(selected);
+        return selected;
       }
 
       function speakWordOnce(word, callbacks = {}) {
         if (!els.voiceToggle.checked || !word) {
           callbacks.onerror?.();
+          return;
+        }
+
+        // Dictation must never turn a target word into additional spoken text.
+        // Native speech synthesizers receive only the text we supply, unlike a
+        // generative cloud model that can occasionally continue a phrase.
+        if (state.mode === "dictation" || state.mode === "word") {
+          speakBrowserWordOnce(word, callbacks);
           return;
         }
 
@@ -6997,47 +7010,6 @@
           offset += chunk.byteLength;
         });
         return audioBytes;
-      }
-
-      function warmQwenTts(word, mode = state.mode) {
-        if (
-          !els.voiceToggle.checked ||
-          !supportsPcmStreaming() ||
-          state.qwenTtsAvailable === false ||
-          !word
-        ) {
-          return;
-        }
-
-        const key = qwenPcmCacheKey(word, mode);
-        if (state.qwenPcmCache.has(key) || state.qwenPcmPreloads.has(key)) {
-          return;
-        }
-
-        const preload = fetch("/api/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ input: word, mode, format: "pcm" })
-        })
-          .then(async (response) => {
-            if (!response.ok) {
-              return null;
-            }
-            const audioBytes = new Uint8Array(await response.arrayBuffer());
-            rememberQwenPcm(key, audioBytes);
-            return audioBytes;
-          })
-          .catch(() => null);
-
-        state.qwenPcmPreloads.set(key, preload);
-        void preload.then(() => state.qwenPcmPreloads.delete(key));
-      }
-
-      function warmNextQwenTts() {
-        const nextWord = state.queue[state.wordIndex + 1];
-        if (nextWord) {
-          warmQwenTts(nextWord);
-        }
       }
 
       function appendAudioBytes(left, right) {
@@ -7183,23 +7155,18 @@
           if (cachedAudio) {
             response = new Response(cachedAudio);
           } else {
-            const preload = format === "pcm" ? state.qwenPcmPreloads.get(cacheKey) : null;
-            const preloadedAudio = preload ? await preload : null;
-            if (controller.signal.aborted || state.speechSessionId !== sessionId) {
-              return;
-            }
-            response = preloadedAudio
-              ? new Response(preloadedAudio)
-              : await fetch("/api/tts", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ input: word, mode, format }),
-                  signal: controller.signal
-                });
+            response = await fetch("/api/tts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ input: word, mode, format }),
+              signal: controller.signal
+            });
           }
 
           if (!response.ok) {
-            throw new Error(await qwenTtsErrorMessage(response));
+            const error = new Error(await qwenTtsErrorMessage(response));
+            error.status = response.status;
+            throw error;
           }
 
           state.qwenTtsAvailable = true;
@@ -7272,7 +7239,9 @@
           if (state.qwenSpeechController === controller) {
             state.qwenSpeechController = null;
           }
-          useBrowserVoiceFallback(word, callbacks, error.message);
+          useBrowserVoiceFallback(word, callbacks, error.message, {
+            disableQwen: shouldDisableQwenTts(error)
+          });
         }
       }
 
@@ -7288,11 +7257,28 @@
         return `The /api/tts endpoint returned HTTP ${response.status}.`;
       }
 
-      function useBrowserVoiceFallback(word, callbacks, reason = "Qwen TTS is unavailable.") {
-        if (state.qwenTtsAvailable !== false) {
+      function shouldDisableQwenTts(error) {
+        return (
+          [400, 401, 403, 404, 405].includes(error?.status) ||
+          /QWEN_API_KEY secret is missing/i.test(error?.message || "")
+        );
+      }
+
+      function useBrowserVoiceFallback(
+        word,
+        callbacks,
+        reason = "Qwen TTS is unavailable.",
+        { disableQwen = false } = {}
+      ) {
+        if (disableQwen && state.qwenTtsAvailable !== false) {
           state.qwenTtsAvailable = false;
           setHint(
             `Qwen voice is unavailable (${reason}) Using your browser voice instead.`,
+            "error"
+          );
+        } else if (!disableQwen && state.qwenTtsAvailable !== false) {
+          setHint(
+            `Cloud voice is temporarily busy (${reason}) Using your browser voice for this reading.`,
             "error"
           );
         }

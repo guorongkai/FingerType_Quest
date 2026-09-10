@@ -1,5 +1,5 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "formal-female-v1";
+const TTS_PROFILE_VERSION = "formal-female-v2";
 const TTS_SEED = 20260910;
 
 const json = (status, body) =>
@@ -79,8 +79,8 @@ export async function handleTts(request, env, waitUntil) {
       input,
       instructions:
         mode === "sentence"
-          ? "Use one consistent, professional adult female voice with neutral American English. Read the English sentence exactly as written, clearly and at a measured pace. Speak only the supplied sentence. Do not add, omit, repeat, explain, label, or improvise any words."
-          : "Use one consistent, professional adult female voice with neutral American English. Read the English word exactly as written, clearly and at a measured pace. Speak only the supplied word once. Do not add, omit, repeat, explain, label, or improvise any words.",
+          ? "Use one consistent, professional adult female voice with neutral American English. This is an exact-reading task: speak the supplied English sentence verbatim, once, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise any words. Do not use an introduction or closing."
+          : "Use one consistent, professional adult female voice with neutral American English. This is an exact-reading task: speak the supplied English word verbatim, once, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise any words. Do not use an introduction or closing.",
       response_format: format,
       seed: TTS_SEED,
       cfg_scale: 4,
