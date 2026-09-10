@@ -1,9 +1,10 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "isolated-word-guard-v9";
+const TTS_PROFILE_VERSION = "isolated-word-guard-v10";
 const TTS_SEED = 1;
 const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
 const WORD_RESPONSE_TIMEOUT_MS = 8000;
+const WORD_RECOVERY_INSTRUCTIONS = "Read the input as one isolated English dictionary headword, exactly once, in the same formal adult woman's neutral American voice. Use clear citation pronunciation and a low falling ending. Do not add, repeat, or continue words.";
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), {
@@ -199,6 +200,7 @@ export async function handleTts(request, env, waitUntil) {
       wordAudio = await fetchValidatedWordPcm(env, input, {
         ...requestBody,
         seed: TTS_RECOVERY_SEED,
+        instructions: WORD_RECOVERY_INSTRUCTIONS,
       });
     }
     if (!wordAudio.ok) {
