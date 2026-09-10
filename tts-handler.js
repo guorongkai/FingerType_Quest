@@ -1,5 +1,5 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
-const TTS_PROFILE_VERSION = "isolated-word-guard-v7";
+const TTS_PROFILE_VERSION = "isolated-word-guard-v8";
 const TTS_SEED = 1;
 const TTS_RECOVERY_SEED = 0;
 const PCM_BYTES_PER_SECOND = 24000 * 2;
@@ -21,7 +21,7 @@ async function digest(text) {
 
 function standaloneWordAudioLimit(word) {
   const letterCount = (word.match(/[a-z]/gi) || []).length;
-  const seconds = Math.min(1.35, Math.max(0.9, 0.58 + letterCount * 0.11));
+  const seconds = Math.min(1.1, Math.max(0.72, 0.42 + letterCount * 0.08));
   return Math.floor(seconds * PCM_BYTES_PER_SECOND);
 }
 
@@ -183,8 +183,8 @@ export async function handleTts(request, env, waitUntil) {
     input: speechInput,
     instructions:
       mode === "sentence"
-        ? "Use one consistent professional adult female narrator with neutral American English. Keep the same timbre, pitch, volume, studio microphone sound, and calm measured pace for every request. This is an exact-reading task: speak the supplied English sentence verbatim, once, with no introduction or closing, then stop immediately. Do not add, omit, repeat, continue, explain, label, or improvise words."
-        : "Speak exactly the one English dictionary headword in the input, once only. Use a single formal adult woman's voice with neutral General American pronunciation, clear consonants, dry studio sound, steady volume, and a natural falling ending. The input is never part of a sentence. Do not add, omit, repeat, continue, explain, label, or improvise any words. Do not add background sound, an introduction, or a closing.",
+        ? "Use one unchanging formal adult woman narrator identity for every request: neutral General American English, dry studio sound, steady volume, calm pace, and stable pitch. Do not alter the speaker's age, gender, accent, emotion, or delivery between sentences. Read the supplied English sentence verbatim once, with no introduction or closing, then stop. Do not add, omit, repeat, continue, explain, label, or improvise words."
+        : "Read the isolated English headword in the input once. Use one unchanging formal adult woman narrator: neutral General American English, dry studio sound, steady volume, calm pace, and stable pitch. Use careful dictionary citation pronunciation, never connected-speech reduction. Articulate every phoneme and all initial/final consonants. End with low neutral pitch, never question, greeting, or continuation intonation. Do not add, omit, repeat, continue, explain, label, or improvise.",
     response_format: format,
     seed: TTS_SEED,
     cfg_scale: 4,
