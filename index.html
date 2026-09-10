@@ -6635,6 +6635,9 @@
         clearSpeechQueue();
         state.streak = 0;
         state.dictationRevealHeld = false;
+        if (state.mode === "sentence") {
+          state.completedWords += 1;
+        }
         if (state.charIndex < currentTargetText().length) {
           addDictationHistoryWord(state.currentWord);
         }
