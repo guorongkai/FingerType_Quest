@@ -57,7 +57,15 @@ export async function handleTts(request, env, waitUntil) {
     )
   );
   const cached = await caches.default.match(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    const headers = new Headers(cached.headers);
+    headers.set("X-TTS-Cache", "HIT");
+    return new Response(cached.body, {
+      status: cached.status,
+      statusText: cached.statusText,
+      headers,
+    });
+  }
 
   const upstream = await fetch(QWEN_TTS_URL, {
     method: "POST",
@@ -91,9 +99,14 @@ export async function handleTts(request, env, waitUntil) {
         ? "audio/pcm; rate=24000; channels=1"
         : upstream.headers.get("Content-Type") || "audio/wav",
       "Cache-Control": "public, max-age=2592000",
+      "X-TTS-Cache": "MISS",
     },
   });
 
-  waitUntil?.(caches.default.put(cacheKey, response.clone()));
+  waitUntil?.(
+    caches.default.put(cacheKey, response.clone()).catch((error) => {
+      console.error("Unable to cache TTS audio.", error);
+    })
+  );
   return response;
 }
