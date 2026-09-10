@@ -3854,6 +3854,8 @@
       };
 
       const gradeOrder = ["K", "1", "2", "3", "4", "5", "6", "7", "8"];
+      const TTS_PCM_SAMPLE_RATE = 24000;
+      const TTS_PCM_INITIAL_BUFFER_BYTES = 4800;
 
       const state = {
         bankId: "grade:1",
@@ -3882,6 +3884,7 @@
         qwenSpeechController: null,
         qwenAudio: null,
         qwenAudioUrl: "",
+        qwenPcmPlayback: null,
         pendingDictationTransition: "",
         audioContext: null,
         shiftHeld: false,
@@ -6933,8 +6936,9 @@
           const name = voice.name.toLowerCase();
           let score = /^en-us/i.test(voice.lang) ? 30 : 0;
           if (/(natural|neural|premium|enhanced|siri)/i.test(name)) score += 240;
-          if (/(ava|eddy|flo|reed|shelley|sandy)/i.test(name)) score += 160;
-          if (/(samantha|alex|allison|zoe|karen|moira|tessa|nicky)/i.test(name)) score += 70;
+          if (/(ava|flo|shelley|sandy)/i.test(name)) score += 160;
+          if (/(samantha|allison|zoe|karen|moira|tessa|nicky)/i.test(name)) score += 180;
+          if (/(alex|eddy|reed|daniel|david|guy|james|oliver|ryan|thomas)/i.test(name)) score -= 500;
           if (/online/i.test(name)) score += 30;
           if (voice.localService) score += 10;
           if (voice.default) score += 5;
@@ -6959,22 +6963,165 @@
         void speakQwenWordOnce(word, callbacks);
       }
 
+      function supportsPcmStreaming() {
+        return Boolean(window.AudioContext || window.webkitAudioContext);
+      }
+
+      function appendAudioBytes(left, right) {
+        const combined = new Uint8Array(left.byteLength + right.byteLength);
+        combined.set(left);
+        combined.set(right, left.byteLength);
+        return combined;
+      }
+
+      function schedulePcmBytes(playback, bytes) {
+        const combined = appendAudioBytes(playback.trailingBytes, bytes);
+        const completeByteLength = combined.byteLength - (combined.byteLength % 2);
+        playback.trailingBytes = combined.slice(completeByteLength);
+        if (!completeByteLength) {
+          return;
+        }
+
+        const frameCount = completeByteLength / 2;
+        const buffer = playback.context.createBuffer(1, frameCount, TTS_PCM_SAMPLE_RATE);
+        const samples = buffer.getChannelData(0);
+        const view = new DataView(combined.buffer, combined.byteOffset, completeByteLength);
+        for (let index = 0; index < frameCount; index += 1) {
+          samples[index] = view.getInt16(index * 2, true) / 32768;
+        }
+
+        const source = playback.context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(playback.context.destination);
+        source.onended = () => {
+          playback.sources.delete(source);
+          if (playback.finished && playback.lastSource === source) {
+            playback.resolveFinished?.();
+          }
+        };
+
+        const startAt = Math.max(playback.nextStartAt, playback.context.currentTime + 0.02);
+        source.start(startAt);
+        playback.nextStartAt = startAt + buffer.duration;
+        playback.lastSource = source;
+        playback.sources.add(source);
+      }
+
+      async function playQwenPcmResponse(response, controller, sessionId) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const reader = response.body?.getReader();
+        if (!AudioContextClass || !reader) {
+          throw new Error("This browser cannot stream Qwen audio.");
+        }
+
+        if (!state.audioContext) {
+          state.audioContext = new AudioContextClass();
+        }
+        const context = state.audioContext;
+        if (context.state === "suspended") {
+          await context.resume();
+        }
+
+        const playback = {
+          context,
+          reader,
+          sources: new Set(),
+          trailingBytes: new Uint8Array(0),
+          nextStartAt: context.currentTime + 0.03,
+          lastSource: null,
+          finished: false,
+          stopped: false,
+          resolveFinished: null
+        };
+        state.qwenPcmPlayback = playback;
+
+        let initialBytes = new Uint8Array(0);
+        let playbackStarted = false;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (
+              controller.signal.aborted ||
+              playback.stopped ||
+              state.speechSessionId !== sessionId
+            ) {
+              return false;
+            }
+            if (done) {
+              break;
+            }
+
+            const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+            if (!playbackStarted) {
+              initialBytes = appendAudioBytes(initialBytes, chunk);
+              if (initialBytes.byteLength < TTS_PCM_INITIAL_BUFFER_BYTES) {
+                continue;
+              }
+              schedulePcmBytes(playback, initialBytes);
+              initialBytes = new Uint8Array(0);
+              playbackStarted = true;
+            } else {
+              schedulePcmBytes(playback, chunk);
+            }
+          }
+
+          if (!playbackStarted && initialBytes.byteLength) {
+            schedulePcmBytes(playback, initialBytes);
+            playbackStarted = true;
+          }
+          if (!playbackStarted || !playback.lastSource) {
+            throw new Error("Qwen returned empty audio.");
+          }
+
+          playback.finished = true;
+          await new Promise((resolve) => {
+            playback.resolveFinished = resolve;
+            if (!playback.sources.has(playback.lastSource)) {
+              resolve();
+            }
+          });
+          return !playback.stopped;
+        } finally {
+          if (state.qwenPcmPlayback === playback) {
+            state.qwenPcmPlayback = null;
+          }
+        }
+      }
+
       async function speakQwenWordOnce(word, callbacks) {
         const sessionId = state.speechSessionId;
         stopQwenSpeech();
         const controller = new AbortController();
         state.qwenSpeechController = controller;
+        const format = supportsPcmStreaming() ? "pcm" : "wav";
 
         try {
           const response = await fetch("/api/tts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ input: word, mode: state.mode }),
+            body: JSON.stringify({ input: word, mode: state.mode, format }),
             signal: controller.signal
           });
 
           if (!response.ok) {
             throw new Error(await qwenTtsErrorMessage(response));
+          }
+
+          state.qwenTtsAvailable = true;
+          if (format === "pcm") {
+            const completed = await playQwenPcmResponse(response, controller, sessionId);
+            if (
+              !completed ||
+              controller.signal.aborted ||
+              state.speechSessionId !== sessionId
+            ) {
+              return;
+            }
+            if (state.qwenSpeechController === controller) {
+              state.qwenSpeechController = null;
+            }
+            callbacks.onend?.();
+            return;
           }
 
           const audioBlob = await response.blob();
@@ -6983,7 +7130,6 @@
           }
 
           state.qwenSpeechController = null;
-          state.qwenTtsAvailable = true;
           const audioUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(audioUrl);
           state.qwenAudio = audio;
@@ -7083,6 +7229,23 @@
       function stopQwenSpeech() {
         state.qwenSpeechController?.abort();
         state.qwenSpeechController = null;
+
+        if (state.qwenPcmPlayback) {
+          const playback = state.qwenPcmPlayback;
+          state.qwenPcmPlayback = null;
+          playback.stopped = true;
+          void playback.reader?.cancel();
+          playback.sources.forEach((source) => {
+            source.onended = null;
+            try {
+              source.stop();
+            } catch {
+              // The source may already have ended.
+            }
+          });
+          playback.sources.clear();
+          playback.resolveFinished?.();
+        }
 
         if (state.qwenAudio) {
           state.qwenAudio.onended = null;

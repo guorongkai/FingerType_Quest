@@ -1,4 +1,6 @@
 const QWEN_TTS_URL = "https://qwen.daytether.ai/v1/audio/speech";
+const TTS_PROFILE_VERSION = "formal-female-v1";
+const TTS_SEED = 20260910;
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), {
@@ -42,13 +44,17 @@ export async function handleTts(request, env, waitUntil) {
     ? body.input.trim().replace(/\s+/g, " ")
     : "";
   const mode = body.mode === "sentence" ? "sentence" : "word";
+  const format = body.format === "pcm" ? "pcm" : "wav";
 
   if (!input || input.length > 1000) {
     return json(400, { error: "Input must be 1–1,000 characters." });
   }
 
   const cacheKey = new Request(
-    new URL(`/__tts-cache/${await digest(`${mode}:${input}`)}`, request.url)
+    new URL(
+      `/__tts-cache/${await digest(`${TTS_PROFILE_VERSION}:${format}:${mode}:${input}`)}`,
+      request.url
+    )
   );
   const cached = await caches.default.match(cacheKey);
   if (cached) return cached;
@@ -65,9 +71,11 @@ export async function handleTts(request, env, waitUntil) {
       input,
       instructions:
         mode === "sentence"
-          ? "Read only the English sentence clearly and naturally, at a calm pace suitable for a child practicing typing. Do not add extra words."
-          : "Say only the English word clearly and naturally, at a calm pace suitable for a child taking an English dictation test. Do not add extra words.",
-      response_format: "wav",
+          ? "Use one consistent, professional adult female voice with neutral American English. Read the English sentence exactly as written, clearly and at a measured pace. Speak only the supplied sentence. Do not add, omit, repeat, explain, label, or improvise any words."
+          : "Use one consistent, professional adult female voice with neutral American English. Read the English word exactly as written, clearly and at a measured pace. Speak only the supplied word once. Do not add, omit, repeat, explain, label, or improvise any words.",
+      response_format: format,
+      seed: TTS_SEED,
+      cfg_scale: 4,
     }),
   });
 
@@ -79,7 +87,9 @@ export async function handleTts(request, env, waitUntil) {
 
   const response = new Response(upstream.body, {
     headers: {
-      "Content-Type": upstream.headers.get("Content-Type") || "audio/wav",
+      "Content-Type": format === "pcm"
+        ? "audio/pcm; rate=24000; channels=1"
+        : upstream.headers.get("Content-Type") || "audio/wav",
       "Cache-Control": "public, max-age=2592000",
     },
   });

@@ -42,7 +42,10 @@ Then open [http://localhost:8788](http://localhost:8788). The `.dev.vars` file
 is intentionally ignored by Git, while the template is safe to share.
 
 The Worker configuration routes `/api/tts` to the cloud voice handler and
-serves all other requests from the static game assets.
+serves all other requests from the static game assets. Cloud voice uses Qwen's
+single public Breeze profile with a fixed seed and a formal adult-female delivery
+instruction. It streams PCM audio for a faster first playback; browser voice
+remains the automatic fallback if cloud voice is unavailable.
 
 ## How to play
 
