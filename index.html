@@ -3878,6 +3878,10 @@
         speechTimerIds: [],
         speechSessionId: 0,
         speechInFlight: false,
+        qwenTtsAvailable: null,
+        qwenSpeechController: null,
+        qwenAudio: null,
+        qwenAudioUrl: "",
         pendingDictationTransition: "",
         audioContext: null,
         shiftHeld: false,
@@ -6788,7 +6792,7 @@
       }
 
       function speakCurrentWord() {
-        if (!els.voiceToggle.checked || !("speechSynthesis" in window)) {
+        if (!els.voiceToggle.checked) {
           return;
         }
 
@@ -6869,7 +6873,7 @@
           "success"
         );
 
-        if (!els.voiceToggle.checked || !("speechSynthesis" in window) || !state.speechInFlight) {
+        if (!els.voiceToggle.checked || !state.speechInFlight) {
           schedulePendingDictationTransition();
         }
       }
@@ -6942,7 +6946,101 @@
       }
 
       function speakWordOnce(word, callbacks = {}) {
-        if (!els.voiceToggle.checked || !("speechSynthesis" in window) || !word) {
+        if (!els.voiceToggle.checked || !word) {
+          callbacks.onerror?.();
+          return;
+        }
+
+        if (state.qwenTtsAvailable === false) {
+          speakBrowserWordOnce(word, callbacks);
+          return;
+        }
+
+        void speakQwenWordOnce(word, callbacks);
+      }
+
+      async function speakQwenWordOnce(word, callbacks) {
+        const sessionId = state.speechSessionId;
+        stopQwenSpeech();
+        const controller = new AbortController();
+        state.qwenSpeechController = controller;
+
+        try {
+          const response = await fetch("/api/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input: word, mode: state.mode }),
+            signal: controller.signal
+          });
+
+          if (!response.ok) {
+            throw new Error(`Qwen TTS returned ${response.status}`);
+          }
+
+          const audioBlob = await response.blob();
+          if (controller.signal.aborted || state.speechSessionId !== sessionId) {
+            return;
+          }
+
+          state.qwenSpeechController = null;
+          state.qwenTtsAvailable = true;
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+          state.qwenAudio = audio;
+          state.qwenAudioUrl = audioUrl;
+
+          let settled = false;
+          const releaseAudio = () => {
+            if (state.qwenAudio === audio) {
+              state.qwenAudio = null;
+              state.qwenAudioUrl = "";
+            }
+            URL.revokeObjectURL(audioUrl);
+          };
+          const finish = () => {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            releaseAudio();
+            callbacks.onend?.();
+          };
+          const fail = () => {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            releaseAudio();
+            if (state.speechSessionId === sessionId) {
+              useBrowserVoiceFallback(word, callbacks);
+            }
+          };
+
+          audio.onended = finish;
+          audio.onerror = fail;
+          await audio.play();
+        } catch (error) {
+          if (controller.signal.aborted || state.speechSessionId !== sessionId) {
+            return;
+          }
+          if (state.qwenSpeechController === controller) {
+            state.qwenSpeechController = null;
+          }
+          useBrowserVoiceFallback(word, callbacks);
+        }
+      }
+
+      function useBrowserVoiceFallback(word, callbacks) {
+        if (state.qwenTtsAvailable !== false) {
+          state.qwenTtsAvailable = false;
+          setHint("Qwen voice is unavailable. Using your browser voice instead.", "error");
+        }
+        speakBrowserWordOnce(word, callbacks);
+      }
+
+      function speakBrowserWordOnce(word, callbacks = {}) {
+        if (!("speechSynthesis" in window) || !word) {
+          callbacks.onerror?.();
           return;
         }
 
@@ -6956,7 +7054,29 @@
         utterance.pitch = 1;
         utterance.onend = callbacks.onend || null;
         utterance.onerror = callbacks.onerror || null;
-        window.speechSynthesis.speak(utterance);
+        try {
+          window.speechSynthesis.speak(utterance);
+        } catch {
+          callbacks.onerror?.();
+        }
+      }
+
+      function stopQwenSpeech() {
+        state.qwenSpeechController?.abort();
+        state.qwenSpeechController = null;
+
+        if (state.qwenAudio) {
+          state.qwenAudio.onended = null;
+          state.qwenAudio.onerror = null;
+          state.qwenAudio.pause();
+          state.qwenAudio.removeAttribute("src");
+          state.qwenAudio.load();
+        }
+        state.qwenAudio = null;
+        if (state.qwenAudioUrl) {
+          URL.revokeObjectURL(state.qwenAudioUrl);
+        }
+        state.qwenAudioUrl = "";
       }
 
       function clearSpeechTimers() {
@@ -6979,6 +7099,7 @@
         state.speechSessionId += 1;
         state.speechInFlight = false;
         state.pendingDictationTransition = pendingTransition;
+        stopQwenSpeech();
         if ("speechSynthesis" in window) {
           window.speechSynthesis.cancel();
         }
@@ -7207,12 +7328,6 @@
         renderLibraryPage();
         previewRound();
         bindEvents();
-
-        if (!("speechSynthesis" in window)) {
-          els.voiceToggle.checked = false;
-          els.voiceToggle.disabled = true;
-          els.sayBtn.disabled = true;
-        }
 
         syncPageFromHash();
       }

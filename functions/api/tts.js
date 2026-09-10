@@ -33,14 +33,15 @@ export async function onRequestPost(context) {
   const input = typeof body.input === "string"
     ? body.input.trim().replace(/\s+/g, " ")
     : "";
+  const mode = body.mode === "sentence" ? "sentence" : "word";
 
-  if (!input || input.length > 100) {
-    return json(400, { error: "Input must be 1–100 characters." });
+  if (!input || input.length > 1000) {
+    return json(400, { error: "Input must be 1–1,000 characters." });
   }
 
-  // 相同单词复用边缘缓存，避免同一个词朗读三次时调用三次 Qwen。
+  // 相同文本与朗读方式复用边缘缓存，避免重复朗读时反复调用 Qwen。
   const cacheKey = new Request(
-    new URL(`/__tts-cache/${await digest(input)}`, request.url)
+    new URL(`/__tts-cache/${await digest(`${mode}:${input}`)}`, request.url)
   );
   const cached = await caches.default.match(cacheKey);
   if (cached) return cached;
@@ -56,7 +57,9 @@ export async function onRequestPost(context) {
       voice: "breeze",
       input,
       instructions:
-        "Say only the word clearly and naturally, at a calm pace suitable for a child taking an English dictation test. Do not add extra words.",
+        mode === "sentence"
+          ? "Read only the English sentence clearly and naturally, at a calm pace suitable for a child practicing typing. Do not add extra words."
+          : "Say only the English word clearly and naturally, at a calm pace suitable for a child taking an English dictation test. Do not add extra words.",
       response_format: "wav",
     }),
   });
