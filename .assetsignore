@@ -1,6 +1,7 @@
 # Server-side source and deployment configuration must not be public assets.
 _worker.js
 tts-handler.js
+qwen-bank-handler.js
 functions/**
 worker/**
 wrangler.jsonc

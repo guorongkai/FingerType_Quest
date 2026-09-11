@@ -1549,6 +1549,162 @@
         font-weight: 750;
       }
 
+      .import-review-dialog {
+        width: min(1040px, calc(100% - 28px));
+        max-width: none;
+        max-height: calc(100dvh - 28px);
+        margin: auto;
+        border: 1px solid #b8c8d8;
+        border-radius: calc(var(--radius) + 4px);
+        padding: 0;
+        background: #fff;
+        color: var(--ink);
+        box-shadow: 0 28px 80px rgba(32, 51, 69, 0.28);
+      }
+
+      .import-review-dialog::backdrop {
+        background: rgba(24, 39, 53, 0.58);
+        backdrop-filter: blur(3px);
+      }
+
+      .import-review-shell {
+        max-height: calc(100dvh - 30px);
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        overflow: hidden;
+      }
+
+      .import-review-header,
+      .import-review-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        background: #f8fafc;
+      }
+
+      .import-review-header {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .import-review-header h2 {
+        font-size: 1.2rem;
+        line-height: 1.15;
+      }
+
+      .import-review-header p {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 750;
+      }
+
+      .import-review-close {
+        flex: 0 0 auto;
+      }
+
+      .import-review-body {
+        min-height: 0;
+        overflow: auto;
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        padding: 14px 16px 16px;
+      }
+
+      .import-review-source {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #cde2df;
+        border-radius: var(--radius);
+        padding: 9px 10px;
+        background: #eefaf7;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      .import-method-badge {
+        min-height: 25px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 999px;
+        padding: 0 9px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 950;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .import-method-badge.fallback {
+        background: #9b6715;
+      }
+
+      .import-review-help {
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 750;
+        line-height: 1.4;
+      }
+
+      .import-review-fields {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .import-review-field {
+        min-width: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 7px;
+        border: 1px solid #d8e3ee;
+        border-radius: var(--radius);
+        padding: 10px;
+        background: #fbfcfd;
+      }
+
+      .import-review-field-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .import-review-field-head label {
+        font-size: 0.85rem;
+        font-weight: 950;
+      }
+
+      .import-review-textarea {
+        height: clamp(190px, 36dvh, 360px);
+        min-height: 150px;
+        resize: vertical;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.88rem;
+      }
+
+      .import-review-sentence-fields .import-review-textarea {
+        height: clamp(230px, 42dvh, 440px);
+      }
+
+      .import-review-status {
+        min-height: 1.4em;
+        color: var(--red);
+        font-size: 0.84rem;
+        font-weight: 850;
+      }
+
+      .import-review-footer {
+        justify-content: flex-end;
+        border-top: 1px solid var(--line);
+      }
+
       .mini-btn {
         min-height: 36px;
         border: 1px solid #c9d6e3;
@@ -2070,6 +2226,14 @@
         .library-editor {
           grid-template-rows: auto auto minmax(260px, 1fr) auto auto;
         }
+
+        .import-review-fields {
+          grid-template-columns: 1fr;
+        }
+
+        .import-review-textarea {
+          height: 180px;
+        }
       }
 
       @media (max-width: 560px) {
@@ -2358,7 +2522,7 @@
         <div class="local-library-summary">
           <span class="editor-kicker">Personal Library</span>
           <strong id="localFolderName">Browser storage</strong>
-          <p id="localFolderDetail">Choose a folder to keep your six custom Markdown banks on this device.</p>
+          <p id="localFolderDetail">Choose a folder to load your own Markdown word and sentence banks on this device.</p>
         </div>
         <div class="local-library-actions">
           <button class="btn primary" id="chooseLocalFolderBtn" type="button">Choose Folder</button>
@@ -2419,6 +2583,62 @@
         </section>
       </section>
     </main>
+
+    <dialog class="import-review-dialog" id="importReviewDialog" aria-labelledby="importReviewTitle">
+      <div class="import-review-shell">
+        <header class="import-review-header">
+          <div>
+            <h2 id="importReviewTitle">Review recognized items</h2>
+            <p id="importReviewSubtitle">Make any final changes before adding these items.</p>
+          </div>
+          <button class="icon-btn import-review-close" id="closeImportReviewBtn" type="button" aria-label="Cancel import">×</button>
+        </header>
+        <div class="import-review-body">
+          <div class="import-review-source">
+            <span class="import-method-badge" id="importReviewMethod">Qwen LLM</span>
+            <span id="importReviewSource"></span>
+          </div>
+          <p class="import-review-help" id="importReviewHelp"></p>
+          <div class="import-review-fields" id="wordImportReviewFields">
+            <section class="import-review-field">
+              <div class="import-review-field-head">
+                <label for="reviewSpellingWords">Spelling Words</label>
+                <span class="count-pill" id="reviewSpellingCount">0 words</span>
+              </div>
+              <textarea class="word-textarea import-review-textarea" id="reviewSpellingWords" spellcheck="true"></textarea>
+            </section>
+            <section class="import-review-field">
+              <div class="import-review-field-head">
+                <label for="reviewHighFrequencyWords">High Frequency Words</label>
+                <span class="count-pill" id="reviewHighFrequencyCount">0 words</span>
+              </div>
+              <textarea class="word-textarea import-review-textarea" id="reviewHighFrequencyWords" spellcheck="true"></textarea>
+            </section>
+            <section class="import-review-field">
+              <div class="import-review-field-head">
+                <label for="reviewCurrentWords">Current Word List</label>
+                <span class="count-pill" id="reviewCurrentWordCount">0 words</span>
+              </div>
+              <textarea class="word-textarea import-review-textarea" id="reviewCurrentWords" spellcheck="true"></textarea>
+            </section>
+          </div>
+          <div class="import-review-sentence-fields" id="sentenceImportReviewFields" hidden>
+            <section class="import-review-field">
+              <div class="import-review-field-head">
+                <label for="reviewCurrentSentences">Current Sentence List</label>
+                <span class="count-pill" id="reviewCurrentSentenceCount">0 sentences</span>
+              </div>
+              <textarea class="word-textarea import-review-textarea" id="reviewCurrentSentences" spellcheck="true"></textarea>
+            </section>
+          </div>
+          <p class="import-review-status" id="importReviewStatus" aria-live="polite"></p>
+        </div>
+        <footer class="import-review-footer">
+          <button class="btn" id="cancelImportReviewBtn" type="button">Cancel</button>
+          <button class="btn primary" id="confirmImportReviewBtn" type="button">Confirm &amp; Add</button>
+        </footer>
+      </div>
+    </dialog>
 
     <div class="screen-reader-only" id="liveStatus" aria-live="assertive"></div>
 
@@ -3525,8 +3745,37 @@
 
       const bankSourceById = new Map(bankSources.map((source) => [source.id, source]));
       const bankLibrary = new Map();
+      const defaultPersonalBankSources = bankSources.filter((source) =>
+        Object.prototype.hasOwnProperty.call(PERSONAL_BANK_FILE_NAMES, source.id)
+      );
+      const publicBankSources = bankSources.filter((source) =>
+        !Object.prototype.hasOwnProperty.call(PERSONAL_BANK_FILE_NAMES, source.id)
+      );
       let bankOverrides = {};
       let selectedLibraryBankId = "custom:current";
+
+      function activateBankSources(personalSources = null) {
+        const activeSources = personalSources === null
+          ? [...publicBankSources, ...defaultPersonalBankSources]
+          : [...publicBankSources, ...personalSources];
+        const activeIds = new Set(activeSources.map((source) => source.id));
+
+        bankSources.splice(0, bankSources.length, ...activeSources);
+        bankSourceById.clear();
+        activeSources.forEach((source) => bankSourceById.set(source.id, source));
+        [...bankLibrary.keys()].forEach((bankId) => {
+          if (!activeIds.has(bankId)) {
+            bankLibrary.delete(bankId);
+          }
+        });
+
+        if (!bankSourceById.has(state.bankId)) {
+          state.bankId = "grade:1";
+        }
+        if (!bankSourceById.has(selectedLibraryBankId)) {
+          selectedLibraryBankId = state.bankId;
+        }
+      }
 
       const shiftedCharacterMap = {
         "`": "~",
@@ -3881,6 +4130,11 @@
       const QWEN_PLAYBACK_RATE = 0.92;
       const QWEN_PCM_LEAD_IN_SECONDS = 0.15;
       const QWEN_PCM_TAIL_OUT_SECONDS = 0.18;
+      const QWEN_IMPORT_IMAGE_BATCH_SIZE = 8;
+      const QWEN_IMPORT_MAX_BATCH_IMAGE_CHARACTERS = 17 * 1024 * 1024;
+      const QWEN_IMPORT_MAX_IMAGE_DIMENSION = 1800;
+      const QWEN_IMPORT_MAX_PDF_PAGES = 40;
+      const QWEN_IMPORT_MAX_TEXT_CHARACTERS = 100000;
 
       const state = {
         bankId: "grade:1",
@@ -3938,6 +4192,8 @@
       let pdfJsModulePromise = null;
       let personalBankDirectoryHandle = null;
       let personalBankDirectoryPermission = "none";
+      let pendingImportReviewResolve = null;
+      let pendingImportReviewSource = null;
 
       const els = {
         practicePage: document.querySelector("#practicePage"),
@@ -3976,6 +4232,26 @@
         importNote: document.querySelector("#importNote"),
         importStatus: document.querySelector("#importStatus"),
         sourceFileInput: document.querySelector("#sourceFileInput"),
+        importReviewDialog: document.querySelector("#importReviewDialog"),
+        importReviewTitle: document.querySelector("#importReviewTitle"),
+        importReviewSubtitle: document.querySelector("#importReviewSubtitle"),
+        importReviewMethod: document.querySelector("#importReviewMethod"),
+        importReviewSource: document.querySelector("#importReviewSource"),
+        importReviewHelp: document.querySelector("#importReviewHelp"),
+        importReviewStatus: document.querySelector("#importReviewStatus"),
+        wordImportReviewFields: document.querySelector("#wordImportReviewFields"),
+        sentenceImportReviewFields: document.querySelector("#sentenceImportReviewFields"),
+        reviewSpellingWords: document.querySelector("#reviewSpellingWords"),
+        reviewHighFrequencyWords: document.querySelector("#reviewHighFrequencyWords"),
+        reviewCurrentWords: document.querySelector("#reviewCurrentWords"),
+        reviewCurrentSentences: document.querySelector("#reviewCurrentSentences"),
+        reviewSpellingCount: document.querySelector("#reviewSpellingCount"),
+        reviewHighFrequencyCount: document.querySelector("#reviewHighFrequencyCount"),
+        reviewCurrentWordCount: document.querySelector("#reviewCurrentWordCount"),
+        reviewCurrentSentenceCount: document.querySelector("#reviewCurrentSentenceCount"),
+        closeImportReviewBtn: document.querySelector("#closeImportReviewBtn"),
+        cancelImportReviewBtn: document.querySelector("#cancelImportReviewBtn"),
+        confirmImportReviewBtn: document.querySelector("#confirmImportReviewBtn"),
         sayBtn: document.querySelector("#sayBtn"),
         revealWordBtn: document.querySelector("#revealWordBtn"),
         nextBtn: document.querySelector("#nextBtn"),
@@ -4326,11 +4602,14 @@
       }
 
       function isPersonalBankSource(source) {
-        return Boolean(source && PERSONAL_BANK_FILE_NAMES[source.id]);
+        return Boolean(source && (source.fromPersonalFolder || PERSONAL_BANK_FILE_NAMES[source.id]));
       }
 
       function personalBankFileName(source) {
-        return isPersonalBankSource(source) ? PERSONAL_BANK_FILE_NAMES[source.id] : "";
+        if (!isPersonalBankSource(source)) {
+          return "";
+        }
+        return source.personalFileName || PERSONAL_BANK_FILE_NAMES[source.id] || source.file;
       }
 
       function supportsPersonalBankDirectory() {
@@ -4457,21 +4736,86 @@
           return [];
         }
 
+        const sources = [source];
         if (options.includeLinked !== false && source.id === "custom:current") {
-          return [source, bankSourceById.get("custom:all")];
+          sources.push(bankSourceById.get("custom:all"));
         }
 
         if (options.includeLinked !== false && source.id === "sentence:current") {
-          return [source, bankSourceById.get("sentence:all-imported")];
+          sources.push(bankSourceById.get("sentence:all-imported"));
         }
 
-        return [source];
+        (options.additionalSourceIds || []).forEach((bankId) => {
+          const additionalSource = bankSourceById.get(bankId);
+          if (additionalSource && isPersonalBankSource(additionalSource)) {
+            sources.push(additionalSource);
+          }
+        });
+
+        return [...new Map(sources.filter(Boolean).map((bankSource) => [bankSource.id, bankSource])).values()];
       }
 
       async function writeMarkdownToPersonalFile(fileHandle, markdown) {
         const writer = await fileHandle.createWritable();
         await writer.write(markdown);
         await writer.close();
+      }
+
+      function personalBankMetadataValue(markdown, field) {
+        const match = String(markdown).match(new RegExp(`^\\s*${field}:\\s*(.+?)\\s*$`, "im"));
+        return match ? match[1].trim() : "";
+      }
+
+      function personalBankHeading(markdown) {
+        const match = String(markdown).match(/^\s*#\s+(.+?)\s*$/m);
+        return match ? match[1].trim() : "";
+      }
+
+      function personalBankIdFromFileName(fileName) {
+        const slug = String(fileName)
+          .replace(/\.md$/i, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+        return `personal:${slug || "word-bank"}`;
+      }
+
+      function personalBankSourceFromFile(fileName, markdown, usedIds) {
+        const metadataId = personalBankMetadataValue(markdown, "id").toLowerCase();
+        const metadataType = personalBankMetadataValue(markdown, "type").toLowerCase();
+        const metadataLabel = personalBankMetadataValue(markdown, "label");
+        const inferredType = metadataType.includes("sentence") || /sentence/i.test(fileName)
+          ? "sentence"
+          : "word";
+        let id = /^(?:custom|sentence|personal):[a-z0-9][a-z0-9:-]*$/i.test(metadataId)
+          ? metadataId
+          : personalBankIdFromFileName(fileName);
+
+        if (publicBankSources.some((source) => source.id === id) || usedIds.has(id)) {
+          const baseId = personalBankIdFromFileName(fileName);
+          id = baseId;
+          let suffix = 2;
+          while (usedIds.has(id)) {
+            id = `${baseId}-${suffix}`;
+            suffix += 1;
+          }
+        }
+        usedIds.add(id);
+
+        const defaultSource = defaultPersonalBankSources.find((source) => source.id === id);
+        const label = metadataLabel || personalBankHeading(markdown) || fileName.replace(/\.md$/i, "");
+        return {
+          id,
+          label,
+          type: inferredType,
+          group: inferredType === "sentence" ? "Sentence Banks" : "Custom Word Banks",
+          file: fileName,
+          personalFileName: fileName,
+          fromPersonalFolder: true,
+          ...(defaultSource?.coversAll ? { coversAll: true } : {}),
+          ...(defaultSource?.coversAllUntil ? { coversAllUntil: defaultSource.coversAllUntil } : {}),
+          ...(!defaultSource ? { coversAll: true } : {})
+        };
       }
 
       async function loadPersonalBankDirectory(options = {}) {
@@ -4487,43 +4831,34 @@
           return { loaded: 0, created: 0, permission };
         }
 
-        let loaded = 0;
-        let created = 0;
-        const sources = bankSources.filter(isPersonalBankSource);
-
-        for (const source of sources) {
-          let fileHandle;
-          let createdFile = false;
-          try {
-            fileHandle = await personalBankDirectoryHandle.getFileHandle(personalBankFileName(source));
-          } catch (error) {
-            if (!options.createMissing || error?.name !== "NotFoundError") {
-              continue;
-            }
-            fileHandle = await personalBankDirectoryHandle.getFileHandle(personalBankFileName(source), {
-              create: true
-            });
-            createdFile = true;
-            created += 1;
+        const fileEntries = [];
+        for await (const [fileName, fileHandle] of personalBankDirectoryHandle.entries()) {
+          if (fileHandle.kind === "file" && /\.md$/i.test(fileName)) {
+            fileEntries.push({ fileName, fileHandle });
           }
+        }
+        fileEntries.sort((left, right) => left.fileName.localeCompare(right.fileName));
 
-          let markdown = await (await fileHandle.getFile()).text();
-          if (createdFile) {
-            markdown = formatBankMarkdown(source, itemsForBankId(source.id));
-            await writeMarkdownToPersonalFile(fileHandle, markdown);
-          }
+        const usedIds = new Set();
+        const records = [];
+        for (const { fileName, fileHandle } of fileEntries) {
+          const markdown = await (await fileHandle.getFile()).text();
+          const source = personalBankSourceFromFile(fileName, markdown, usedIds);
+          records.push({ source, markdown });
+        }
 
+        activateBankSources(records.map((record) => record.source));
+        records.forEach(({ source, markdown }) => {
           const items = parseBankItems(source, markdown);
           setPersonalBankItems(source, items);
           registerBankItems(source, items, markdown, "personal-folder");
-          loaded += 1;
-        }
+        });
 
-        if (loaded > 0) {
+        if (records.length > 0) {
           saveCustomBanks();
         }
 
-        return { loaded, created, permission };
+        return { loaded: records.length, created: 0, permission };
       }
 
       async function writePersonalBankDirectory(source, options = {}) {
@@ -4591,13 +4926,13 @@
 
         if (!connected) {
           els.localFolderName.textContent = "Browser storage";
-          els.localFolderDetail.textContent = "Choose a folder to keep your six custom Markdown banks on this device.";
+          els.localFolderDetail.textContent = "Choose a folder to load your own Markdown word and sentence banks on this device.";
           return;
         }
 
         els.localFolderName.textContent = personalBankDirectoryHandle.name;
         els.localFolderDetail.textContent = canRead
-          ? "Six personal Markdown banks are connected. Saving and importing keeps the folder in sync."
+          ? "Markdown banks are loaded from this folder. Files that are not here are not shown."
           : "Folder access needs permission again. Choose the folder to reconnect.";
       }
 
@@ -4646,12 +4981,14 @@
           }
 
           await savePersonalBankDirectory(handle);
-          const result = await loadPersonalBankDirectory({ createMissing: true, requestPermission: true });
+          const result = await loadPersonalBankDirectory({ requestPermission: true });
           renderBankOptions();
           previewRound();
           renderLibraryPage();
-          const createdText = result.created ? ` Created ${result.created} Markdown file${result.created === 1 ? "" : "s"}.` : "";
-          setBankStatus(`Connected personal folder ${handle.name}.${createdText}`, "success");
+          setBankStatus(
+            `Connected personal folder ${handle.name}. Found ${result.loaded} Markdown bank${result.loaded === 1 ? "" : "s"}.`,
+            "success"
+          );
         } catch (error) {
           if (error?.name === "AbortError") {
             setBankStatus("Folder selection cancelled.");
@@ -4690,6 +5027,10 @@
           await forgetPersonalBankDirectory();
           personalBankDirectoryHandle = null;
           personalBankDirectoryPermission = "none";
+          activateBankSources();
+          await loadMarkdownBankFiles({ force: true });
+          renderBankOptions();
+          previewRound();
           renderLibraryPage();
           setBankStatus("Disconnected personal folder. Your Markdown files were not changed.", "success");
         } catch (error) {
@@ -4712,7 +5053,7 @@
         const currentSentenceSource = bankSourceById.get("sentence:current");
         const allSentenceSource = bankSourceById.get("sentence:all-imported");
 
-        if (hasStoredCurrentWords || customCurrentWords.length > 0) {
+        if (currentSource && (hasStoredCurrentWords || customCurrentWords.length > 0)) {
           registerBankItems(
             currentSource,
             customCurrentWords,
@@ -4721,7 +5062,7 @@
           );
         }
 
-        if (hasStoredSpellingWords || customSpellingWords.length > 0) {
+        if (spellingSource && (hasStoredSpellingWords || customSpellingWords.length > 0)) {
           registerBankItems(
             spellingSource,
             customSpellingWords,
@@ -4730,7 +5071,7 @@
           );
         }
 
-        if (hasStoredHighFrequencyWords || customHighFrequencyWords.length > 0) {
+        if (highFrequencySource && (hasStoredHighFrequencyWords || customHighFrequencyWords.length > 0)) {
           registerBankItems(
             highFrequencySource,
             customHighFrequencyWords,
@@ -4739,7 +5080,7 @@
           );
         }
 
-        if (hasStoredAllWords || customAllWords.length > 0) {
+        if (allSource && (hasStoredAllWords || customAllWords.length > 0)) {
           registerBankItems(
             allSource,
             customAllWords,
@@ -4748,7 +5089,7 @@
           );
         }
 
-        if (hasStoredCurrentSentences || customCurrentSentenceItems.length > 0) {
+        if (currentSentenceSource && (hasStoredCurrentSentences || customCurrentSentenceItems.length > 0)) {
           registerBankItems(
             currentSentenceSource,
             customCurrentSentenceItems,
@@ -4757,7 +5098,7 @@
           );
         }
 
-        if (hasStoredAllSentences || customAllSentenceItems.length > 0) {
+        if (allSentenceSource && (hasStoredAllSentences || customAllSentenceItems.length > 0)) {
           registerBankItems(
             allSentenceSource,
             customAllSentenceItems,
@@ -4779,7 +5120,7 @@
       }
 
       async function loadMarkdownBankFiles(options = {}) {
-        const fetches = bankSources.map(async (source) => {
+        const fetches = bankSources.filter((source) => !source.fromPersonalFolder).map(async (source) => {
           try {
             const response = await fetch(`${source.file}?v=${Date.now()}`, { cache: "no-store" });
             if (!response.ok) {
@@ -4847,7 +5188,7 @@
         });
 
         const hasPrevious = [...els.bankSelect.options].some((option) => option.value === previous);
-        state.bankId = hasPrevious ? previous : state.mode === "sentence" ? "sentence:current" : "grade:1";
+        state.bankId = hasPrevious ? previous : bankSources[0]?.id || "grade:1";
         ensureBankMatchesMode();
         els.bankSelect.value = state.bankId;
       }
@@ -4952,12 +5293,18 @@
         const source = selectedBankSource();
 
         if (state.mode === "sentence" && source?.type !== "sentence") {
-          state.bankId = "sentence:current";
+          const sentenceSource = bankSources.find((bankSource) => bankSource.type === "sentence");
+          if (sentenceSource) {
+            state.bankId = sentenceSource.id;
+          } else {
+            state.mode = "word";
+            state.bankId = bankSources.find((bankSource) => bankSource.type !== "sentence")?.id || "grade:1";
+          }
           return;
         }
 
         if (state.mode !== "sentence" && source?.type === "sentence") {
-          state.bankId = "grade:1";
+          state.bankId = bankSources.find((bankSource) => bankSource.type !== "sentence")?.id || "grade:1";
         }
       }
 
@@ -5005,7 +5352,12 @@
       }
 
       function renderLibraryEditor() {
-        const source = bankSourceById.get(selectedLibraryBankId) || bankSourceById.get("custom:current");
+        const source = bankSourceById.get(selectedLibraryBankId)
+          || selectedBankSource()
+          || bankSources[0];
+        if (!source) {
+          return;
+        }
         const entry = bankLibrary.get(source.id);
         const items = itemsForBankId(source.id);
 
@@ -5023,11 +5375,7 @@
       function canImportFileInto(source) {
         return [
           "custom:current",
-          "custom:spelling",
-          "custom:high-frequency",
-          "custom:all",
-          "sentence:current",
-          "sentence:all-imported"
+          "sentence:current"
         ].includes(source?.id);
       }
 
@@ -5045,20 +5393,11 @@
           return;
         }
 
-        const replacesCurrentList = [
-          "custom:current",
-          "custom:spelling",
-          "custom:high-frequency",
-          "sentence:current"
-        ].includes(source.id);
-        const isSentenceList = source.type === "sentence";
         els.importTitle.textContent = `Add to ${source.label}`;
-        if (source.id === "custom:current" || source.id === "sentence:current") {
-          els.importNote.textContent = `Upload an image, PDF, TXT, or Markdown file. It replaces this list and also adds its ${isSentenceList ? "sentences" : "words"} to ${isSentenceList ? "All Imported Sentence List" : "All Added Words"}.`;
-        } else if (replacesCurrentList) {
-          els.importNote.textContent = "Upload an image, PDF, TXT, or Markdown file. It replaces this list without changing other custom lists.";
+        if (source.id === "custom:current") {
+          els.importNote.textContent = "Upload an image, PDF, TXT, or Markdown file. Qwen identifies Current, Spelling, and High Frequency words; browser recognition takes over if Qwen is unavailable. You can edit everything before it is added.";
         } else {
-          els.importNote.textContent = `Upload an image, PDF, TXT, or Markdown file. Its ${isSentenceList ? "sentences" : "words"} are added to this list without changing the Current List.`;
+          els.importNote.textContent = "Upload an image, PDF, TXT, or Markdown file. Qwen identifies complete practice sentences; browser recognition takes over if Qwen is unavailable. You can edit everything before it is added.";
         }
         els.sourceFileInput.value = "";
         setImportStatus("");
@@ -5232,6 +5571,193 @@
         return file.type.startsWith("text/") || /\.(?:md|text|txt)$/i.test(file.name);
       }
 
+      function canvasToJpegDataUrl(canvas) {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error("Could not prepare an image for Qwen."));
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ""));
+            reader.onerror = () => reject(new Error("Could not read the prepared image."));
+            reader.readAsDataURL(blob);
+          }, "image/jpeg", 0.84);
+        });
+      }
+
+      async function prepareImageForQwen(file) {
+        const bitmap = await createImageBitmap(file);
+        try {
+          const scale = Math.min(
+            1,
+            QWEN_IMPORT_MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height)
+          );
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+          canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+          const context = canvas.getContext("2d");
+          if (!context) {
+            throw new Error("Could not prepare the image for Qwen.");
+          }
+          context.fillStyle = "#fff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          return canvasToJpegDataUrl(canvas);
+        } finally {
+          bitmap.close?.();
+        }
+      }
+
+      async function preparePdfPagesForQwen(file) {
+        const pdfjs = await loadPdfJs();
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const loadingTask = pdfjs.getDocument({ data: bytes });
+        const pdf = await loadingTask.promise;
+        if (pdf.numPages > QWEN_IMPORT_MAX_PDF_PAGES) {
+          throw new Error(`Qwen import supports up to ${QWEN_IMPORT_MAX_PDF_PAGES} PDF pages at a time.`);
+        }
+
+        const images = [];
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          setImportStatus(`Preparing PDF page ${pageNumber} of ${pdf.numPages} for Qwen…`);
+          const page = await pdf.getPage(pageNumber);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const scale = Math.min(
+            2,
+            QWEN_IMPORT_MAX_IMAGE_DIMENSION / Math.max(baseViewport.width, baseViewport.height)
+          );
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          const context = canvas.getContext("2d");
+          if (!context) {
+            throw new Error("Could not prepare the PDF for Qwen.");
+          }
+          context.fillStyle = "#fff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: context, viewport }).promise;
+          images.push(await canvasToJpegDataUrl(canvas));
+          page.cleanup?.();
+        }
+        return images;
+      }
+
+      async function qwenRecognitionRequest(payload) {
+        const response = await fetch("/api/recognize-bank", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        let responseBody = null;
+        try {
+          responseBody = await response.json();
+        } catch {
+          // A static-only local server has no API route; browser recognition will take over.
+        }
+
+        if (!response.ok) {
+          throw new Error(responseBody?.error || `Qwen recognition returned HTTP ${response.status}.`);
+        }
+        if (!responseBody?.result) {
+          throw new Error("Qwen returned an empty recognition result.");
+        }
+        return responseBody.result;
+      }
+
+      function mergeQwenRecognition(target, result, mode) {
+        if (mode === "sentence") {
+          target.sentences.push(...(Array.isArray(result.sentences) ? result.sentences : []));
+          return;
+        }
+
+        target.current.push(...(Array.isArray(result.current) ? result.current : []));
+        target.spelling.push(...(Array.isArray(result.spelling) ? result.spelling : []));
+        target.highFrequency.push(...(Array.isArray(result.highFrequency) ? result.highFrequency : []));
+      }
+
+      async function recognizeUploadedFileWithQwen(file, source) {
+        const mode = source.type === "sentence" ? "sentence" : "word";
+        const aggregate = mode === "sentence"
+          ? { sentences: [] }
+          : { current: [], spelling: [], highFrequency: [] };
+        let requests;
+
+        if (isTextFile(file)) {
+          const text = (await file.text()).trim();
+          if (!text) {
+            throw new Error("The selected text file is empty.");
+          }
+          if (text.length > QWEN_IMPORT_MAX_TEXT_CHARACTERS) {
+            throw new Error("The text file is too large for one Qwen request.");
+          }
+          requests = [{ mode, text }];
+        } else {
+          const images = isPdfFile(file)
+            ? await preparePdfPagesForQwen(file)
+            : isImageFile(file)
+              ? [await prepareImageForQwen(file)]
+              : null;
+          if (!images) {
+            throw new Error("Choose an image, PDF, TXT, or Markdown file.");
+          }
+          requests = [];
+          let batch = [];
+          let batchCharacters = 0;
+          images.forEach((image) => {
+            if (image.length > QWEN_IMPORT_MAX_BATCH_IMAGE_CHARACTERS) {
+              throw new Error("One prepared page is too large for Qwen.");
+            }
+            if (
+              batch.length >= QWEN_IMPORT_IMAGE_BATCH_SIZE ||
+              batchCharacters + image.length > QWEN_IMPORT_MAX_BATCH_IMAGE_CHARACTERS
+            ) {
+              requests.push({ mode, images: batch });
+              batch = [];
+              batchCharacters = 0;
+            }
+            batch.push(image);
+            batchCharacters += image.length;
+          });
+          if (batch.length) {
+            requests.push({ mode, images: batch });
+          }
+        }
+
+        for (let index = 0; index < requests.length; index += 1) {
+          const pageText = requests.length > 1 ? ` batch ${index + 1} of ${requests.length}` : "";
+          setImportStatus(`Qwen is recognizing ${file.name}${pageText}…`);
+          mergeQwenRecognition(
+            aggregate,
+            await qwenRecognitionRequest(requests[index]),
+            mode
+          );
+        }
+
+        if (mode === "sentence") {
+          const sentences = parseSentences(aggregate.sentences.join("\n"));
+          if (!sentences.length) {
+            throw new Error("Qwen did not find any complete English sentences.");
+          }
+          return { sentences };
+        }
+
+        const spelling = parseWords(aggregate.spelling.join(" "));
+        const highFrequency = parseWords(aggregate.highFrequency.join(" "));
+        const current = parseWords([
+          ...aggregate.current,
+          ...spelling,
+          ...highFrequency
+        ].join(" "));
+        if (!current.length) {
+          throw new Error("Qwen did not find any English practice words.");
+        }
+        return { current, spelling, highFrequency };
+      }
+
       async function extractUploadedFileText(file, source) {
         if (isImageFile(file)) {
           return extractImageText(file, source?.type === "word");
@@ -5282,37 +5808,225 @@
         return [...words, ...recoveredShortWords];
       }
 
+      function parseUploadedWordLists(text) {
+        const rawText = String(text);
+        const [textWithCrops] = rawText.split("\n[[OCR short-word recovery]]\n");
+        const isOcrResult = rawText.includes("[[OCR ");
+        const headingWords = new Set([
+          "spelling",
+          "vocabulary",
+          "word",
+          "words",
+          "high",
+          "frequency",
+          "review",
+          "kickin",
+          "kreations"
+        ]);
+        const classified = {
+          spelling: [],
+          highFrequency: []
+        };
+        const sectionPattern = /\b(spelling\s+words?|high\s+frequency\s+words?|review\s+words?)\b/gi;
+
+        textWithCrops.split("\n[[OCR word-list crop]]\n").forEach((segment) => {
+          const importText = stripMarkdownControlLines(segment);
+          const headings = [...importText.matchAll(sectionPattern)];
+
+          headings.forEach((heading, index) => {
+            const headingText = heading[1].toLowerCase();
+            const sectionStart = (heading.index || 0) + heading[0].length;
+            const sectionEnd = index + 1 < headings.length
+              ? headings[index + 1].index
+              : importText.length;
+            const items = parseWords(importText.slice(sectionStart, sectionEnd)).filter((word) => {
+              if (headingWords.has(word)) {
+                return false;
+              }
+              return !isOcrResult || word.length > 1 || word === "a" || word === "i";
+            });
+
+            if (headingText.startsWith("spelling")) {
+              classified.spelling.push(...items);
+            } else {
+              classified.highFrequency.push(...items);
+            }
+          });
+        });
+
+        classified.spelling = [...new Set(classified.spelling)];
+        classified.highFrequency = [...new Set(classified.highFrequency)];
+        const categorizedItems = [...new Set([
+          ...classified.spelling,
+          ...classified.highFrequency
+        ])];
+
+        return {
+          current: categorizedItems.length > 0 ? categorizedItems : parseUploadedWordList(text),
+          ...classified
+        };
+      }
+
       function parseUploadedSentenceList(text) {
         return parseSentences(stripMarkdownControlLines(text));
       }
 
-      async function saveImportedItems(source, items, fileName) {
+      async function recognizeUploadedFile(file, source) {
+        try {
+          const result = await recognizeUploadedFileWithQwen(file, source);
+          return { method: "qwen", result, fallbackReason: "" };
+        } catch (qwenError) {
+          const fallbackReason = qwenError instanceof Error
+            ? qwenError.message
+            : "Qwen recognition was unavailable.";
+          setImportStatus("Qwen is unavailable. Using browser recognition as a fallback…");
+
+          try {
+            const text = await extractUploadedFileText(file, source);
+            const result = source.type === "word"
+              ? parseUploadedWordLists(text)
+              : { sentences: parseUploadedSentenceList(text) };
+            const items = source.type === "word" ? result.current : result.sentences;
+            if (!items.length) {
+              throw new Error(source.type === "sentence"
+                ? "No complete English sentences were found."
+                : "No English words were found.");
+            }
+            return { method: "browser", result, fallbackReason };
+          } catch (fallbackError) {
+            const fallbackMessage = fallbackError instanceof Error
+              ? fallbackError.message
+              : "Browser recognition failed.";
+            throw new Error(`Qwen recognition was unavailable, and browser recognition could not finish: ${fallbackMessage}`);
+          }
+        }
+      }
+
+      function updateImportReviewCounts() {
+        els.reviewSpellingCount.textContent = formatItemCount(
+          parseWords(els.reviewSpellingWords.value).length,
+          "word"
+        );
+        els.reviewHighFrequencyCount.textContent = formatItemCount(
+          parseWords(els.reviewHighFrequencyWords.value).length,
+          "word"
+        );
+        els.reviewCurrentWordCount.textContent = formatItemCount(
+          parseWords(els.reviewCurrentWords.value).length,
+          "word"
+        );
+        els.reviewCurrentSentenceCount.textContent = formatItemCount(
+          parseSentences(els.reviewCurrentSentences.value).length,
+          "sentence"
+        );
+      }
+
+      function finishImportReview(value) {
+        const resolve = pendingImportReviewResolve;
+        pendingImportReviewResolve = null;
+        pendingImportReviewSource = null;
+        if (els.importReviewDialog.open) {
+          els.importReviewDialog.close();
+        }
+        resolve?.(value);
+      }
+
+      function cancelImportReview() {
+        finishImportReview(null);
+      }
+
+      function confirmImportReview() {
+        if (!pendingImportReviewResolve) {
+          return;
+        }
+
+        const source = pendingImportReviewSource;
+        if (!source || !canImportFileInto(source)) {
+          els.importReviewStatus.textContent = "The selected bank is no longer available.";
+          return;
+        }
+
+        if (source.type === "sentence") {
+          const items = parseSentences(els.reviewCurrentSentences.value);
+          if (!items.length) {
+            els.importReviewStatus.textContent = "Add at least one complete English sentence before confirming.";
+            els.reviewCurrentSentences.focus();
+            return;
+          }
+          finishImportReview({ items, classifiedWordLists: null });
+          return;
+        }
+
+        const items = parseWords(els.reviewCurrentWords.value);
+        if (!items.length) {
+          els.importReviewStatus.textContent = "Add at least one English word to Current Word List before confirming.";
+          els.reviewCurrentWords.focus();
+          return;
+        }
+        finishImportReview({
+          items,
+          classifiedWordLists: {
+            spelling: parseWords(els.reviewSpellingWords.value),
+            highFrequency: parseWords(els.reviewHighFrequencyWords.value)
+          }
+        });
+      }
+
+      function openImportReview(source, fileName, recognition) {
+        const isSentence = source.type === "sentence";
+        const methodIsQwen = recognition.method === "qwen";
+        const result = recognition.result;
+
+        els.importReviewTitle.textContent = isSentence
+          ? "Review Current Sentence List"
+          : "Review Recognized Word Lists";
+        els.importReviewSubtitle.textContent = "Make any final changes. Nothing is added until you confirm.";
+        els.importReviewMethod.textContent = methodIsQwen ? "Qwen LLM" : "Browser fallback";
+        els.importReviewMethod.classList.toggle("fallback", !methodIsQwen);
+        els.importReviewSource.textContent = methodIsQwen
+          ? `${fileName} was recognized with Qwen.`
+          : `${fileName} was recognized in the browser because Qwen was unavailable.`;
+        els.wordImportReviewFields.hidden = isSentence;
+        els.sentenceImportReviewFields.hidden = !isSentence;
+        els.importReviewHelp.textContent = isSentence
+          ? "Each confirmed sentence replaces Current Sentence List and is also added to All Imported Sentence List."
+          : "Current Word List is replaced and also added to All Added Words. Non-empty Spelling and High Frequency fields update those lists; an empty category leaves its existing list unchanged.";
+        els.reviewSpellingWords.value = (result.spelling || []).join("\n");
+        els.reviewHighFrequencyWords.value = (result.highFrequency || []).join("\n");
+        els.reviewCurrentWords.value = (result.current || []).join("\n");
+        els.reviewCurrentSentences.value = (result.sentences || []).join("\n");
+        els.importReviewStatus.textContent = "";
+        updateImportReviewCounts();
+
+        return new Promise((resolve) => {
+          pendingImportReviewResolve = resolve;
+          pendingImportReviewSource = source;
+          els.importReviewDialog.showModal();
+          requestAnimationFrame(() => {
+            (isSentence ? els.reviewCurrentSentences : els.reviewCurrentWords).focus();
+          });
+        });
+      }
+
+      async function saveImportedItems(source, items, fileName, classifiedWordLists = null) {
         if (source.id === "custom:current") {
           customCurrentWords = items;
           customAllWords = parseWords([...customAllWords, ...items].join(" "));
           hasStoredCurrentWords = true;
           hasStoredAllWords = true;
-          state.mode = "word";
-        } else if (source.id === "custom:spelling") {
-          customSpellingWords = items;
-          hasStoredSpellingWords = true;
-          state.mode = "word";
-        } else if (source.id === "custom:high-frequency") {
-          customHighFrequencyWords = items;
-          hasStoredHighFrequencyWords = true;
-          state.mode = "word";
-        } else if (source.id === "custom:all") {
-          customAllWords = parseWords([...customAllWords, ...items].join(" "));
-          hasStoredAllWords = true;
+          if (classifiedWordLists?.spelling.length > 0) {
+            customSpellingWords = classifiedWordLists.spelling;
+            hasStoredSpellingWords = true;
+          }
+          if (classifiedWordLists?.highFrequency.length > 0) {
+            customHighFrequencyWords = classifiedWordLists.highFrequency;
+            hasStoredHighFrequencyWords = true;
+          }
           state.mode = "word";
         } else if (source.id === "sentence:current") {
           customCurrentSentenceItems = items;
           customAllSentenceItems = parseSentences([...customAllSentenceItems, ...items].join("\n"));
           hasStoredCurrentSentences = true;
-          hasStoredAllSentences = true;
-          state.mode = "sentence";
-        } else {
-          customAllSentenceItems = parseSentences([...customAllSentenceItems, ...items].join("\n"));
           hasStoredAllSentences = true;
           state.mode = "sentence";
         }
@@ -5321,7 +6035,13 @@
         selectedLibraryBankId = source.id;
         saveCustomBanks();
         syncCustomBanksIntoLibrary();
-        const folderStatus = await syncPersonalBankDirectoryAfterSave(source);
+        const additionalSourceIds = source.id === "custom:current"
+          ? [
+              ...(classifiedWordLists?.spelling.length ? ["custom:spelling"] : []),
+              ...(classifiedWordLists?.highFrequency.length ? ["custom:high-frequency"] : [])
+            ]
+          : [];
+        const folderStatus = await syncPersonalBankDirectoryAfterSave(source, { additionalSourceIds });
         renderBankOptions();
         applyModeButtons();
         previewRound();
@@ -5332,19 +6052,21 @@
           : source.id === "sentence:current"
             ? bankSourceById.get("sentence:all-imported")
             : null;
-        const replacesCurrentList = [
-          "custom:current",
-          "custom:spelling",
-          "custom:high-frequency",
-          "sentence:current"
-        ].includes(source.id);
-        const action = replacesCurrentList
-          ? `Replaced ${source.label} with ${formatItemCount(items.length, source.type)} from ${fileName}.`
-          : `Added ${formatItemCount(items.length, source.type)} from ${fileName} to ${source.label}.`;
+        const action = `Replaced ${source.label} with ${formatItemCount(items.length, source.type)} from ${fileName}.`;
         const linkedSummary = linkedAllSource
           ? ` ${linkedAllSource.label} now has ${formatItemCount(itemsForBankId(linkedAllSource.id).length, source.type)}.`
           : "";
-        setBankStatus(`${action}${linkedSummary}${folderStatus}`, "success");
+        const classifications = source.id === "custom:current"
+          ? [
+              classifiedWordLists?.spelling.length
+                ? ` Spelling Words: ${formatItemCount(classifiedWordLists.spelling.length)}.`
+                : "",
+              classifiedWordLists?.highFrequency.length
+                ? ` High Frequency Words: ${formatItemCount(classifiedWordLists.highFrequency.length)}.`
+                : ""
+            ].join("")
+          : "";
+        setBankStatus(`${action}${linkedSummary}${classifications}${folderStatus}`, "success");
         setImportStatus("Import complete.", "success");
       }
 
@@ -5357,19 +6079,21 @@
 
         els.sourceFileInput.disabled = true;
         try {
-          setImportStatus(`Reading ${file.name}…`);
-          const text = await extractUploadedFileText(file, source);
-          const items = source.type === "sentence"
-            ? parseUploadedSentenceList(text)
-            : parseUploadedWordList(text);
-
-          if (items.length === 0) {
-            throw new Error(source.type === "sentence"
-              ? "No complete English sentences were found in this file."
-              : "No English words were found in this file.");
+          setImportStatus(`Preparing ${file.name} for Qwen…`);
+          const recognition = await recognizeUploadedFile(file, source);
+          setImportStatus("Recognition complete. Review the results before adding them.");
+          const reviewed = await openImportReview(source, file.name, recognition);
+          if (!reviewed) {
+            setImportStatus("Import canceled.");
+            return;
           }
-
-          await saveImportedItems(source, items, file.name);
+          setImportStatus("Saving confirmed items…");
+          await saveImportedItems(
+            source,
+            reviewed.items,
+            file.name,
+            reviewed.classifiedWordLists
+          );
         } catch (error) {
           const message = error instanceof Error ? error.message : "The file could not be imported.";
           setImportStatus(message, "error");
@@ -5428,6 +6152,8 @@
           hasStoredAllSentences = true;
           saveCustomBanks();
           syncCustomBanksIntoLibrary();
+        } else if (source.fromPersonalFolder) {
+          registerBankItems(source, items, formatBankMarkdown(source, items), "personal-folder");
         } else {
           bankOverrides[source.id] = formatBankMarkdown(source, items);
           saveBankOverrides();
@@ -5506,9 +6232,13 @@
           return;
         }
 
-        setPersonalBankItems(source, []);
-        saveCustomBanks();
-        syncCustomBanksIntoLibrary();
+        if (source.fromPersonalFolder && !Object.prototype.hasOwnProperty.call(PERSONAL_BANK_FILE_NAMES, source.id)) {
+          registerBankItems(source, [], formatBankMarkdown(source, []), "personal-folder");
+        } else {
+          setPersonalBankItems(source, []);
+          saveCustomBanks();
+          syncCustomBanksIntoLibrary();
+        }
         state.bankId = source.id;
         state.mode = source.type === "sentence" ? "sentence" : "word";
         const folderStatus = await syncPersonalBankDirectoryAfterSave(source, { includeLinked: false });
@@ -7629,6 +8359,24 @@
 
         els.sourceFileInput.addEventListener("change", async () => {
           await importSelectedFile();
+        });
+        [
+          els.reviewSpellingWords,
+          els.reviewHighFrequencyWords,
+          els.reviewCurrentWords,
+          els.reviewCurrentSentences
+        ].forEach((textarea) => {
+          textarea.addEventListener("input", () => {
+            els.importReviewStatus.textContent = "";
+            updateImportReviewCounts();
+          });
+        });
+        els.closeImportReviewBtn.addEventListener("click", cancelImportReview);
+        els.cancelImportReviewBtn.addEventListener("click", cancelImportReview);
+        els.confirmImportReviewBtn.addEventListener("click", confirmImportReview);
+        els.importReviewDialog.addEventListener("cancel", (event) => {
+          event.preventDefault();
+          cancelImportReview();
         });
 
         els.startBtn.addEventListener("click", startRound);

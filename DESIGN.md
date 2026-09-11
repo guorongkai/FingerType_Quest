@@ -2,9 +2,9 @@
 
 ## 1. 版本关系
 
-本文件描述当前 Alpha 版本：`index.html` 与其 Cloudflare Worker 语音路由。
+本文件描述当前 Alpha 版本：`index.html` 与其 Cloudflare Worker 语音及文件识别路由。
 
-当前版本使用 `index.html`、`DESIGN.md`、根目录的 `banks/*.md`，以及仅用于 Qwen TTS 的 Worker。为了读取旁边的 Markdown 词库文件，推荐通过本地静态服务打开 `index.html`；若需要测试云端语音，则运行 Worker 本地开发服务器。
+当前版本使用 `index.html`、`DESIGN.md`、根目录的 `banks/*.md`，以及用于 Qwen TTS 和词库识别的 Worker。为了读取旁边的 Markdown 词库文件，推荐通过本地静态服务打开 `index.html`；若需要测试 Qwen 云端功能，则运行 Worker 本地开发服务器。
 
 维护规则：任何影响用户可见行为、数据流、部署方式或外部服务的功能更新，必须在同一次更新中同步修改本设计文档和验收记录。
 
@@ -19,7 +19,7 @@
 - 新增 `Sentence Practice`，训练大小写、空格和标点符号。
 - 支持从电子书文本或电影脚本文本中提取句子，生成可练习的句子库。
 - 新增更明确的数据加载、浏览器保存、导入、导出和重置策略。
-- 支持每位用户授权一个自己的本地资料库文件夹，把六个自定义 bank 独立保存为 Markdown 文件；该能力不需要登录或后端。
+- 支持每位用户授权一个自己的本地资料库文件夹；文件夹中的 Markdown 文件会动态成为该用户的自定义 word/sentence bank，不需要登录或后端。
 
 ## 3. 文件结构
 
@@ -92,7 +92,7 @@ Bank Library 包含一个个人资料库工具栏和两列管理区：
 
 - 个人资料库工具栏：连接、重载或断开用户本地文件夹。
 - 左侧：所有 bank 列表。
-- 右侧：选中 bank 的 Markdown 编辑器和对应的导入区。六个自定义 bank 都支持从图片、PDF、TXT 或 Markdown 导入。
+- 右侧：选中 bank 的 Markdown 编辑器；只有两个 Current bank 显示导入区，避免向汇总或分类列表重复上传。
 
 左侧 bank 分组：
 
@@ -110,21 +110,23 @@ Bank Library 包含一个个人资料库工具栏和两列管理区：
 - `Save Bank`
 - `Use in Practice`
 - `Export Markdown`
-- `Clear This List`：仅在六个自定义 bank 显示；清空当前选中的列表，不影响其他自定义列表。
+- `Clear This List`：仅在当前可见的个人 bank 显示；清空当前选中的列表，不影响其他自定义列表。
 - `Reset Browser Edits`
 
 个人资料库工具栏显示当前状态：
 
 - 未连接时使用 `Browser storage`，可选择一个本地文件夹。
-- 已连接时显示文件夹名称；六个自定义 bank 会从该文件夹读取，并在保存或导入时写回。
+- 已连接时显示文件夹名称；文件夹中的所有 `.md` bank 会从该文件夹读取，并在保存或导入时写回。
+- 本地文件夹缺少 `Current Word List`、`Spelling Words`、`High Frequency Words` 或任何其他个人 bank 时，该列表不会出现在界面中。
 - `Reload Folder` 用于读取用户在外部编辑器中保存后的 Markdown 内容。
 - `Disconnect` 只移除网站对文件夹的已保存引用，不删除用户文件。
 
 右侧导入区提供：
 
 - 文件选择器，支持图片、PDF、`.txt`、`.text` 和 `.md`
-- 当前所选自定义 bank 的导入状态与结果提示
-- 词库文件自动抽取英文单词；句库文件自动抽取完整英文句子
+- 仅在 `Current Word List` 或 `Current Sentence List` 被选中时显示导入状态与结果提示
+- 优先由 Qwen LLM 按版面和标题识别词库分类或完整句子；Qwen 不可用时自动使用原有浏览器文本解析/Tesseract OCR
+- 识别后统一打开确认窗口；用户可修改 Spelling、High Frequency、Current Words 或 Current Sentences，取消时不写入，确认后才保存
 - 选中 K-8 公共词库时不显示导入区，避免误把个人资料写入公共课程词库
 
 ## 5. Bank 数据模型
@@ -140,6 +142,23 @@ Bank Library 包含一个个人资料库工具栏和两列管理区：
 - `file`：对应 Markdown 文件路径
 - `coversAll`：是否每轮覆盖全部条目
 - `coversAllUntil`：当条目数不超过某个数量时，是否覆盖全部条目
+
+K-8 bank 始终由随应用发布的注册表提供。未连接个人文件夹时，应用使用随应用发布的六个默认个人 bank；连接后，个人 bank 注册表完全由所选文件夹中的 `.md` 文件动态生成。每个文件可用以下元数据控制显示；没有元数据时也可使用，会由文件名和标题推断：
+
+```md
+# My Family Story
+
+id: personal:family-story
+type: sentences
+label: Family Story
+
+- The moon is bright.
+```
+
+- `id` 可使用 `custom:*`、`sentence:*` 或 `personal:*`；重复或保留的公共 ID 会自动以文件名生成安全 ID。
+- `type` 包含 `sentence` 时归类为句库，其余归类为词库。
+- `label` 决定界面名称；未提供时使用第一个 Markdown 标题，仍未提供则使用文件名。
+- `custom:current`、`custom:spelling`、`custom:high-frequency`、`custom:all`、`sentence:current`、`sentence:all-imported` 是可选的约定 ID，用于保留 Current/分类/汇总联动规则；文件不存在时不会创建或显示。
 
 当前 bank 清单：
 
@@ -234,8 +253,8 @@ label: Current Sentence List
 1. 初始化内置兜底数据，保证页面永远有可练习内容。
 2. 尝试读取每个 `banks/*.md` 文件。
 3. 读取浏览器保存的自定义词库、导入句子库和 bank override。
-4. 若用户已授权且权限仍有效，读取个人资料库文件夹中的六个 Markdown 文件。
-5. 个人资料库只覆盖六个自定义 bank，并优先于浏览器保存内容。
+4. 若用户已授权且权限仍有效，扫描个人资料库文件夹中的所有 `.md` 文件，并从其元数据、标题和文件名动态注册个人 bank。
+5. 已连接个人资料库时，它是个人 bank 的来源；缺失文件不会由浏览器保存内容补回到界面。
 
 这样设计的原因：
 
@@ -249,10 +268,10 @@ label: Current Sentence List
 
 浏览器不能在所有环境中静默写回任意本地路径，所以新版采用两种策略：
 
-- `Save Bank`：始终保存到浏览器本地存储，立即用于练习；已连接个人资料库时，同时写回相关 Markdown 文件。
+- `Save Bank`：未连接文件夹时保存到浏览器本地存储；已连接个人资料库时，保存到选中 bank 的 Markdown 文件，立即用于练习。
 - `Export Markdown`：下载当前编辑器里的 Markdown 文件。
 - `Reload Banks`：重新读取部署站点的 `banks/*.md`，并重载已连接的个人资料库。
-- `Reload Folder`：只重新读取用户选定文件夹的六个 Markdown 文件。
+- `Reload Folder`：重新扫描用户选定文件夹中的所有 Markdown bank。
 - `Reset Browser Edits`：清除当前 bank 的浏览器覆盖内容；个人资料库仍连接时，会重新以个人文件夹内容为准。
 - `Clear This List`：清空当前选中的自定义 bank，并保存空列表；Current 与 All 始终独立清空。已连接个人资料库时，只写回该 bank 对应的一个 Markdown 文件。
 - `Disconnect`：只忘记已保存的文件夹授权引用，不删除磁盘上的任何文件。
@@ -274,28 +293,26 @@ label: Current Sentence List
 
 ### 8.1 个人资料库文件夹
 
-在线部署时，用户从 Bank Library 点击 `Choose Folder`，在自己的电脑上选择一个文件夹。浏览器只会访问该用户明确选中的文件夹，并在首次连接时为缺失文件创建以下六个 Markdown 文件：
+在线部署时，用户从 Bank Library 点击 `Choose Folder`，在自己的电脑上选择一个文件夹。浏览器只会访问该用户明确选中的文件夹，并将该文件夹内的每一个 `.md` 文件视为一个个人 bank。它不会创建缺失文件，也不会显示不存在的预设列表。
 
 ```text
 My FingerType Banks/
 ├── current-words.md
 ├── spelling-words.md
-├── high-frequency-words.md
-├── all-added-words.md
-├── current-sentences.md
-└── all-imported-sentences.md
+├── family-story.md
+└── weekly-review.md
 ```
 
-对应关系：
-
-| 个人文件 | Bank ID | 写入时机 |
+| 可选文件名 | 建议 ID | 用途 |
 | --- | --- | --- |
-| `current-words.md` | `custom:current` | 编辑、导入或单独清空 Current Word List 时 |
-| `spelling-words.md` | `custom:spelling` | 编辑、导入或单独清空 Spelling Words 时 |
-| `high-frequency-words.md` | `custom:high-frequency` | 编辑、导入或单独清空 High Frequency Words 时 |
-| `all-added-words.md` | `custom:all` | Current Word List 自动汇总、直接编辑、直接导入或单独清空 All Added Words 时 |
-| `current-sentences.md` | `sentence:current` | 编辑、导入或单独清空 Current Sentence List 时 |
-| `all-imported-sentences.md` | `sentence:all-imported` | Current Sentence List 自动汇总、直接编辑、直接导入或单独清空 All Imported Sentence List 时 |
+| `current-words.md` | `custom:current` | Current Word List；唯一显示文件上传入口的单词 bank |
+| `spelling-words.md` | `custom:spelling` | Spelling Words |
+| `high-frequency-words.md` | `custom:high-frequency` | High Frequency Words |
+| `all-added-words.md` | `custom:all` | All Added Words |
+| `current-sentences.md` | `sentence:current` | Current Sentence List；唯一显示文件上传入口的句子 bank |
+| `all-imported-sentences.md` | `sentence:all-imported` | All Imported Sentence List |
+
+这些文件名只是约定，任意名称的 `.md` 文件同样会显示为可编辑 bank。只有文件夹中实际存在的文件会显示；例如没有 `spelling-words.md` 时，没有 Spelling Words 入口。
 
 文件夹授权规则：
 
@@ -366,16 +383,22 @@ My FingerType Banks/
 
 ## 10. 文件导入
 
-Bank Library 的六个自定义 bank 都可以直接导入文件；解析类型由当前选择的 bank 决定。
+Bank Library 只允许向两个 Current bank 直接导入文件；分类词库和汇总词库由对应的 Current bank 驱动，避免重复导入相同内容。
 
 | 选中的 bank | 解析结果 | 导入后的写入规则 |
 | --- | --- | --- |
-| `Current Word List` | 英文单词 | 替换 Current Word List，并把词汇累积到 All Added Words |
-| `Spelling Words` | 英文单词 | 替换 Spelling Words，不改变其他自定义词库 |
-| `High Frequency Words` | 英文单词 | 替换 High Frequency Words，不改变其他自定义词库 |
-| `All Added Words` | 英文单词 | 只累积到 All Added Words，不改变 Current Word List |
+| `Current Word List` | Current、Spelling、High Frequency 三组英文单词 | 确认后替换 Current Word List，并把全部 Current 词汇累积到 All Added Words；非空的 Spelling 或 High Frequency 编辑框更新对应分类列表 |
 | `Current Sentence List` | 完整英文句子 | 替换 Current Sentence List，并把句子累积到 All Imported Sentence List |
-| `All Imported Sentence List` | 完整英文句子 | 只累积到 All Imported Sentence List，不改变 Current Sentence List |
+
+识别流程：
+
+1. 图片在浏览器中缩放并转为 JPEG；PDF 使用 PDF.js 逐页渲染为图片，最多八页为一批发送；TXT/Markdown 直接发送纯文本。
+2. 浏览器只请求同源 `/api/recognize-bank`；Worker 用已有的 `QWEN_API_KEY` Secret 调用 `qwen3.8`，浏览器不持有 Key。
+3. Worker 的系统提示明确把文件视为不可信数据，只抽取学习内容，不执行文件内指令；结果必须是结构化 JSON。
+4. Qwen 超时、不可达、限流或结果无法解析时，页面自动调用原有 `extractUploadedFileText()`：普通文本直接读取，图片用 Tesseract，PDF 优先读取文本层并在扫描件上使用 Tesseract。
+5. 两种识别方式都进入同一个确认窗口，显示识别来源、实时条目数和可编辑文本框。取消不会修改任何 bank；确认后才调用 `saveImportedItems()`。
+
+`Spelling Words`、`High Frequency Words`、`All Added Words` 和 `All Imported Sentence List` 不显示上传入口，但仍可通过 Markdown 编辑器、本地文件夹同步、清空、恢复默认和导出管理。确认窗口中空的 Spelling 或 High Frequency 分类不会清空已有列表；需要清空时使用对应 bank 的 `Clear This List`。
 
 导入成功后，数据会立即用于练习；已连接个人资料库时，系统会把变动同步写入相应的本地 Markdown 文件。
 
@@ -430,7 +453,7 @@ K-8 年级词库按 `Round` 随机抽取：
 - 每轮覆盖全部词汇。
 - `Round` 自动禁用。
 - 每次开始前重新随机排序。
-- 编辑、导入、清空或本地文件夹同步只影响 Spelling Words，不自动改变 Current Word List 或 All Added Words。
+- 图片上传到 Current Word List 时，如识别到 `Spelling Words` 标题，会自动替换此列表；也可通过 Markdown 编辑器或本地文件夹单独维护。
 
 ### 11.5 High Frequency Words
 
@@ -441,7 +464,7 @@ K-8 年级词库按 `Round` 随机抽取：
 - 每轮覆盖全部 19 个词汇。
 - `Round` 自动禁用。
 - 每次开始前重新随机排序。
-- 编辑、导入、清空或本地文件夹同步只影响 High Frequency Words，不自动改变 Current Word List 或 All Added Words。
+- 图片上传到 Current Word List 时，如识别到 `High Frequency Words` 或 `Review Words` 标题，会自动替换此列表；也可通过 Markdown 编辑器或本地文件夹单独维护。
 
 ### 11.6 Starter Sentences
 
@@ -498,7 +521,7 @@ K-8 年级词库按 `Round` 随机抽取：
 #### 请求与密钥边界
 
 - 浏览器只发送 `{ input, mode, format: "pcm" }` 到同源 `/api/tts`，绝不持有或显示 Qwen Key。
-- Cloudflare Worker 在 `worker/index.js` 中仅把 `/api/tts` 交给共享的 `tts-handler.js`；其他页面和 Markdown 文件由静态资源绑定 `ASSETS` 返回。
+- Cloudflare Worker 在 `worker/index.js` 中把 `/api/tts` 交给共享的 `tts-handler.js`，把 `/api/recognize-bank` 交给 `qwen-bank-handler.js`；其他页面和 Markdown 文件由静态资源绑定 `ASSETS` 返回。
 - `QWEN_API_KEY` 必须作为 Worker Production 环境的 `Secret` 保存，不提交到 Git，也不写入 `wrangler.jsonc`、浏览器代码或日志。
 - Worker 调用 Qwen 的 `breeze-tts-2`、`voice: "breeze"`、PCM 或 WAV 输出。公开接口没有可选的命名女声音色或参考音频；固定 seed 和统一的“正式成年美式女声”指令只能尽量稳定不同文本之间的声线，不能像专属声纹模型一样绝对锁定。
 
@@ -525,7 +548,7 @@ Qwen 是生成式 TTS，单个词有继续扩读成短语或句子的风险。�
 #### 本地与线上测试
 
 - 本地仅测试网页和浏览器语音时，可使用任意静态服务器。
-- 本地测试 Qwen 时，复制 `.dev.vars.example` 为 `.dev.vars`，仅在其中填写 `QWEN_API_KEY`，然后运行 `npx wrangler dev --local --port 8788` 并访问 `http://localhost:8788`。
+- 本地测试 Qwen 语音或文件识别时，复制 `.dev.vars.example` 为 `.dev.vars`，仅在其中填写 `QWEN_API_KEY`，然后运行 `npx wrangler dev --local --port 8788` 并访问 `http://localhost:8788`。
 - 线上使用 `wrangler.jsonc`：静态资源目录为项目根目录，只有 `/api/*` 先进入 Worker；GitHub 推送触发 Cloudflare Workers 自动部署。
 - 语音改动的验收至少包括：`/api/tts` 返回已验证的 `audio/pcm` 或 WAV、Word/Dictation 仍由 Qwen 发声、超长词条会取消上游并用第二固定 seed 和简短恢复指令重试、两个结果仍异常时才得到 422、单词不会播放超出时长上限的续读、听写每遍结束后有固定 3 秒静音、三次可复用同一音频，以及 Qwen 故障时浏览器保底可用。
 
@@ -584,6 +607,7 @@ Qwen 是生成式 TTS，单个词有继续扩读成短语或句子的风险。�
 - Cloudflare Workers Static Assets
 - Cloudflare Worker Secret（仅 `QWEN_API_KEY`）
 - Qwen Breeze TTS HTTP API（仅经 Worker 调用）
+- Qwen `qwen3.8` Chat/Image API（仅经 Worker 调用，用于用户明确上传的文件）
 
 没有使用：
 
@@ -591,7 +615,7 @@ Qwen 是生成式 TTS，单个词有继续扩读成短语或句子的风险。�
 - 登录系统
 - 外部 JavaScript 库
 
-Worker 只代理语音生成，不保存用户账号、练习记录或个人词库；词库和成绩仍保存在浏览器或用户明确授权的本地文件夹中。
+Worker 只代理语音生成和用户明确发起的文件识别，不保存用户账号、练习记录、上传文件或个人词库。识别请求及结果只在请求期间传给 Qwen；词库和成绩仍保存在浏览器或用户明确授权的本地文件夹中。
 
 注意：
 
@@ -614,10 +638,12 @@ Worker 只代理语音生成，不保存用户账号、练习记录或个人词�
 - `formatBankMarkdown()`：把运行时条目重新格式化为 Markdown。
 - `registerBankItems()`：写入运行时 bank 缓存。
 - `applyStoredOverrides()`：应用浏览器覆盖内容。
-- `syncCustomBanksIntoLibrary()`：把六个自定义 bank 同步到统一 bank 缓存。
+- `activateBankSources()`：在默认个人 bank 与本地文件夹动态发现的 bank 之间切换运行时注册表。
+- `syncCustomBanksIntoLibrary()`：把当前可见的约定自定义 bank 同步到统一 bank 缓存。
 - `restorePersonalBankDirectory()`：恢复已保存的个人文件夹句柄，并在权限仍有效时读取文件。
-- `loadPersonalBankDirectory()`：读取个人文件夹的六个 Markdown bank；首次连接可创建缺失文件。
-- `writePersonalBankDirectory()`：把 Current/All 联动后的内容写回相应个人文件。
+- `personalBankSourceFromFile()`：从个人 Markdown 文件的元数据、标题和文件名创建 bank 描述。
+- `loadPersonalBankDirectory()`：扫描个人文件夹中的所有 Markdown bank；不创建缺失文件。
+- `writePersonalBankDirectory()`：把编辑或 Current/All 联动后的内容写回已存在的个人文件。
 
 ### Bank Library
 
@@ -631,9 +657,13 @@ Worker 只代理语音生成，不保存用户账号、练习记录或个人词�
 - `clearSelectedCustomBank()`：二次确认后只清空选中的一个自定义 bank。
 - `pairedPersonalBankSource()`：找出用于清空提示的 Current/All 配对 bank。
 - `reloadBankFilesFromPage()`：重新读取 Markdown 文件。
-- `canImportFileInto()`：只允许向六个自定义 bank 导入文件。
-- `importSelectedFile()`：读取并按当前 bank 类型解析用户选择的文件。
-- `saveImportedItems()`：根据 Current 或 All 规则更新 bank，并同步个人资料库。
+- `canImportFileInto()`：只允许向 Current Word List 和 Current Sentence List 导入文件。
+- `recognizeUploadedFileWithQwen()`：把文本或批量页面图片发到同源识别路由，并合并、清洗 Qwen 结果。
+- `recognizeUploadedFile()`：优先使用 Qwen，失败时自动回落到现有浏览器识别。
+- `parseUploadedWordLists()`：浏览器 fallback 从 Current Word List 的上传文本中提取 Spelling、High Frequency 和 Review 分类。
+- `openImportReview()` / `confirmImportReview()`：展示可编辑确认窗口，校验最终结果并只在确认后继续保存。
+- `importSelectedFile()`：编排文件识别、fallback、人工确认与保存。
+- `saveImportedItems()`：根据 Current 规则更新列表、汇总列表和已识别分类，并同步个人资料库。
 
 ### 练习引擎
 
@@ -692,9 +722,12 @@ Worker 只代理语音生成，不保存用户账号、练习记录或个人词�
 - 输入 `Space` 时会判对并前进。
 - 导入区可以把粘贴文本生成 Imported Sentences。
 - 导入区会过滤过短片段。
-- 已支持个人资料库文件夹：六个自定义 bank 可读取和写回用户选择的本地 Markdown 文件；不支持该 API 的浏览器会保留浏览器保存和导出路径。
+- 已支持个人资料库文件夹：会动态读取和写回用户选择的本地 Markdown 文件；文件夹中没有的个人 bank 不显示，不支持该 API 的浏览器会保留浏览器保存和导出路径。
 - 已接入 Qwen Breeze TTS：Worker Secret 不会暴露到浏览器；本地与线上均可测试 `/api/tts`。
 - 已验证 Qwen 对孤立词偶尔会生成异常长音频（例如 `you` 曾返回约 83 秒 PCM）；Word/Dictation 现在由 Worker 先验证完整短音频，发现异常立即取消 Qwen 且不缓存，并用第二固定 seed 重试一次，再由页面时长上限二次保护，避免续读、占住唯一生成槽或令后续 Qwen 请求 429。
+- 已验证 Qwen 词库识别成功时会显示 Current、Spelling、High Frequency 三栏；编辑会实时更新计数，取消不会写入，确认后 Current/All 与非空分类列表同步更新。
+- 已模拟 Qwen 识别接口故障：原有浏览器解析会自动接管，并在相同确认窗口显示 `Browser fallback`；句子导入只显示可编辑的 Current Sentence List。
+- 已检查识别确认窗口桌面布局和浏览器控制台：无重叠、裁切、脚本错误或控制台警告。
 
 仍可继续优化：
 

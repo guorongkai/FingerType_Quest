@@ -12,8 +12,9 @@ A child-friendly English typing game for learners beginning to build QWERTY keyb
 - Friendly error handling: mistakes are counted but never inserted into the word
 - Optional sound and browser voice playback
 - A Bank Library for viewing and editing word and sentence banks
-- Browser-based saving, plus optional connection to a local folder for six personal banks in supported browsers
-- No account, backend, build step, or external runtime dependency
+- Qwen-assisted file recognition with an editable review step and automatic browser fallback
+- Browser-based saving, plus optional connection to a local folder that dynamically loads each user's personal Markdown banks in supported browsers
+- No account or build step; cloud voice and LLM recognition use a small Cloudflare Worker
 
 ## Run it
 
@@ -26,11 +27,12 @@ python3 -m http.server 8000
 
 Then visit [http://localhost:8000/index.html](http://localhost:8000/index.html).
 
-### Test cloud voice locally
+### Test Qwen voice and file recognition locally
 
 The simple server above is enough for browser voice, but it cannot run the
-Cloudflare `/api/tts` Worker route. To test Qwen voice locally, copy the
-template, add your key, and run the Worker development server instead:
+Cloudflare `/api/tts` and `/api/recognize-bank` Worker routes. To test Qwen
+features locally, copy the template, add your key, and run the Worker
+development server instead:
 
 ```bash
 cp .dev.vars.example .dev.vars
@@ -41,8 +43,9 @@ npx wrangler dev --local --port 8788
 Then open [http://localhost:8788](http://localhost:8788). The `.dev.vars` file
 is intentionally ignored by Git, while the template is safe to share.
 
-The Worker configuration routes `/api/tts` to the cloud voice handler and
-serves all other requests from the static game assets. Cloud voice uses Qwen's
+The Worker configuration routes `/api/tts` to the cloud voice handler,
+`/api/recognize-bank` to the word/sentence recognition handler, and serves all
+other requests from the static game assets. Cloud voice uses Qwen's
 single public Breeze profile with a fixed seed and a formal adult-female delivery
 instruction. Word and Dictation requests accept exactly one English headword.
 Before returning PCM to the page, the Worker verifies that Qwen completed a
@@ -52,6 +55,12 @@ still unsafe. The page retains a matching playback cap as a second safeguard.
 Qwen streams PCM audio for faster playback; browser voice remains the automatic
 fallback for that one reading if cloud voice is temporarily unavailable or both
 safe Qwen attempts fail.
+
+For Current Word List and Current Sentence List imports, the page sends plain
+text or prepared page images to the same-origin Worker. Qwen returns structured
+word categories or sentences, then a review dialog lets the user edit or cancel
+before anything is saved. If Qwen is unavailable, the existing in-browser text
+parser and OCR flow runs automatically and uses the same review dialog.
 
 ## How to play
 
@@ -68,13 +77,16 @@ In Sentence Practice, capitalization, spaces, and common punctuation are part of
 .
 ├── index.html            # Alpha app: bank library and all practice modes
 ├── banks/                # K–8, custom, and sentence-bank Markdown files
+├── qwen-bank-handler.js  # Server-only Qwen document recognition
+├── tts-handler.js        # Server-only Qwen voice handling
+├── worker/               # Cloudflare Worker entrypoint
 ├── DESIGN.md             # Alpha design and data-model notes
 └── Demo/                 # Static demonstration copy
 ```
 
 ## Personal banks and privacy
 
-The built-in K–8 banks ship with the app. Edits to personal banks are saved in browser storage by default. In browsers that support the File System Access API, **Banks** can connect to a folder you choose; the app then reads and writes only the six personal Markdown bank files in that folder. No learner data is sent to a server.
+The built-in K–8 banks ship with the app. Edits to personal banks are saved in browser storage by default. In browsers that support the File System Access API, **Banks** can connect to a folder you choose; every `.md` file in that folder becomes a personal word or sentence bank based on its `id:`, `type:`, and `label:` metadata (or its title and filename). Files that are absent are not shown, and no missing lists are created automatically. Practice history and bank contents remain local. Only a file the user explicitly uploads for recognition is sent through the same-origin Cloudflare Worker to Qwen when the service is available; the API key never reaches the browser.
 
 ## Browser notes
 

@@ -1,3 +1,3 @@
-# Copy this file to .dev.vars and replace the placeholder with your active key.
+# Copy this file to .dev.vars and replace the placeholder with the Qwen key used for voice and bank recognition.
 # .dev.vars is ignored by Git and must never be committed.
 QWEN_API_KEY="paste-your-qwen-key-here"
