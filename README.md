@@ -95,7 +95,7 @@ The built-in K–8 banks ship with the app. Edits to personal banks are saved in
 
 For the full Alpha experience, use a current desktop Chromium browser (such as Chrome or Edge), especially if you want to connect a local folder. The game itself is a static website and requires no installation.
 
-The practice screen uses the live viewport height to tighten spacing, key sizes, and target text where possible. On a very short desktop window, it becomes a vertically scrollable page before any target text, Stats cards, controls, or keyboard rows are clipped.
+The practice screen uses the live viewport height to tighten spacing, key sizes, and target text where possible. On larger desktop displays, the center practice and Stats panels are capped directly at `min(320px, 35dvh)` for words and `min(360px, 40dvh)` for sentences, so high-resolution displays do not stretch them excessively. On a very short desktop window, the page becomes vertically scrollable before any target text, Stats cards, controls, or keyboard rows are clipped.
 
 ## Maintenance rule
 

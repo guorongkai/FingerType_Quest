@@ -324,6 +324,23 @@
         align-items: stretch;
       }
 
+      @media (min-width: 861px) and (min-height: 761px) {
+        .practice-row {
+          --practice-panel-limit: min(320px, 35dvh);
+          max-height: var(--practice-panel-limit);
+        }
+
+        .app.sentence-mode .practice-row {
+          --practice-panel-limit: min(360px, 40dvh);
+          max-height: var(--practice-panel-limit);
+        }
+
+        .practice-row > .stage,
+        .practice-row > .stats {
+          max-height: var(--practice-panel-limit);
+        }
+      }
+
       .panel {
         min-height: 0;
         border: 1px solid var(--line);
@@ -2161,20 +2178,20 @@
 
         .stage,
         .stage:not(.sentence-stage) {
-          grid-template-rows: auto auto auto auto;
+          grid-template-rows: auto minmax(0, 1fr) auto auto;
         }
 
         .stage.sentence-stage {
-          grid-template-rows: auto auto auto;
+          grid-template-rows: auto minmax(0, 1fr) auto;
         }
 
         .stage.dictation-stage {
-          grid-template-rows: auto auto auto auto auto;
+          grid-template-rows: auto auto minmax(0, 1fr) auto auto;
         }
 
         .word.sentence-target {
-          max-height: none;
-          overflow-y: visible;
+          max-height: 100%;
+          overflow-y: auto;
         }
 
         .coach {
@@ -2259,8 +2276,8 @@
         }
 
         .word.sentence-target {
-          max-height: none;
-          overflow-y: visible;
+          max-height: 100%;
+          overflow-y: auto;
           font-size: var(--target-font-size, clamp(0.95rem, 2.35dvh, 1.35rem));
         }
 
