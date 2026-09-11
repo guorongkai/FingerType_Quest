@@ -6,7 +6,7 @@
 
 当前版本使用 `index.html`、`DESIGN.md`、根目录的 `banks/*.md`，以及用于 Qwen TTS 和词库识别的 Worker。为了读取旁边的 Markdown 词库文件，推荐通过本地静态服务打开 `index.html`；若需要测试 Qwen 云端功能，则运行 Worker 本地开发服务器。
 
-维护规则：任何影响用户可见行为、数据流、部署方式或外部服务的功能更新，必须在同一次更新中同步修改本设计文档和验收记录。
+维护规则：仓库中的每一次修改（包括小型修复和重构）都必须在同一个任务中同步检查并更新 `README.md` 与本设计文档。`README.md` 维护面向用户的功能、设置、运行、隐私、依赖和文件结构；本文件维护架构、UI 行为、数据流、集成、安全边界、关键函数和验收记录。根目录 `AGENTS.md` 固化此规则，供后续 Codex 任务自动执行。任何密钥、Token 或附件中的敏感内容都不得写入文档。
 
 ## 2. 本次升级目标
 
@@ -25,9 +25,17 @@
 
 ```text
 Typing Game/
+├── AGENTS.md
 ├── index.html
 ├── DESIGN.md
+├── README.md
+├── qwen-bank-handler.js
 ├── tts-handler.js
+├── _worker.js
+├── functions/
+│   └── api/
+│       ├── recognize-bank.js
+│       └── tts.js
 ├── worker/
 │   └── index.js
 ├── wrangler.jsonc
@@ -728,6 +736,7 @@ Worker 只代理语音生成和用户明确发起的文件识别，不保存用�
 - 已验证 Qwen 词库识别成功时会显示 Current、Spelling、High Frequency 三栏；编辑会实时更新计数，取消不会写入，确认后 Current/All 与非空分类列表同步更新。
 - 已模拟 Qwen 识别接口故障：原有浏览器解析会自动接管，并在相同确认窗口显示 `Browser fallback`；句子导入只显示可编辑的 Current Sentence List。
 - 已检查识别确认窗口桌面布局和浏览器控制台：无重叠、裁切、脚本错误或控制台警告。
+- 已在根目录新增 `AGENTS.md`，并在 `README.md` 与本文件中同步记录强制文档维护规则；后续每次仓库修改都必须同时检查并更新两份文档。
 
 仍可继续优化：
 

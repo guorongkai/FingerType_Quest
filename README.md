@@ -75,8 +75,10 @@ In Sentence Practice, capitalization, spaces, and common punctuation are part of
 
 ```text
 .
+├── AGENTS.md             # Repository-wide documentation requirements
 ├── index.html            # Alpha app: bank library and all practice modes
 ├── banks/                # K–8, custom, and sentence-bank Markdown files
+├── functions/api/        # Cloudflare Pages API entrypoints
 ├── qwen-bank-handler.js  # Server-only Qwen document recognition
 ├── tts-handler.js        # Server-only Qwen voice handling
 ├── worker/               # Cloudflare Worker entrypoint
@@ -91,6 +93,15 @@ The built-in K–8 banks ship with the app. Edits to personal banks are saved in
 ## Browser notes
 
 For the full Alpha experience, use a current desktop Chromium browser (such as Chrome or Edge), especially if you want to connect a local folder. The game itself is a static website and requires no installation.
+
+## Maintenance rule
+
+Every repository change must update both `README.md` and `DESIGN.md` in the
+same change. Keep this README accurate for user-facing behavior, setup,
+operation, privacy, dependencies, and project layout. Keep `DESIGN.md` accurate
+for architecture, UI behavior, data flow, integrations, security boundaries,
+key functions, and verification results. This requirement is also recorded in
+`AGENTS.md` so future Codex work applies it automatically.
 
 ## Documentation
 
