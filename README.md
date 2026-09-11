@@ -9,6 +9,7 @@ A child-friendly English typing game for learners beginning to build QWERTY keyb
 - **K–8 word banks** stored as editable Markdown files
 - **Word Practice**, **Dictation**, and **Sentence Practice** modes
 - An animated on-screen QWERTY keyboard with finger-position coaching
+- A responsive practice layout that keeps targets, stats, and the keyboard accessible at every window height
 - Friendly error handling: mistakes are counted but never inserted into the word
 - Optional sound and browser voice playback
 - A Bank Library for viewing and editing word and sentence banks
@@ -93,6 +94,8 @@ The built-in K–8 banks ship with the app. Edits to personal banks are saved in
 ## Browser notes
 
 For the full Alpha experience, use a current desktop Chromium browser (such as Chrome or Edge), especially if you want to connect a local folder. The game itself is a static website and requires no installation.
+
+The practice screen uses the live viewport height to tighten spacing, key sizes, and target text where possible. On a very short desktop window, it becomes a vertically scrollable page before any target text, Stats cards, controls, or keyboard rows are clipped.
 
 ## Maintenance rule
 

@@ -96,15 +96,15 @@
         width: min(1240px, calc(100% - 28px));
         height: 100dvh;
         margin: 0 auto;
-        padding: 10px 0;
+        padding: clamp(4px, 1.2dvh, 10px) 0;
         display: grid;
-        grid-template-rows: auto auto minmax(132px, 0.58fr) minmax(292px, 1.42fr);
-        gap: 9px;
+        grid-template-rows: auto auto minmax(0, 0.68fr) minmax(0, 1.32fr);
+        gap: clamp(4px, 1dvh, 9px);
         min-height: 0;
       }
 
       .app.sentence-mode {
-        grid-template-rows: auto auto auto minmax(292px, 1fr);
+        grid-template-rows: auto auto minmax(0, 0.82fr) minmax(0, 1.18fr);
       }
 
       body.bank-view {
@@ -335,11 +335,12 @@
 
       .stage {
         position: relative;
+        min-height: 0;
         display: grid;
-        grid-template-rows: auto minmax(56px, 1fr) auto auto;
-        align-content: center;
-        gap: 6px;
-        padding: 12px 15px;
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        align-content: stretch;
+        gap: clamp(3px, 0.8dvh, 6px);
+        padding: clamp(6px, 1.4dvh, 12px) clamp(9px, 1.8dvw, 15px);
       }
 
       .stage.sentence-stage {
@@ -382,7 +383,7 @@
       .word {
         align-self: center;
         color: var(--ink);
-        font-size: clamp(2.7rem, 7.5vh, 5rem);
+        font-size: var(--target-font-size, clamp(1.55rem, 7.5dvh, 5rem));
         line-height: 0.92;
         font-weight: 950;
         letter-spacing: 0;
@@ -391,12 +392,12 @@
 
       .word:not(.sentence-target) {
         padding: 2px 0 4px;
-        font-size: clamp(2.5rem, 6.9vh, 4.6rem);
+        font-size: var(--target-font-size, clamp(1.45rem, 6.9dvh, 4.6rem));
         line-height: 1;
       }
 
       .stage:not(.sentence-stage) {
-        grid-template-rows: auto minmax(82px, 1fr) auto auto;
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
       }
 
       .word.sentence-target {
@@ -406,15 +407,19 @@
         overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
-        padding: 5px 8px 8px;
+        padding: 7px 10px 10px;
         color: #8592a1;
-        font-size: clamp(1.2rem, 3.1vh, 2rem);
-        line-height: 1.45;
+        font-size: var(--target-font-size, clamp(0.9rem, 3.1dvh, 2rem));
+        line-height: 1.35;
         max-width: 100%;
         word-break: normal;
         overflow-wrap: anywhere;
         white-space: pre-wrap;
         scrollbar-width: thin;
+      }
+
+      .word.target-needs-scroll {
+        overflow-y: auto;
       }
 
       .word.sentence-target.round-complete {
@@ -447,7 +452,7 @@
       }
 
       .letter-rail {
-        min-height: 38px;
+        min-height: clamp(26px, 4.2dvh, 38px);
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
@@ -497,7 +502,7 @@
 
       .letter {
         width: clamp(29px, 4.6vw, 39px);
-        height: clamp(32px, 4.6vh, 40px);
+        height: clamp(26px, 4.6dvh, 40px);
         display: grid;
         place-items: center;
         border: 2px solid #cbd8e5;
@@ -539,7 +544,7 @@
       }
 
       .hint {
-        min-height: 21px;
+        min-height: clamp(16px, 2.5dvh, 21px);
         color: var(--muted);
         font-size: 1rem;
         font-weight: 800;
@@ -671,7 +676,7 @@
         position: relative;
         min-height: 0;
         display: grid;
-        grid-template-rows: auto minmax(252px, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
         gap: 7px;
         padding: 11px 13px 10px;
       }
@@ -790,7 +795,7 @@
       .keyboard {
         position: relative;
         z-index: 2;
-        --key-height: clamp(32px, 5.1vh, 42px);
+        --key-height: clamp(18px, 5.1dvh, 42px);
         min-width: 0;
         display: grid;
         gap: 5px;
@@ -1814,12 +1819,12 @@
       @media (max-height: 760px) and (min-width: 760px) {
         .app {
           padding: 6px 0;
-          grid-template-rows: auto auto minmax(176px, 0.7fr) minmax(232px, 1.3fr);
+          grid-template-rows: auto auto minmax(0, 0.74fr) minmax(0, 1.26fr);
           gap: 6px;
         }
 
         .app.sentence-mode {
-          grid-template-rows: auto auto auto minmax(220px, 1fr);
+          grid-template-rows: auto auto minmax(0, 0.96fr) minmax(0, 1.04fr);
         }
 
         .top-bar {
@@ -1877,7 +1882,7 @@
         }
 
         .stage:not(.sentence-stage) {
-          grid-template-rows: auto minmax(64px, 1fr) auto auto;
+          grid-template-rows: auto minmax(0, 1fr) auto auto;
         }
 
         .stage.dictation-stage {
@@ -1910,7 +1915,7 @@
         }
 
         .coach {
-          grid-template-rows: auto minmax(220px, 1fr);
+          grid-template-rows: auto minmax(0, 1fr);
           gap: 5px;
         }
 
@@ -1953,7 +1958,7 @@
         }
 
         .keyboard {
-          --key-height: 26px;
+          --key-height: clamp(18px, 3.5dvh, 26px);
         }
 
         .key {
@@ -1973,12 +1978,12 @@
 
       @media (max-height: 680px) and (min-width: 760px) {
         .app {
-          grid-template-rows: auto auto minmax(156px, 0.62fr) minmax(218px, 1.38fr);
+          grid-template-rows: auto auto minmax(0, 0.84fr) minmax(0, 1.16fr);
           gap: 5px;
         }
 
         .app.sentence-mode {
-          grid-template-rows: auto auto auto minmax(206px, 1fr);
+          grid-template-rows: auto auto minmax(0, 1.08fr) minmax(0, 0.92fr);
         }
 
         h1 {
@@ -2018,7 +2023,7 @@
         }
 
         .stage:not(.sentence-stage) {
-          grid-template-rows: minmax(58px, 1fr) auto auto;
+          grid-template-rows: minmax(0, 1fr) auto auto;
         }
 
         .stage.dictation-stage {
@@ -2083,7 +2088,7 @@
         }
 
         .stats h2 {
-          display: none;
+          font-size: 0.72rem;
         }
 
         .stat-grid {
@@ -2103,7 +2108,7 @@
         }
 
         .coach {
-          grid-template-rows: auto minmax(214px, 1fr);
+          grid-template-rows: auto minmax(0, 1fr);
         }
 
         .coach-head {
@@ -2125,7 +2130,7 @@
         }
 
         .keyboard {
-          --key-height: 24px;
+          --key-height: clamp(17px, 3.55dvh, 24px);
         }
 
         .key {
@@ -2137,6 +2142,58 @@
           height: 40px;
         }
 
+      }
+
+      @media (max-height: 760px) and (min-width: 760px) {
+        body {
+          overflow: auto;
+        }
+
+        .app {
+          height: auto;
+          min-height: 100dvh;
+          grid-template-rows: auto auto auto auto;
+        }
+
+        .app.sentence-mode {
+          grid-template-rows: auto auto auto auto;
+        }
+
+        .stage,
+        .stage:not(.sentence-stage) {
+          grid-template-rows: auto auto auto auto;
+        }
+
+        .stage.sentence-stage {
+          grid-template-rows: auto auto auto;
+        }
+
+        .stage.dictation-stage {
+          grid-template-rows: auto auto auto auto auto;
+        }
+
+        .word.sentence-target {
+          max-height: none;
+          overflow-y: visible;
+        }
+
+        .coach {
+          grid-template-rows: auto auto;
+        }
+
+        .brand p,
+        .coach-title p,
+        .coach-tip,
+        .trainer-note,
+        .hint,
+        .stats h2 {
+          display: block;
+        }
+
+        .stage .badge-row,
+        .home-strip {
+          display: flex;
+        }
       }
 
       @media (max-width: 860px) {
@@ -2202,8 +2259,9 @@
         }
 
         .word.sentence-target {
-          max-height: min(32dvh, 13.5rem);
-          font-size: clamp(1.1rem, 2.35vh, 1.35rem);
+          max-height: none;
+          overflow-y: visible;
+          font-size: var(--target-font-size, clamp(0.95rem, 2.35dvh, 1.35rem));
         }
 
         .app.sentence-mode .practice-row {
@@ -6899,6 +6957,42 @@
         }, 290);
       }
 
+      function fitTargetText() {
+        const target = els.targetWord;
+        if (!target || !target.isConnected) {
+          return;
+        }
+
+        target.style.removeProperty("--target-font-size");
+        target.classList.remove("target-needs-scroll");
+
+        if (target.clientHeight === 0) {
+          return;
+        }
+
+        const minimumFontSize = target.classList.contains("sentence-target")
+          ? 10
+          : state.mode === "dictation"
+            ? 13
+            : 18;
+        let fontSize = Number.parseFloat(window.getComputedStyle(target).fontSize);
+
+        for (
+          let attempt = 0;
+          attempt < 72 && target.scrollHeight > target.clientHeight + 1 && fontSize > minimumFontSize;
+          attempt += 1
+        ) {
+          fontSize = Math.max(minimumFontSize, fontSize - 1);
+          target.style.setProperty("--target-font-size", `${fontSize}px`);
+        }
+
+        target.classList.toggle("target-needs-scroll", target.scrollHeight > target.clientHeight + 1);
+      }
+
+      function scheduleTargetTextFit() {
+        requestAnimationFrame(fitTargetText);
+      }
+
       function renderWord() {
         const isDictation = state.mode === "dictation";
         const isSentence = state.mode === "sentence";
@@ -6937,10 +7031,12 @@
               els.letterRail.appendChild(item);
             });
           }
+          scheduleTargetTextFit();
           return;
         }
 
         if (isSentence) {
+          scheduleTargetTextFit();
           return;
         }
 
@@ -6959,6 +7055,8 @@
           item.textContent = letter === " " ? "space" : letter;
           els.letterRail.appendChild(item);
         });
+
+        scheduleTargetTextFit();
       }
 
       function renderSentenceTarget(sentence) {
@@ -8302,6 +8400,7 @@
         els.targetWord.classList.remove("dictation-revealed");
         els.targetWord.classList.add("round-complete");
         renderDictationHistory();
+        scheduleTargetTextFit();
         els.letterRail.innerHTML = "";
         setHint(
           `Round complete. You finished ${state.completedWords} ${unitLabel(state.completedWords)}.`,
@@ -8506,7 +8605,10 @@
         });
 
         window.addEventListener("resize", () => {
-          requestAnimationFrame(updateMotionCue);
+          requestAnimationFrame(() => {
+            updateMotionCue();
+            fitTargetText();
+          });
         });
 
         window.addEventListener("hashchange", syncPageFromHash);
