@@ -19,7 +19,7 @@
 - 新增 `Sentence Practice`，训练大小写、空格和标点符号。
 - 支持从电子书文本或电影脚本文本中提取句子，生成可练习的句子库。
 - 新增更明确的数据加载、浏览器保存、导入、导出和重置策略。
-- 支持每位用户授权一个自己的本地资料库文件夹，把四个自定义 bank 独立保存为 Markdown 文件；该能力不需要登录或后端。
+- 支持每位用户授权一个自己的本地资料库文件夹，把六个自定义 bank 独立保存为 Markdown 文件；该能力不需要登录或后端。
 
 ## 3. 文件结构
 
@@ -43,6 +43,8 @@ Typing Game/
     ├── grade-7.md
     ├── grade-8.md
     ├── custom-current.md
+    ├── spelling-words.md
+    ├── high-frequency-words.md
     ├── custom-all.md
     ├── current-sentences.md
     └── all-imported-sentences.md
@@ -90,7 +92,7 @@ Bank Library 包含一个个人资料库工具栏和两列管理区：
 
 - 个人资料库工具栏：连接、重载或断开用户本地文件夹。
 - 左侧：所有 bank 列表。
-- 右侧：选中 bank 的 Markdown 编辑器和对应的导入区。四个自定义 bank 都支持从图片、PDF、TXT 或 Markdown 导入。
+- 右侧：选中 bank 的 Markdown 编辑器和对应的导入区。六个自定义 bank 都支持从图片、PDF、TXT 或 Markdown 导入。
 
 左侧 bank 分组：
 
@@ -108,13 +110,13 @@ Bank Library 包含一个个人资料库工具栏和两列管理区：
 - `Save Bank`
 - `Use in Practice`
 - `Export Markdown`
-- `Clear This List`：仅在四个自定义 bank 显示；清空当前选中的列表，不影响配对的 Current 或 All 列表。
+- `Clear This List`：仅在六个自定义 bank 显示；清空当前选中的列表，不影响其他自定义列表。
 - `Reset Browser Edits`
 
 个人资料库工具栏显示当前状态：
 
 - 未连接时使用 `Browser storage`，可选择一个本地文件夹。
-- 已连接时显示文件夹名称；四个自定义 bank 会从该文件夹读取，并在保存或导入时写回。
+- 已连接时显示文件夹名称；六个自定义 bank 会从该文件夹读取，并在保存或导入时写回。
 - `Reload Folder` 用于读取用户在外部编辑器中保存后的 Markdown 内容。
 - `Disconnect` 只移除网站对文件夹的已保存引用，不删除用户文件。
 
@@ -153,6 +155,8 @@ Bank Library 包含一个个人资料库工具栏和两列管理区：
 | `grade:7` | word | `banks/grade-7.md` | 按 Round 随机抽取 |
 | `grade:8` | word | `banks/grade-8.md` | 按 Round 随机抽取 |
 | `custom:current` | word | `banks/custom-current.md` | 每轮覆盖全部 |
+| `custom:spelling` | word | `banks/spelling-words.md` | 每轮覆盖全部 |
+| `custom:high-frequency` | word | `banks/high-frequency-words.md` | 每轮覆盖全部 |
 | `custom:all` | word | `banks/custom-all.md` | 30 个以内覆盖全部，超过 30 个按 Round |
 | `sentence:current` | sentence | `banks/current-sentences.md` | 每轮按文件顺序覆盖全部 |
 | `sentence:all-imported` | sentence | `banks/all-imported-sentences.md` | 30 句以内按文件顺序覆盖全部，超过 30 句取前 Round 数量 |
@@ -230,8 +234,8 @@ label: Current Sentence List
 1. 初始化内置兜底数据，保证页面永远有可练习内容。
 2. 尝试读取每个 `banks/*.md` 文件。
 3. 读取浏览器保存的自定义词库、导入句子库和 bank override。
-4. 若用户已授权且权限仍有效，读取个人资料库文件夹中的四个 Markdown 文件。
-5. 个人资料库只覆盖四个自定义 bank，并优先于浏览器保存内容。
+4. 若用户已授权且权限仍有效，读取个人资料库文件夹中的六个 Markdown 文件。
+5. 个人资料库只覆盖六个自定义 bank，并优先于浏览器保存内容。
 
 这样设计的原因：
 
@@ -248,7 +252,7 @@ label: Current Sentence List
 - `Save Bank`：始终保存到浏览器本地存储，立即用于练习；已连接个人资料库时，同时写回相关 Markdown 文件。
 - `Export Markdown`：下载当前编辑器里的 Markdown 文件。
 - `Reload Banks`：重新读取部署站点的 `banks/*.md`，并重载已连接的个人资料库。
-- `Reload Folder`：只重新读取用户选定文件夹的四个 Markdown 文件。
+- `Reload Folder`：只重新读取用户选定文件夹的六个 Markdown 文件。
 - `Reset Browser Edits`：清除当前 bank 的浏览器覆盖内容；个人资料库仍连接时，会重新以个人文件夹内容为准。
 - `Clear This List`：清空当前选中的自定义 bank，并保存空列表；Current 与 All 始终独立清空。已连接个人资料库时，只写回该 bank 对应的一个 Markdown 文件。
 - `Disconnect`：只忘记已保存的文件夹授权引用，不删除磁盘上的任何文件。
@@ -270,11 +274,13 @@ label: Current Sentence List
 
 ### 8.1 个人资料库文件夹
 
-在线部署时，用户从 Bank Library 点击 `Choose Folder`，在自己的电脑上选择一个文件夹。浏览器只会访问该用户明确选中的文件夹，并在首次连接时为缺失文件创建以下四个 Markdown 文件：
+在线部署时，用户从 Bank Library 点击 `Choose Folder`，在自己的电脑上选择一个文件夹。浏览器只会访问该用户明确选中的文件夹，并在首次连接时为缺失文件创建以下六个 Markdown 文件：
 
 ```text
 My FingerType Banks/
 ├── current-words.md
+├── spelling-words.md
+├── high-frequency-words.md
 ├── all-added-words.md
 ├── current-sentences.md
 └── all-imported-sentences.md
@@ -285,6 +291,8 @@ My FingerType Banks/
 | 个人文件 | Bank ID | 写入时机 |
 | --- | --- | --- |
 | `current-words.md` | `custom:current` | 编辑、导入或单独清空 Current Word List 时 |
+| `spelling-words.md` | `custom:spelling` | 编辑、导入或单独清空 Spelling Words 时 |
+| `high-frequency-words.md` | `custom:high-frequency` | 编辑、导入或单独清空 High Frequency Words 时 |
 | `all-added-words.md` | `custom:all` | Current Word List 自动汇总、直接编辑、直接导入或单独清空 All Added Words 时 |
 | `current-sentences.md` | `sentence:current` | 编辑、导入或单独清空 Current Sentence List 时 |
 | `all-imported-sentences.md` | `sentence:all-imported` | Current Sentence List 自动汇总、直接编辑、直接导入或单独清空 All Imported Sentence List 时 |
@@ -358,11 +366,13 @@ My FingerType Banks/
 
 ## 10. 文件导入
 
-Bank Library 的四个自定义 bank 都可以直接导入文件；解析类型由当前选择的 bank 决定。
+Bank Library 的六个自定义 bank 都可以直接导入文件；解析类型由当前选择的 bank 决定。
 
 | 选中的 bank | 解析结果 | 导入后的写入规则 |
 | --- | --- | --- |
 | `Current Word List` | 英文单词 | 替换 Current Word List，并把词汇累积到 All Added Words |
+| `Spelling Words` | 英文单词 | 替换 Spelling Words，不改变其他自定义词库 |
+| `High Frequency Words` | 英文单词 | 替换 High Frequency Words，不改变其他自定义词库 |
 | `All Added Words` | 英文单词 | 只累积到 All Added Words，不改变 Current Word List |
 | `Current Sentence List` | 完整英文句子 | 替换 Current Sentence List，并把句子累积到 All Imported Sentence List |
 | `All Imported Sentence List` | 完整英文句子 | 只累积到 All Imported Sentence List，不改变 Current Sentence List |
@@ -412,7 +422,28 @@ K-8 年级词库按 `Round` 随机抽取：
 - 超过 30 个时按 Round 随机抽取。
 - 每轮先随机打乱。
 
-### 11.4 Starter Sentences
+### 11.4 Spelling Words
+
+图片中的拼写词作为独立的自定义列表：
+
+- 初始词汇为 `dentist`, `she`, `go`, `silent`, `hi`, `we`, `napkin`, `no`, `open`, `problem`。
+- 每轮覆盖全部词汇。
+- `Round` 自动禁用。
+- 每次开始前重新随机排序。
+- 编辑、导入、清空或本地文件夹同步只影响 Spelling Words，不自动改变 Current Word List 或 All Added Words。
+
+### 11.5 High Frequency Words
+
+图片中的 High Frequency Words 和其下的 Review Words 组成独立的自定义列表：
+
+- 初始高频词为 `have`, `my`, `what`, `one`, `is`, `put`, `you`, `the`, `jump`, `want`。
+- 初始复习词为 `for`, `big`, `a`, `go`, `can`, `and`, `has`, `come`, `are`。
+- 每轮覆盖全部 19 个词汇。
+- `Round` 自动禁用。
+- 每次开始前重新随机排序。
+- 编辑、导入、清空或本地文件夹同步只影响 High Frequency Words，不自动改变 Current Word List 或 All Added Words。
+
+### 11.6 Starter Sentences
 
 严格按 Markdown 句库中的原始顺序练习：
 
@@ -422,7 +453,7 @@ K-8 年级词库按 `Round` 随机抽取：
 
 句子数不足 Round 时，该词库会覆盖全部现有句子，不重复补充条目，确保故事顺序不被打乱。
 
-### 11.5 Imported Sentences
+### 11.7 Imported Sentences
 
 导入句子库严格保持 Markdown 中的句子顺序：
 
@@ -583,9 +614,9 @@ Worker 只代理语音生成，不保存用户账号、练习记录或个人词�
 - `formatBankMarkdown()`：把运行时条目重新格式化为 Markdown。
 - `registerBankItems()`：写入运行时 bank 缓存。
 - `applyStoredOverrides()`：应用浏览器覆盖内容。
-- `syncCustomBanksIntoLibrary()`：把旧自定义词库和导入句子库同步到统一 bank 缓存。
+- `syncCustomBanksIntoLibrary()`：把六个自定义 bank 同步到统一 bank 缓存。
 - `restorePersonalBankDirectory()`：恢复已保存的个人文件夹句柄，并在权限仍有效时读取文件。
-- `loadPersonalBankDirectory()`：读取个人文件夹的四个 Markdown bank；首次连接可创建缺失文件。
+- `loadPersonalBankDirectory()`：读取个人文件夹的六个 Markdown bank；首次连接可创建缺失文件。
 - `writePersonalBankDirectory()`：把 Current/All 联动后的内容写回相应个人文件。
 
 ### Bank Library
@@ -600,7 +631,7 @@ Worker 只代理语音生成，不保存用户账号、练习记录或个人词�
 - `clearSelectedCustomBank()`：二次确认后只清空选中的一个自定义 bank。
 - `pairedPersonalBankSource()`：找出用于清空提示的 Current/All 配对 bank。
 - `reloadBankFilesFromPage()`：重新读取 Markdown 文件。
-- `canImportFileInto()`：只允许向四个自定义 bank 导入文件。
+- `canImportFileInto()`：只允许向六个自定义 bank 导入文件。
 - `importSelectedFile()`：读取并按当前 bank 类型解析用户选择的文件。
 - `saveImportedItems()`：根据 Current 或 All 规则更新 bank，并同步个人资料库。
 
@@ -661,7 +692,7 @@ Worker 只代理语音生成，不保存用户账号、练习记录或个人词�
 - 输入 `Space` 时会判对并前进。
 - 导入区可以把粘贴文本生成 Imported Sentences。
 - 导入区会过滤过短片段。
-- 已支持个人资料库文件夹：四个自定义 bank 可读取和写回用户选择的本地 Markdown 文件；不支持该 API 的浏览器会保留浏览器保存和导出路径。
+- 已支持个人资料库文件夹：六个自定义 bank 可读取和写回用户选择的本地 Markdown 文件；不支持该 API 的浏览器会保留浏览器保存和导出路径。
 - 已接入 Qwen Breeze TTS：Worker Secret 不会暴露到浏览器；本地与线上均可测试 `/api/tts`。
 - 已验证 Qwen 对孤立词偶尔会生成异常长音频（例如 `you` 曾返回约 83 秒 PCM）；Word/Dictation 现在由 Worker 先验证完整短音频，发现异常立即取消 Qwen 且不缓存，并用第二固定 seed 重试一次，再由页面时长上限二次保护，避免续读、占住唯一生成槽或令后续 Qwen 请求 429。
 

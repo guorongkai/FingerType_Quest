@@ -2358,7 +2358,7 @@
         <div class="local-library-summary">
           <span class="editor-kicker">Personal Library</span>
           <strong id="localFolderName">Browser storage</strong>
-          <p id="localFolderDetail">Choose a folder to keep your four custom Markdown banks on this device.</p>
+          <p id="localFolderDetail">Choose a folder to keep your six custom Markdown banks on this device.</p>
         </div>
         <div class="local-library-actions">
           <button class="btn primary" id="chooseLocalFolderBtn" type="button">Choose Folder</button>
@@ -2731,6 +2731,8 @@
 
       const CUSTOM_BANKS_KEY = "fingerTypeQuest.customBanks";
       const CUSTOM_CURRENT_WORDS_KEY = "fingerTypeQuest.customCurrentWords";
+      const CUSTOM_SPELLING_WORDS_KEY = "fingerTypeQuest.customSpellingWords";
+      const CUSTOM_HIGH_FREQUENCY_WORDS_KEY = "fingerTypeQuest.customHighFrequencyWords";
       const CUSTOM_ALL_WORDS_KEY = "fingerTypeQuest.customAllWords";
       const LEGACY_CUSTOM_SENTENCES_KEY = "fingerTypeQuest.customSentences";
       const CUSTOM_CURRENT_SENTENCES_KEY = "fingerTypeQuest.customCurrentSentences";
@@ -2743,6 +2745,8 @@
       const PERSONAL_BANK_DIRECTORY_KEY = "custom-bank-folder";
       const PERSONAL_BANK_FILE_NAMES = Object.freeze({
         "custom:current": "current-words.md",
+        "custom:spelling": "spelling-words.md",
+        "custom:high-frequency": "high-frequency-words.md",
         "custom:all": "all-added-words.md",
         "sentence:current": "current-sentences.md",
         "sentence:all-imported": "all-imported-sentences.md"
@@ -2818,6 +2822,22 @@
           type: "word",
           group: "Custom Word Banks",
           file: "banks/custom-current.md",
+          coversAll: true
+        },
+        {
+          id: "custom:spelling",
+          label: "Spelling Words",
+          type: "word",
+          group: "Custom Word Banks",
+          file: "banks/spelling-words.md",
+          coversAll: true
+        },
+        {
+          id: "custom:high-frequency",
+          label: "High Frequency Words",
+          type: "word",
+          group: "Custom Word Banks",
+          file: "banks/high-frequency-words.md",
           coversAll: true
         },
         {
@@ -3903,10 +3923,14 @@
       const pressedKeys = new Set();
       let dictationHistoryFitFrame = 0;
       let customCurrentWords = [];
+      let customSpellingWords = [];
+      let customHighFrequencyWords = [];
       let customAllWords = [];
       let customCurrentSentenceItems = [];
       let customAllSentenceItems = [];
       let hasStoredCurrentWords = false;
+      let hasStoredSpellingWords = false;
+      let hasStoredHighFrequencyWords = false;
       let hasStoredAllWords = false;
       let hasStoredCurrentSentences = false;
       let hasStoredAllSentences = false;
@@ -4050,6 +4074,14 @@
           return customCurrentWords;
         }
 
+        if (source.id === "custom:spelling") {
+          return customSpellingWords;
+        }
+
+        if (source.id === "custom:high-frequency") {
+          return customHighFrequencyWords;
+        }
+
         if (source.id === "custom:all") {
           return customAllWords;
         }
@@ -4164,6 +4196,26 @@
         }
 
         try {
+          const storedSpelling = JSON.parse(localStorage.getItem(CUSTOM_SPELLING_WORDS_KEY));
+          hasStoredSpellingWords = Array.isArray(storedSpelling);
+          customSpellingWords = hasStoredSpellingWords ? parseWords(storedSpelling.join(" ")) : [];
+        } catch {
+          customSpellingWords = [];
+          hasStoredSpellingWords = false;
+        }
+
+        try {
+          const storedHighFrequency = JSON.parse(localStorage.getItem(CUSTOM_HIGH_FREQUENCY_WORDS_KEY));
+          hasStoredHighFrequencyWords = Array.isArray(storedHighFrequency);
+          customHighFrequencyWords = hasStoredHighFrequencyWords
+            ? parseWords(storedHighFrequency.join(" "))
+            : [];
+        } catch {
+          customHighFrequencyWords = [];
+          hasStoredHighFrequencyWords = false;
+        }
+
+        try {
           const storedAll = JSON.parse(localStorage.getItem(CUSTOM_ALL_WORDS_KEY));
           hasStoredAllWords = Array.isArray(storedAll);
           customAllWords = hasStoredAllWords ? parseWords(storedAll.join(" ")) : [];
@@ -4222,6 +4274,8 @@
 
         [
           CUSTOM_CURRENT_WORDS_KEY,
+          CUSTOM_SPELLING_WORDS_KEY,
+          CUSTOM_HIGH_FREQUENCY_WORDS_KEY,
           CUSTOM_ALL_WORDS_KEY,
           LEGACY_CUSTOM_SENTENCES_KEY,
           CUSTOM_CURRENT_SENTENCES_KEY,
@@ -4233,6 +4287,8 @@
           const storedOverrides = JSON.parse(localStorage.getItem(BANK_OVERRIDES_KEY));
           if (storedOverrides && typeof storedOverrides === "object" && !Array.isArray(storedOverrides)) {
             delete storedOverrides["custom:current"];
+            delete storedOverrides["custom:spelling"];
+            delete storedOverrides["custom:high-frequency"];
             delete storedOverrides["custom:all"];
             delete storedOverrides["sentence:starter"];
             delete storedOverrides["sentence:imported"];
@@ -4249,6 +4305,8 @@
 
       function saveCustomBanks() {
         localStorage.setItem(CUSTOM_CURRENT_WORDS_KEY, JSON.stringify(customCurrentWords));
+        localStorage.setItem(CUSTOM_SPELLING_WORDS_KEY, JSON.stringify(customSpellingWords));
+        localStorage.setItem(CUSTOM_HIGH_FREQUENCY_WORDS_KEY, JSON.stringify(customHighFrequencyWords));
         localStorage.setItem(CUSTOM_ALL_WORDS_KEY, JSON.stringify(customAllWords));
         localStorage.setItem(CUSTOM_CURRENT_SENTENCES_KEY, JSON.stringify(customCurrentSentenceItems));
         localStorage.setItem(CUSTOM_ALL_SENTENCES_KEY, JSON.stringify(customAllSentenceItems));
@@ -4376,6 +4434,12 @@
         if (source.id === "custom:current") {
           customCurrentWords = items;
           hasStoredCurrentWords = true;
+        } else if (source.id === "custom:spelling") {
+          customSpellingWords = items;
+          hasStoredSpellingWords = true;
+        } else if (source.id === "custom:high-frequency") {
+          customHighFrequencyWords = items;
+          hasStoredHighFrequencyWords = true;
         } else if (source.id === "custom:all") {
           customAllWords = items;
           hasStoredAllWords = true;
@@ -4527,13 +4591,13 @@
 
         if (!connected) {
           els.localFolderName.textContent = "Browser storage";
-          els.localFolderDetail.textContent = "Choose a folder to keep your four custom Markdown banks on this device.";
+          els.localFolderDetail.textContent = "Choose a folder to keep your six custom Markdown banks on this device.";
           return;
         }
 
         els.localFolderName.textContent = personalBankDirectoryHandle.name;
         els.localFolderDetail.textContent = canRead
-          ? "Four personal Markdown banks are connected. Saving and importing keeps the folder in sync."
+          ? "Six personal Markdown banks are connected. Saving and importing keeps the folder in sync."
           : "Folder access needs permission again. Choose the folder to reconnect.";
       }
 
@@ -4642,6 +4706,8 @@
 
       function syncCustomBanksIntoLibrary() {
         const currentSource = bankSourceById.get("custom:current");
+        const spellingSource = bankSourceById.get("custom:spelling");
+        const highFrequencySource = bankSourceById.get("custom:high-frequency");
         const allSource = bankSourceById.get("custom:all");
         const currentSentenceSource = bankSourceById.get("sentence:current");
         const allSentenceSource = bankSourceById.get("sentence:all-imported");
@@ -4651,6 +4717,24 @@
             currentSource,
             customCurrentWords,
             formatBankMarkdown(currentSource, customCurrentWords),
+            "browser"
+          );
+        }
+
+        if (hasStoredSpellingWords || customSpellingWords.length > 0) {
+          registerBankItems(
+            spellingSource,
+            customSpellingWords,
+            formatBankMarkdown(spellingSource, customSpellingWords),
+            "browser"
+          );
+        }
+
+        if (hasStoredHighFrequencyWords || customHighFrequencyWords.length > 0) {
+          registerBankItems(
+            highFrequencySource,
+            customHighFrequencyWords,
+            formatBankMarkdown(highFrequencySource, customHighFrequencyWords),
             "browser"
           );
         }
@@ -4706,6 +4790,14 @@
 
             if (source.id === "custom:current" && !hasStoredCurrentWords && items.length > 0) {
               customCurrentWords = items;
+            }
+
+            if (source.id === "custom:spelling" && !hasStoredSpellingWords && items.length > 0) {
+              customSpellingWords = items;
+            }
+
+            if (source.id === "custom:high-frequency" && !hasStoredHighFrequencyWords && items.length > 0) {
+              customHighFrequencyWords = items;
             }
 
             if (source.id === "custom:all" && !hasStoredAllWords && items.length > 0) {
@@ -4931,6 +5023,8 @@
       function canImportFileInto(source) {
         return [
           "custom:current",
+          "custom:spelling",
+          "custom:high-frequency",
           "custom:all",
           "sentence:current",
           "sentence:all-imported"
@@ -4951,12 +5045,21 @@
           return;
         }
 
-        const replacesCurrentList = source.id === "custom:current" || source.id === "sentence:current";
+        const replacesCurrentList = [
+          "custom:current",
+          "custom:spelling",
+          "custom:high-frequency",
+          "sentence:current"
+        ].includes(source.id);
         const isSentenceList = source.type === "sentence";
         els.importTitle.textContent = `Add to ${source.label}`;
-        els.importNote.textContent = replacesCurrentList
-          ? `Upload an image, PDF, TXT, or Markdown file. It replaces this list and also adds its ${isSentenceList ? "sentences" : "words"} to ${isSentenceList ? "All Imported Sentence List" : "All Added Words"}.`
-          : `Upload an image, PDF, TXT, or Markdown file. Its ${isSentenceList ? "sentences" : "words"} are added to this list without changing the Current List.`;
+        if (source.id === "custom:current" || source.id === "sentence:current") {
+          els.importNote.textContent = `Upload an image, PDF, TXT, or Markdown file. It replaces this list and also adds its ${isSentenceList ? "sentences" : "words"} to ${isSentenceList ? "All Imported Sentence List" : "All Added Words"}.`;
+        } else if (replacesCurrentList) {
+          els.importNote.textContent = "Upload an image, PDF, TXT, or Markdown file. It replaces this list without changing other custom lists.";
+        } else {
+          els.importNote.textContent = `Upload an image, PDF, TXT, or Markdown file. Its ${isSentenceList ? "sentences" : "words"} are added to this list without changing the Current List.`;
+        }
         els.sourceFileInput.value = "";
         setImportStatus("");
       }
@@ -5190,6 +5293,14 @@
           hasStoredCurrentWords = true;
           hasStoredAllWords = true;
           state.mode = "word";
+        } else if (source.id === "custom:spelling") {
+          customSpellingWords = items;
+          hasStoredSpellingWords = true;
+          state.mode = "word";
+        } else if (source.id === "custom:high-frequency") {
+          customHighFrequencyWords = items;
+          hasStoredHighFrequencyWords = true;
+          state.mode = "word";
         } else if (source.id === "custom:all") {
           customAllWords = parseWords([...customAllWords, ...items].join(" "));
           hasStoredAllWords = true;
@@ -5216,15 +5327,24 @@
         previewRound();
         renderLibraryPage();
 
-        const allSource = source.type === "sentence"
-          ? bankSourceById.get("sentence:all-imported")
-          : bankSourceById.get("custom:all");
-        const allCount = itemsForBankId(allSource.id).length;
-        const replacesCurrentList = source.id === "custom:current" || source.id === "sentence:current";
+        const linkedAllSource = source.id === "custom:current"
+          ? bankSourceById.get("custom:all")
+          : source.id === "sentence:current"
+            ? bankSourceById.get("sentence:all-imported")
+            : null;
+        const replacesCurrentList = [
+          "custom:current",
+          "custom:spelling",
+          "custom:high-frequency",
+          "sentence:current"
+        ].includes(source.id);
         const action = replacesCurrentList
           ? `Replaced ${source.label} with ${formatItemCount(items.length, source.type)} from ${fileName}.`
           : `Added ${formatItemCount(items.length, source.type)} from ${fileName} to ${source.label}.`;
-        setBankStatus(`${action} ${allSource.label} now has ${formatItemCount(allCount, source.type)}.${folderStatus}`, "success");
+        const linkedSummary = linkedAllSource
+          ? ` ${linkedAllSource.label} now has ${formatItemCount(itemsForBankId(linkedAllSource.id).length, source.type)}.`
+          : "";
+        setBankStatus(`${action}${linkedSummary}${folderStatus}`, "success");
         setImportStatus("Import complete.", "success");
       }
 
@@ -5279,6 +5399,16 @@
           customAllWords = parseWords([...customAllWords, ...items].join(" "));
           hasStoredCurrentWords = true;
           hasStoredAllWords = true;
+          saveCustomBanks();
+          syncCustomBanksIntoLibrary();
+        } else if (source.id === "custom:spelling") {
+          customSpellingWords = items;
+          hasStoredSpellingWords = true;
+          saveCustomBanks();
+          syncCustomBanksIntoLibrary();
+        } else if (source.id === "custom:high-frequency") {
+          customHighFrequencyWords = items;
+          hasStoredHighFrequencyWords = true;
           saveCustomBanks();
           syncCustomBanksIntoLibrary();
         } else if (source.id === "custom:all") {
@@ -5402,6 +5532,18 @@
           localStorage.removeItem(CUSTOM_CURRENT_WORDS_KEY);
           customCurrentWords = [];
           hasStoredCurrentWords = false;
+        }
+
+        if (source.id === "custom:spelling") {
+          localStorage.removeItem(CUSTOM_SPELLING_WORDS_KEY);
+          customSpellingWords = [];
+          hasStoredSpellingWords = false;
+        }
+
+        if (source.id === "custom:high-frequency") {
+          localStorage.removeItem(CUSTOM_HIGH_FREQUENCY_WORDS_KEY);
+          customHighFrequencyWords = [];
+          hasStoredHighFrequencyWords = false;
         }
 
         if (source.id === "custom:all") {

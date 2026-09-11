@@ -12,7 +12,7 @@ A child-friendly English typing game for learners beginning to build QWERTY keyb
 - Friendly error handling: mistakes are counted but never inserted into the word
 - Optional sound and browser voice playback
 - A Bank Library for viewing and editing word and sentence banks
-- Browser-based saving, plus optional connection to a local folder for four personal banks in supported browsers
+- Browser-based saving, plus optional connection to a local folder for six personal banks in supported browsers
 - No account, backend, build step, or external runtime dependency
 
 ## Run it
@@ -74,7 +74,7 @@ In Sentence Practice, capitalization, spaces, and common punctuation are part of
 
 ## Personal banks and privacy
 
-The built-in K–8 banks ship with the app. Edits to personal banks are saved in browser storage by default. In browsers that support the File System Access API, **Banks** can connect to a folder you choose; the app then reads and writes only the four personal Markdown bank files in that folder. No learner data is sent to a server.
+The built-in K–8 banks ship with the app. Edits to personal banks are saved in browser storage by default. In browsers that support the File System Access API, **Banks** can connect to a folder you choose; the app then reads and writes only the six personal Markdown bank files in that folder. No learner data is sent to a server.
 
 ## Browser notes
 
