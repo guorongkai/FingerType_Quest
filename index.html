@@ -325,19 +325,37 @@
       }
 
       @media (min-width: 861px) and (min-height: 761px) {
+        body {
+          overflow: auto;
+        }
+
+        .app,
+        .app.sentence-mode {
+          height: auto;
+          min-height: 100dvh;
+          grid-template-rows: auto auto auto auto;
+          align-content: start;
+        }
+
         .practice-row {
-          --practice-panel-limit: min(270px, 34dvh);
+          --practice-panel-limit: min(240px, 30dvh);
           max-height: var(--practice-panel-limit);
         }
 
         .app.sentence-mode .practice-row {
-          --practice-panel-limit: min(310px, 38dvh);
+          --practice-panel-limit: min(240px, 30dvh);
           max-height: var(--practice-panel-limit);
         }
 
         .practice-row > .stage,
         .practice-row > .stats {
           max-height: var(--practice-panel-limit);
+        }
+
+        .coach {
+          align-self: start;
+          max-height: 540px;
+          grid-template-rows: auto auto;
         }
       }
 
@@ -420,6 +438,8 @@
       .word.sentence-target {
         align-self: start;
         min-height: 0;
+        min-width: 0;
+        width: 100%;
         max-height: 100%;
         overflow-x: hidden;
         overflow-y: auto;
@@ -432,6 +452,7 @@
         word-break: normal;
         overflow-wrap: anywhere;
         white-space: pre-wrap;
+        text-wrap: pretty;
         scrollbar-width: thin;
       }
 
@@ -643,6 +664,7 @@
         grid-template-rows: auto 1fr auto;
         gap: 7px;
         padding: 12px;
+        container-type: size;
       }
 
       .stats h2,
@@ -670,8 +692,9 @@
       }
 
       .stat strong {
-        font-size: clamp(1.18rem, 2.2vw, 1.5rem);
-        line-height: 1;
+        font-size: clamp(0.84rem, min(14cqi, 9cqb), 1.35rem);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.05;
       }
 
       .meter {
@@ -6987,12 +7010,18 @@
           return;
         }
 
-        const minimumFontSize = target.classList.contains("sentence-target")
+        const isSentenceTarget = target.classList.contains("sentence-target");
+        const minimumFontSize = isSentenceTarget
           ? 10
           : state.mode === "dictation"
             ? 13
             : 18;
         let fontSize = Number.parseFloat(window.getComputedStyle(target).fontSize);
+
+        if (isSentenceTarget) {
+          // Resolve full-width line wrapping before deciding whether smaller type is needed.
+          target.getBoundingClientRect();
+        }
 
         for (
           let attempt = 0;

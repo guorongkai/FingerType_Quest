@@ -95,7 +95,7 @@ The built-in K–8 banks ship with the app. Edits to personal banks are saved in
 
 For the full Alpha experience, use a current desktop Chromium browser (such as Chrome or Edge), especially if you want to connect a local folder. The game itself is a static website and requires no installation.
 
-The practice screen uses the live viewport height to tighten spacing, key sizes, and target text where possible. On larger desktop displays, the center practice and Stats panels use compact fixed ceilings: `min(270px, 34dvh)` for words and `min(310px, 38dvh)` for sentences. They never grow taller on larger displays. On a very short desktop window, the page becomes vertically scrollable before any target text, Stats cards, controls, or keyboard rows are clipped.
+The practice screen uses the live viewport height to tighten spacing, key sizes, and target text where possible. Sentence targets use the full available width and naturally wrap onto lines before the app considers reducing their font size. Stats counter text scales from the actual Stats panel dimensions, so it remains legible without spilling out of its cards at compact window sizes. On larger desktop displays, the center practice and Stats panels use the same compact fixed ceiling in both word and sentence modes: `min(240px, 30dvh)`. The Typing Coach is kept directly below them, sizes to its keyboard content, and never exceeds `540px`; extra browser height remains as page background below the coach. On a very short desktop window, the page becomes vertically scrollable before any target text, Stats cards, controls, or keyboard rows are clipped.
 
 ## Maintenance rule
 
