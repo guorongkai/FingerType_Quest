@@ -139,11 +139,12 @@ Bank Library 包含一个个人资料库工具栏和两列管理区：
 - 已连接时显示文件夹名称；文件夹中的所有 `.md` bank 会从该文件夹读取，并在保存或导入时写回。
 - 本地文件夹缺少 `Current Word List`、`Spelling Words`、`High Frequency Words` 或任何其他个人 bank 时，该列表不会出现在界面中。
 - `Reload Folder` 用于读取用户在外部编辑器中保存后的 Markdown 内容。
-- `Disconnect` 只移除网站对文件夹的已保存引用，不删除用户文件。
+- `Disconnect` 只移除网站对文件夹的已保存引用，不删除用户文件。成功后应用立即切回 `Grade 1 Words` 的 Word Practice，并把操作位换成不可点击的 `Using Online Banks` 状态按钮，表示内置在线词库已生效。
 
 右侧导入区提供：
 
-- 文件选择器，支持图片、PDF、`.txt`、`.text` 和 `.md`
+- 文件选择器只展示 PNG、JPEG、WebP、GIF、PDF、`.txt`、`.text` 和 `.md`；HEIC、HEIF、AVIF、BMP、TIFF 及其他未列出的扩展名会在识别前返回明确的格式不支持提示
+- 上传区说明只列出 PNG、JPEG、WebP、GIF 图片格式，对用户统一称为 FingerType Quest 识别，并明确说明识别结果必须经用户检查和确认后才会加入对应词库
 - 仅在 `Current Word List` 或 `Current Sentence List` 被选中时显示导入状态与结果提示
 - 优先由 Qwen LLM 按版面和标题识别词库分类或完整句子；Qwen 不可用时自动使用原有浏览器文本解析/Tesseract OCR
 - 识别后统一打开确认窗口；用户可修改 Spelling、High Frequency、Current Words 或 Current Sentences，取消时不写入，确认后才保存
@@ -294,7 +295,7 @@ label: Current Sentence List
 - `Reload Folder`：重新扫描用户选定文件夹中的所有 Markdown bank。
 - `Reset Browser Edits`：清除当前 bank 的浏览器覆盖内容；个人资料库仍连接时，会重新以个人文件夹内容为准。
 - `Clear This List`：清空当前选中的自定义 bank，并保存空列表；Current 与 All 始终独立清空。已连接个人资料库时，只写回该 bank 对应的一个 Markdown 文件。
-- `Disconnect`：只忘记已保存的文件夹授权引用，不删除磁盘上的任何文件。
+- `Disconnect`：只忘记已保存的文件夹授权引用，不删除磁盘上的任何文件；成功后切到 `Grade 1 Words` 的 Word Practice，并显示不可点击的 `Using Online Banks` 状态按钮。
 
 外部编辑推荐流程：
 
@@ -412,7 +413,7 @@ Bank Library 只允许向两个 Current bank 直接导入文件；分类词库�
 
 识别流程：
 
-1. 图片在浏览器中缩放并转为 JPEG；PDF 使用 PDF.js 逐页渲染为图片，最多八页为一批发送；TXT/Markdown 直接发送纯文本。
+1. 页面先按文件扩展名和 MIME 类型执行格式白名单校验；不支持的格式不会调用 Qwen 或浏览器 OCR。支持的图片在浏览器中缩放并转为 JPEG；PDF 使用 PDF.js 逐页渲染为图片，最多八页为一批发送；TXT/TEXT/Markdown 直接发送纯文本。
 2. 浏览器只请求同源 `/api/recognize-bank`；Worker 用已有的 `QWEN_API_KEY` Secret 调用 `qwen3.8`，浏览器不持有 Key。
 3. Worker 的系统提示明确把文件视为不可信数据，只抽取学习内容，不执行文件内指令；结果必须是结构化 JSON。
 4. Qwen 超时、不可达、限流或结果无法解析时，页面自动调用原有 `extractUploadedFileText()`：普通文本直接读取，图片用 Tesseract，PDF 优先读取文本层并在扫描件上使用 Tesseract。
@@ -678,6 +679,7 @@ Worker 只代理语音生成和用户明确发起的文件识别，不保存用�
 - `pairedPersonalBankSource()`：找出用于清空提示的 Current/All 配对 bank。
 - `reloadBankFilesFromPage()`：重新读取 Markdown 文件。
 - `canImportFileInto()`：只允许向 Current Word List 和 Current Sentence List 导入文件。
+- `validateImportFileFormat()`：在识别前按白名单拒绝 HEIC 等不支持格式，并返回具体格式与支持列表。
 - `recognizeUploadedFileWithQwen()`：把文本或批量页面图片发到同源识别路由，并合并、清洗 Qwen 结果。
 - `recognizeUploadedFile()`：优先使用 Qwen，失败时自动回落到现有浏览器识别。
 - `parseUploadedWordLists()`：浏览器 fallback 从 Current Word List 的上传文本中提取 Spelling、High Frequency 和 Review 分类。
@@ -754,7 +756,9 @@ Worker 只代理语音生成和用户明确发起的文件识别，不保存用�
 - 已在 `1920×1400` 桌面视口验证紧凑面板与 Coach：单词、句子和 Stats 均为 216px；Coach 保持约 366px，并与练习区维持 9px 间隔，视口继续变高时不再增高。Coach 顶栏的标题与右侧提示均为 28px 高，错误说明位于二者中间，`Command` 徽章为 21px 高且不溢出；Home Row 到键盘的距离为 5px。在 390px 宽窄屏上页面没有横向视口溢出。使用长句确认目标会以 30px 字号自然换行且无内部溢出；长统计值 `100 / 100` 的自适应字号为约 19px，未超出卡片。在 `1280×500` 句子模式再次确认不强制过小上限，整页可滚动，目标文本没有内部溢出；该尺寸下 Coach 顶栏为隐藏状态、Coach gap 为 0px，键盘仍可见。数字键和双符号键在普通与 Shift 状态均没有溢出，测试期间浏览器控制台无错误或警告。
 - 已在 `1920×1400` Word Practice 验证默认目标字为约 59.6px、灰色字母格为 `31.5×32.4px`，累计较原始基线收紧约 19%，且上方练习区与 Stats 仍均为 216px、页面无横向溢出。已在 `1280×500` 紧凑键盘验证数字 `1` 键未按 Shift 时主符号向左偏移 2px、Shift 符号位于右上角且约为 5.6px；长按 Shift 后两者交换位置和字号，蓝色 Shift 符号为约 9px 的主标签、原符号为右上角的小灰色标签，全部状态均无越界或页面横向溢出。另在 `390×600` 窄屏检查了全部 21 个双符号键，无标签越界或页面横向溢出。模拟 Qwen TTS 返回 `503` 时，原有练习提示保持不变；浏览器控制台无错误或警告。
 - 已在 `1920×1400`、`1280×680` 和 `1280×500` 验证响应式 Stats：练习区与 Stats 始终保持同高，并从 `216px` 依次收缩至约 `197px`、`145px`；在最矮测试高度，Stats 标题、标签和数值分别为约 `9.5px`、`8px`、`12.7px`。所有 Stats 卡片、练习区和页面均无内部或横向溢出，控制台无错误或警告。
+- 已模拟已连接个人文件夹后执行 Disconnect：连接时按钮为可点击的 `Disconnect`；成功后自动选中 `Grade 1 Words`、切换到 Word Practice，并以不可点击的 `Using Online Banks` 状态按钮和 `Online Banks` 名称取代它。断开不会修改 Markdown 文件，页面无横向溢出且控制台无错误或警告。
 - 已在根目录新增 `AGENTS.md`，并在 `README.md` 与本文件中同步记录强制文档维护规则；后续每次仓库修改都必须同时检查并更新两份文档。
+- 已限制文件选择器为 PNG、JPEG、WebP、GIF、PDF、TXT、TEXT 和 Markdown。Playwright 强制注入虚拟 HEIC 文件时，页面在任何 `/api/recognize-bank` 或 OCR 调用前显示明确格式错误，网络记录无识别请求且控制台无错误；随后上传受支持的 Markdown 文件仍正常进入 Qwen 路由，并在仅有静态服务器时按预期回落到浏览器确认窗口。
 
 仍可继续优化：
 

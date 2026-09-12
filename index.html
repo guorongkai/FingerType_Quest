@@ -198,6 +198,23 @@
         border-color: #e7be44;
       }
 
+      .btn.status {
+        background: #e7f7f4;
+        border-color: #8dd1ae;
+        color: var(--primary-dark);
+        cursor: default;
+        opacity: 1;
+      }
+
+      .btn:disabled {
+        cursor: default;
+      }
+
+      .btn:disabled:hover {
+        box-shadow: none;
+        transform: none;
+      }
+
       .settings {
         min-height: 54px;
         display: grid;
@@ -2719,7 +2736,7 @@
         <div class="local-library-actions">
           <button class="btn primary" id="chooseLocalFolderBtn" type="button">Choose Folder</button>
           <button class="btn" id="reloadLocalFolderBtn" type="button">Reload Folder</button>
-          <button class="btn warn" id="disconnectLocalFolderBtn" type="button">Disconnect</button>
+          <button class="btn status" id="disconnectLocalFolderBtn" type="button" disabled aria-disabled="true">Using Online Banks</button>
         </div>
       </section>
 
@@ -2767,7 +2784,7 @@
               class="file-input"
               id="sourceFileInput"
               type="file"
-              accept="image/*,.pdf,.txt,.text,.md,text/plain,text/markdown,application/pdf"
+              accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.txt,.text,.md,image/png,image/jpeg,image/webp,image/gif,text/plain,text/markdown,application/pdf"
               aria-label="Upload a file to the selected bank"
             />
             <p class="import-status" id="importStatus" aria-live="polite"></p>
@@ -4327,6 +4344,15 @@
       const QWEN_IMPORT_MAX_IMAGE_DIMENSION = 1800;
       const QWEN_IMPORT_MAX_PDF_PAGES = 40;
       const QWEN_IMPORT_MAX_TEXT_CHARACTERS = 100000;
+      const SUPPORTED_IMPORT_FORMATS = "PNG, JPEG, WebP, GIF, PDF, TXT, TEXT, or Markdown";
+      const SUPPORTED_IMPORT_IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
+      const SUPPORTED_IMPORT_TEXT_EXTENSIONS = new Set(["txt", "text", "md"]);
+      const SUPPORTED_IMPORT_IMAGE_MIME_TYPES = new Set([
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/gif"
+      ]);
 
       const state = {
         bankId: "grade:1",
@@ -5109,16 +5135,23 @@
         els.chooseLocalFolderBtn.disabled = !supported;
         els.reloadLocalFolderBtn.disabled = !canRead;
         els.disconnectLocalFolderBtn.disabled = !connected;
+        els.disconnectLocalFolderBtn.classList.toggle("warn", connected);
+        els.disconnectLocalFolderBtn.classList.toggle("status", !connected);
+        els.disconnectLocalFolderBtn.textContent = connected ? "Disconnect" : "Using Online Banks";
+        els.disconnectLocalFolderBtn.setAttribute("aria-disabled", String(!connected));
+        els.disconnectLocalFolderBtn.title = connected
+          ? "Disconnect this local folder"
+          : "The built-in online banks are active";
 
         if (!supported) {
-          els.localFolderName.textContent = "Browser storage";
-          els.localFolderDetail.textContent = "This browser keeps custom banks in browser storage. Markdown export remains available.";
+          els.localFolderName.textContent = "Online Banks";
+          els.localFolderDetail.textContent = "Built-in banks are active. This browser keeps personal edits in browser storage.";
           return;
         }
 
         if (!connected) {
-          els.localFolderName.textContent = "Browser storage";
-          els.localFolderDetail.textContent = "Choose a folder to load your own Markdown word and sentence banks on this device.";
+          els.localFolderName.textContent = "Online Banks";
+          els.localFolderDetail.textContent = "Built-in banks are active. Choose a folder to load your own Markdown word and sentence banks on this device.";
           return;
         }
 
@@ -5215,16 +5248,27 @@
       }
 
       async function disconnectPersonalBankDirectory() {
+        if (!personalBankDirectoryHandle) {
+          renderPersonalBankDirectoryControls();
+          return;
+        }
+
         try {
           await forgetPersonalBankDirectory();
           personalBankDirectoryHandle = null;
           personalBankDirectoryPermission = "none";
           activateBankSources();
           await loadMarkdownBankFiles({ force: true });
+          state.bankId = bankSourceById.has("grade:1")
+            ? "grade:1"
+            : publicBankSources.find((source) => source.type === "word")?.id || "grade:1";
+          state.mode = "word";
+          selectedLibraryBankId = state.bankId;
           renderBankOptions();
+          applyModeButtons();
           previewRound();
           renderLibraryPage();
-          setBankStatus("Disconnected personal folder. Your Markdown files were not changed.", "success");
+          setBankStatus("Disconnected personal folder. Switched to the online default bank. Your Markdown files were not changed.", "success");
         } catch (error) {
           const message = error instanceof Error ? error.message : "Could not disconnect the personal folder.";
           setBankStatus(message, "error");
@@ -5587,9 +5631,9 @@
 
         els.importTitle.textContent = `Add to ${source.label}`;
         if (source.id === "custom:current") {
-          els.importNote.textContent = "Upload an image, PDF, TXT, or Markdown file. Qwen identifies Current, Spelling, and High Frequency words; browser recognition takes over if Qwen is unavailable. You can edit everything before it is added.";
+          els.importNote.textContent = "Upload a PNG, JPEG, WebP, or GIF image. FingerType Quest identifies Current, Spelling, and High Frequency words. After recognition, you must review and confirm the results before they are added to the corresponding word lists.";
         } else {
-          els.importNote.textContent = "Upload an image, PDF, TXT, or Markdown file. Qwen identifies complete practice sentences; browser recognition takes over if Qwen is unavailable. You can edit everything before it is added.";
+          els.importNote.textContent = "Upload a PNG, JPEG, WebP, or GIF image. FingerType Quest identifies complete practice sentences. After recognition, you must review and confirm the results before they are added to the Current Sentence List.";
         }
         els.sourceFileInput.value = "";
         setImportStatus("");
@@ -5751,16 +5795,62 @@
         }
       }
 
+      function importFileExtension(file) {
+        const match = String(file?.name || "").toLowerCase().match(/\.([^.]+)$/);
+        return match?.[1] || "";
+      }
+
+      function importFileKind(file) {
+        const extension = importFileExtension(file);
+        if (SUPPORTED_IMPORT_IMAGE_EXTENSIONS.has(extension)) {
+          return "image";
+        }
+        if (extension === "pdf") {
+          return "pdf";
+        }
+        if (SUPPORTED_IMPORT_TEXT_EXTENSIONS.has(extension)) {
+          return "text";
+        }
+        if (extension) {
+          return "";
+        }
+
+        const mimeType = String(file?.type || "").toLowerCase();
+        if (SUPPORTED_IMPORT_IMAGE_MIME_TYPES.has(mimeType)) {
+          return "image";
+        }
+        if (mimeType === "application/pdf") {
+          return "pdf";
+        }
+        if (mimeType === "text/plain" || mimeType === "text/markdown") {
+          return "text";
+        }
+        return "";
+      }
+
+      function validateImportFileFormat(file) {
+        if (importFileKind(file)) {
+          return;
+        }
+        const extension = importFileExtension(file);
+        const formatName = extension
+          ? extension.toUpperCase()
+          : String(file?.type || "unknown");
+        throw new Error(
+          `The ${formatName} file format is not supported. Choose ${SUPPORTED_IMPORT_FORMATS}.`
+        );
+      }
+
       function isImageFile(file) {
-        return file.type.startsWith("image/") || /\.(?:avif|bmp|gif|jpe?g|png|tiff?|webp)$/i.test(file.name);
+        return importFileKind(file) === "image";
       }
 
       function isPdfFile(file) {
-        return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+        return importFileKind(file) === "pdf";
       }
 
       function isTextFile(file) {
-        return file.type.startsWith("text/") || /\.(?:md|text|txt)$/i.test(file.name);
+        return importFileKind(file) === "text";
       }
 
       function canvasToJpegDataUrl(canvas) {
@@ -5894,7 +5984,7 @@
               ? [await prepareImageForQwen(file)]
               : null;
           if (!images) {
-            throw new Error("Choose an image, PDF, TXT, or Markdown file.");
+            throw new Error(`Choose ${SUPPORTED_IMPORT_FORMATS}.`);
           }
           requests = [];
           let batch = [];
@@ -5963,7 +6053,7 @@
           return file.text();
         }
 
-        throw new Error("Choose an image, PDF, TXT, or Markdown file.");
+        throw new Error(`Choose ${SUPPORTED_IMPORT_FORMATS}.`);
       }
 
       function parseUploadedWordList(text) {
@@ -6271,6 +6361,7 @@
 
         els.sourceFileInput.disabled = true;
         try {
+          validateImportFileFormat(file);
           setImportStatus(`Preparing ${file.name} for Qwen…`);
           const recognition = await recognizeUploadedFile(file, source);
           setImportStatus("Recognition complete. Review the results before adding them.");

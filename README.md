@@ -57,11 +57,17 @@ Qwen streams PCM audio for faster playback; browser voice remains the automatic
 fallback for that one reading if cloud voice is temporarily unavailable or both
 safe Qwen attempts fail.
 
-For Current Word List and Current Sentence List imports, the page sends plain
-text or prepared page images to the same-origin Worker. Qwen returns structured
-word categories or sentences, then a review dialog lets the user edit or cancel
-before anything is saved. If Qwen is unavailable, the existing in-browser text
-parser and OCR flow runs automatically and uses the same review dialog.
+For Current Word List and Current Sentence List imports, the supported formats
+are PNG, JPEG, WebP, GIF, PDF, TXT, TEXT, and Markdown. The file picker filters
+to those formats, and the page rejects unsupported extensions such as HEIC with
+a specific message before contacting Qwen or browser OCR. Supported plain text
+or prepared page images are sent to the same-origin Worker. Qwen returns
+structured word categories or sentences, then a review dialog lets the user
+edit or cancel before anything is saved. If Qwen is unavailable, the existing
+in-browser text parser and OCR flow runs automatically and uses the same review
+dialog. The upload guidance names PNG, JPEG, WebP, and GIF images, describes
+recognition as a FingerType Quest feature, and makes clear that the user must
+review and confirm the result before it is added to the corresponding list.
 
 ## How to play
 
@@ -89,7 +95,7 @@ In Sentence Practice, capitalization, spaces, and common punctuation are part of
 
 ## Personal banks and privacy
 
-The built-in K–8 banks ship with the app. Edits to personal banks are saved in browser storage by default. In browsers that support the File System Access API, **Banks** can connect to a folder you choose; every `.md` file in that folder becomes a personal word or sentence bank based on its `id:`, `type:`, and `label:` metadata (or its title and filename). Files that are absent are not shown, and no missing lists are created automatically. Practice history and bank contents remain local. Only a file the user explicitly uploads for recognition is sent through the same-origin Cloudflare Worker to Qwen when the service is available; the API key never reaches the browser.
+The built-in K–8 banks ship with the app. Edits to personal banks are saved in browser storage by default. In browsers that support the File System Access API, **Banks** can connect to a folder you choose; every `.md` file in that folder becomes a personal word or sentence bank based on its `id:`, `type:`, and `label:` metadata (or its title and filename). Files that are absent are not shown, and no missing lists are created automatically. Disconnecting a folder never changes its files: the app immediately returns to `Grade 1 Words` in Word Practice and the disabled `Using Online Banks` control confirms that the built-in banks are active. Practice history and bank contents remain local. Only a file the user explicitly uploads for recognition is sent through the same-origin Cloudflare Worker to Qwen when the service is available; the API key never reaches the browser.
 
 ## Browser notes
 
