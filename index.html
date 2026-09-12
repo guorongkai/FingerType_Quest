@@ -324,6 +324,26 @@
         align-items: stretch;
       }
 
+      @media (min-width: 861px) {
+        .practice-row {
+          --practice-panel-limit: clamp(132px, 29dvh, 216px);
+          height: var(--practice-panel-limit);
+          max-height: var(--practice-panel-limit);
+        }
+
+        .app.sentence-mode .practice-row {
+          --practice-panel-limit: clamp(132px, 29dvh, 216px);
+          height: var(--practice-panel-limit);
+          max-height: var(--practice-panel-limit);
+        }
+
+        .practice-row > .stage,
+        .practice-row > .stats {
+          height: 100%;
+          max-height: var(--practice-panel-limit);
+        }
+      }
+
       @media (min-width: 861px) and (min-height: 761px) {
         body {
           overflow: auto;
@@ -335,21 +355,6 @@
           min-height: 100dvh;
           grid-template-rows: auto auto auto auto;
           align-content: start;
-        }
-
-        .practice-row {
-          --practice-panel-limit: min(240px, 30dvh);
-          max-height: var(--practice-panel-limit);
-        }
-
-        .app.sentence-mode .practice-row {
-          --practice-panel-limit: min(240px, 30dvh);
-          max-height: var(--practice-panel-limit);
-        }
-
-        .practice-row > .stage,
-        .practice-row > .stats {
-          max-height: var(--practice-panel-limit);
         }
 
         .coach {
@@ -427,7 +432,7 @@
 
       .word:not(.sentence-target) {
         padding: 2px 0 4px;
-        font-size: var(--target-font-size, clamp(1.45rem, 6.9dvh, 4.6rem));
+        font-size: var(--target-font-size, clamp(1.1745rem, 5.589dvh, 3.726rem));
         line-height: 1;
       }
 
@@ -490,10 +495,10 @@
       }
 
       .letter-rail {
-        min-height: clamp(26px, 4.2dvh, 38px);
+        min-height: clamp(21px, 3.402dvh, 31px);
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 4px;
         align-items: center;
       }
 
@@ -539,15 +544,15 @@
       }
 
       .letter {
-        width: clamp(29px, 4.6vw, 39px);
-        height: clamp(26px, 4.6dvh, 40px);
+        width: clamp(23px, 3.726vw, 31.5px);
+        height: clamp(21px, 3.726dvh, 32.4px);
         display: grid;
         place-items: center;
         border: 2px solid #cbd8e5;
         border-radius: var(--radius);
         background: #f8fafc;
         color: #738198;
-        font-size: clamp(1rem, 2.2vw, 1.45rem);
+        font-size: clamp(0.81rem, 1.782vw, 1.1745rem);
         font-weight: 950;
         text-transform: none;
         transition:
@@ -571,9 +576,9 @@
       }
 
       .letter.space-letter {
-        width: clamp(47px, 7vw, 60px);
+        width: clamp(38px, 5.67vw, 48.6px);
         color: #4b5e76;
-        font-size: clamp(0.62rem, 1.35vw, 0.82rem);
+        font-size: clamp(0.5rem, 1.094vw, 0.67rem);
         text-transform: uppercase;
       }
 
@@ -673,6 +678,10 @@
         line-height: 1.1;
       }
 
+      .stats h2 {
+        font-size: clamp(0.62rem, min(8cqi, 8cqb), 1rem);
+      }
+
       .stat-grid {
         min-height: 0;
         display: grid;
@@ -692,9 +701,13 @@
       }
 
       .stat strong {
-        font-size: clamp(0.84rem, min(14cqi, 9cqb), 1.35rem);
+        font-size: clamp(0.68rem, min(13cqi, 10cqb), 1.35rem);
         font-variant-numeric: tabular-nums;
         line-height: 1.05;
+      }
+
+      .stats .stat span {
+        font-size: clamp(0.5rem, min(6.5cqi, 5.7cqb), 0.72rem);
       }
 
       .meter {
@@ -1952,9 +1965,9 @@
         }
 
         .letter {
-          width: 30px;
-          height: 31px;
-          font-size: 0.96rem;
+          width: 24px;
+          height: 25px;
+          font-size: 0.77rem;
         }
 
         .hint {
@@ -2116,14 +2129,14 @@
         }
 
         .letter-rail {
-          min-height: 30px;
-          gap: 5px;
+          min-height: 24px;
+          gap: 4px;
         }
 
         .letter {
-          width: 27px;
-          height: 29px;
-          font-size: 0.9rem;
+          width: 22px;
+          height: 23px;
+          font-size: 0.73rem;
         }
 
         .hint {
@@ -2141,7 +2154,7 @@
         }
 
         .stats h2 {
-          font-size: 0.72rem;
+          font-size: clamp(0.5rem, 7.5cqb, 0.72rem);
         }
 
         .stat-grid {
@@ -2153,11 +2166,11 @@
         }
 
         .stat span {
-          font-size: 0.62rem;
+          font-size: clamp(0.5rem, 5.7cqb, 0.62rem);
         }
 
         .stat strong {
-          font-size: 1.2rem;
+          font-size: clamp(0.68rem, 10cqb, 1.05rem);
         }
 
         .coach {
@@ -2413,6 +2426,11 @@
       }
 
       @media (max-height: 760px) {
+        .app,
+        .app.sentence-mode {
+          align-content: start;
+        }
+
         .coach {
           grid-template-rows: auto;
           gap: 0;
@@ -2420,6 +2438,56 @@
 
         .coach-head {
           display: none;
+        }
+
+        .key.number-key {
+          font-size: clamp(0.52rem, 1.8dvh, 0.7rem);
+        }
+
+        .key.dual-label {
+          display: block;
+          padding: 1px 2px;
+        }
+
+        .key.dual-label .key-shift {
+          display: block;
+          position: absolute;
+          top: 1px;
+          right: 2px;
+          align-self: auto;
+          color: #5b697c;
+          font-size: 0.62em;
+          line-height: 1;
+        }
+
+        .key.dual-label .key-main {
+          position: absolute;
+          top: 50%;
+          left: calc(50% - 2px);
+          align-self: auto;
+          transform: translate(-50%, -50%);
+          font-size: inherit;
+          line-height: 1;
+        }
+
+        .keyboard.shift-layer .key.dual-key .key-shift {
+          display: block;
+          top: 50%;
+          right: auto;
+          left: calc(50% - 2px);
+          transform: translate(-50%, -50%);
+          color: var(--blue);
+          font-size: inherit;
+        }
+
+        .keyboard.shift-layer .key.dual-key .key-main {
+          display: block;
+          top: 1px;
+          right: 2px;
+          left: auto;
+          transform: none;
+          color: #8a98aa;
+          font-size: 0.62em;
         }
       }
 
@@ -8237,11 +8305,7 @@
         stopQwenSpeech();
         const mode = state.mode === "sentence" ? "sentence" : "word";
         if (mode === "word" && !supportsPcmStreaming()) {
-          useBrowserVoiceFallback(
-            word,
-            callbacks,
-            "This browser cannot play Qwen's validated PCM word audio."
-          );
+          useBrowserVoiceFallback(word, callbacks);
           return;
         }
         const controller = new AbortController();
@@ -8326,11 +8390,7 @@
             settled = true;
             releaseAudio();
             if (state.speechSessionId === sessionId) {
-              useBrowserVoiceFallback(
-                word,
-                callbacks,
-                "Qwen returned audio that this browser could not play."
-              );
+              useBrowserVoiceFallback(word, callbacks);
             }
           };
 
@@ -8344,7 +8404,7 @@
           if (state.qwenSpeechController === controller) {
             state.qwenSpeechController = null;
           }
-          useBrowserVoiceFallback(word, callbacks, error.message);
+          useBrowserVoiceFallback(word, callbacks);
         }
       }
 
@@ -8360,15 +8420,7 @@
         return `The /api/tts endpoint returned HTTP ${response.status}.`;
       }
 
-      function useBrowserVoiceFallback(
-        word,
-        callbacks,
-        reason = "Qwen TTS is unavailable."
-      ) {
-        setHint(
-          `Cloud voice failed for this reading (${reason}) Using your browser voice; the next word will retry Qwen.`,
-          "error"
-        );
+      function useBrowserVoiceFallback(word, callbacks) {
         speakBrowserWordOnce(word, callbacks);
       }
 
