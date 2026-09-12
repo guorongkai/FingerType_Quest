@@ -119,51 +119,52 @@
       }
 
       .top-bar {
-        min-height: 46px;
+        min-height: clamp(26px, calc(14px + 0.6vw + 1.2dvh), 34px);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: clamp(6px, calc(1px + 0.35vw + 0.15dvh), 11px);
       }
 
       .brand {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: clamp(6px, calc(1px + 0.3vw + 0.16dvh), 8px);
         min-width: 0;
       }
 
       .brand-mark {
-        width: 43px;
-        height: 43px;
+        width: clamp(26px, calc(12px + 0.7vw + 1.3dvh), 32px);
+        height: clamp(26px, calc(12px + 0.7vw + 1.3dvh), 32px);
         flex: 0 0 auto;
         display: grid;
         place-items: center;
         border: 2px solid var(--ink);
         border-radius: var(--radius);
         background: var(--gold);
-        box-shadow: 4px 4px 0 var(--ink);
+        box-shadow: 3px 3px 0 var(--ink);
         font-weight: 950;
+        font-size: clamp(0.68rem, calc(0.38rem + 0.16vw + 0.14dvh), 0.8rem);
       }
 
       h1 {
-        font-size: clamp(1.5rem, 2.8vw, 2.15rem);
+        font-size: clamp(1.05rem, calc(0.5rem + 0.9vw + 0.55dvh), 1.5rem);
         line-height: 1;
         letter-spacing: 0;
         white-space: nowrap;
       }
 
       .brand p {
-        margin-top: 4px;
+        margin-top: 3px;
         color: var(--muted);
-        font-size: 0.95rem;
+        font-size: clamp(0.58rem, calc(0.35rem + 0.2vw + 0.15dvh), 0.68rem);
         font-weight: 650;
         white-space: nowrap;
       }
 
       .top-actions {
         display: flex;
-        gap: 8px;
+        gap: clamp(5px, calc(1.2px + 0.3vw + 0.18dvh), 7px);
         flex-wrap: wrap;
         justify-content: flex-end;
       }
@@ -180,6 +181,12 @@
           transform 140ms ease,
           box-shadow 140ms ease,
           background 140ms ease;
+      }
+
+      .top-actions .btn {
+        min-height: clamp(26px, calc(17px + 0.42vw + 1.14dvh), 32px);
+        padding: 0 clamp(10px, calc(5px + 0.3vw + 0.34dvh), 13px);
+        font-size: clamp(0.72rem, calc(0.42rem + 0.28vw + 0.19dvh), 0.86rem);
       }
 
       .btn:hover {
@@ -216,12 +223,13 @@
       }
 
       .settings {
-        min-height: 54px;
+        min-height: clamp(47px, calc(22px + 1.04vw + 1.95dvh), 54px);
         display: grid;
         grid-template-columns: minmax(150px, 1.05fr) minmax(360px, 1.55fr) minmax(130px, 0.75fr) auto auto;
-        gap: 10px;
+        gap: clamp(6px, calc(1px + 0.39vw + 0.33dvh), 9px);
         align-items: end;
-        padding: 8px 11px;
+        padding: clamp(4px, calc(1px + 0.16vw + 0.24dvh), 6px)
+          clamp(8px, calc(4px + 0.33vw + 0.26dvh), 10px);
         border: 1px solid var(--line);
         border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.9);
@@ -233,8 +241,14 @@
       .mode-control,
       .toggle {
         display: grid;
-        gap: 5px;
+        gap: clamp(3px, calc(0.7px + 0.16vw + 0.18dvh), 5px);
         min-width: 0;
+      }
+
+      .settings .field span,
+      .settings .mode-label,
+      .settings .toggle span:first-child {
+        font-size: clamp(0.58rem, calc(0.34rem + 0.21vw + 0.29dvh), 0.7rem);
       }
 
       .field span,
@@ -252,22 +266,23 @@
 
       select {
         width: 100%;
-        height: 36px;
+        height: clamp(30px, calc(16px + 0.46vw + 1.3dvh), 34px);
         min-width: 0;
         border: 1px solid #c5d2df;
         border-radius: var(--radius);
-        padding: 0 11px;
+        padding: 0 clamp(8px, calc(4px + 0.33vw + 0.26dvh), 10px);
         color: var(--ink);
         background: #fff;
         font-weight: 850;
+        font-size: clamp(0.75rem, calc(0.43rem + 0.27vw + 0.33dvh), 0.91rem);
       }
 
       .segmented {
-        height: 36px;
+        height: clamp(30px, calc(16px + 0.46vw + 1.3dvh), 34px);
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 4px;
-        padding: 4px;
+        gap: clamp(3px, calc(0.7px + 0.13vw + 0.13dvh), 4px);
+        padding: clamp(3px, calc(0.7px + 0.13vw + 0.13dvh), 4px);
         border: 1px solid #c5d2df;
         border-radius: var(--radius);
         background: #e8eef5;
@@ -278,7 +293,7 @@
         border-radius: 6px;
         background: transparent;
         color: var(--muted);
-        font-size: 0.82rem;
+        font-size: clamp(0.72rem, calc(0.42rem + 0.18vw + 0.16dvh), 0.81rem);
         font-weight: 900;
       }
 
@@ -289,7 +304,7 @@
       }
 
       .toggle {
-        min-width: 72px;
+        min-width: clamp(61px, calc(31px + 0.59vw + 1.63dvh), 68px);
       }
 
       .toggle input {
@@ -300,8 +315,8 @@
 
       .switch-track {
         position: relative;
-        width: 66px;
-        height: 36px;
+        width: clamp(55px, calc(27px + 0.65vw + 1.95dvh), 61px);
+        height: clamp(30px, calc(16px + 0.46vw + 1.3dvh), 34px);
         border: 1px solid #c5d2df;
         border-radius: 999px;
         background: #dce6ef;
@@ -311,13 +326,14 @@
       .switch-track::after {
         content: "";
         position: absolute;
-        top: 4px;
-        left: 4px;
-        width: 26px;
-        height: 26px;
+        top: 50%;
+        left: clamp(4px, calc(1px + 0.1vw + 0.15dvh), 5px);
+        width: clamp(22px, calc(10px + 0.26vw + 0.98dvh), 26px);
+        height: clamp(22px, calc(10px + 0.26vw + 0.98dvh), 26px);
         border-radius: 50%;
         background: #fff;
         box-shadow: 0 5px 14px rgba(20, 36, 61, 0.24);
+        transform: translateY(-50%);
         transition: transform 140ms ease;
       }
 
@@ -326,7 +342,8 @@
       }
 
       .toggle input:checked + .switch-track::after {
-        transform: translateX(30px);
+        transform: translateX(clamp(25px, calc(12px + 0.39vw + 1.17dvh), 27px))
+          translateY(-50%);
       }
 
       .practice-row {
@@ -747,8 +764,10 @@
         min-height: 0;
         display: grid;
         grid-template-rows: auto minmax(0, 1fr);
-        gap: 5px;
-        padding: 11px 13px 10px;
+        gap: clamp(3px, calc(1px + 0.45dvh), 5px);
+        padding: clamp(8px, calc(1px + 1dvh), 11px)
+          clamp(10px, calc(2px + 0.8dvh), 13px)
+          clamp(8px, calc(1px + 0.9dvh), 10px);
       }
 
       .coach-head {
@@ -843,8 +862,10 @@
         display: grid;
         grid-template-rows: auto auto;
         align-content: start;
-        gap: 3px;
-        padding: 5px 10px 7px;
+        gap: clamp(2px, calc(0.4px + 0.35dvh), 3px);
+        padding: clamp(4px, calc(1px + 0.5dvh), 5px)
+          clamp(7px, calc(2px + 0.8dvh), 10px)
+          clamp(5px, calc(1px + 0.75dvh), 7px);
         border: 1px solid #d8e3ee;
         border-radius: var(--radius);
         background:
@@ -856,9 +877,9 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: clamp(6px, calc(1px + 0.8dvh), 10px);
         color: var(--muted);
-        font-size: 0.75rem;
+        font-size: clamp(0.65rem, calc(0.33rem + 0.75dvh), 0.75rem);
         font-weight: 850;
         line-height: 1.2;
       }
@@ -872,22 +893,22 @@
         min-height: 0;
         display: grid;
         align-items: start;
-        padding-top: 2px;
+        padding-top: clamp(0px, calc(-1px + 0.4dvh), 2px);
       }
 
       .keyboard {
         position: relative;
         z-index: 2;
-        --key-height: clamp(18px, 5.1dvh, 42px);
+        --key-height: clamp(20px, 5.1dvh, 42px);
         min-width: 0;
         display: grid;
-        gap: 5px;
+        gap: clamp(3px, calc(1px + 0.45dvh), 5px);
       }
 
       .key-row {
         display: grid;
         grid-template-columns: repeat(var(--columns, 58), minmax(0, 1fr));
-        gap: 4px;
+        gap: clamp(2px, calc(0.5px + 0.4dvh), 4px);
       }
 
       .row-spacer {
@@ -1051,23 +1072,23 @@
       }
 
       .finger[data-finger$="pinky"] {
-        --finger-height: 45px;
+        --finger-height: clamp(34px, calc(6px + 4.3dvh), 45px);
       }
 
       .finger[data-finger$="ring"] {
-        --finger-height: 53px;
+        --finger-height: clamp(41px, calc(11px + 4.65dvh), 53px);
       }
 
       .finger[data-finger$="middle"] {
-        --finger-height: 62px;
+        --finger-height: clamp(45px, calc(2px + 6.65dvh), 62px);
       }
 
       .finger[data-finger$="index"] {
-        --finger-height: 57px;
+        --finger-height: clamp(42px, calc(4px + 5.8dvh), 57px);
       }
 
       .finger.thumb {
-        --finger-height: 34px;
+        --finger-height: clamp(23px, calc(-5px + 4.3dvh), 34px);
         width: clamp(50px, 6vw, 76px);
         border-radius: 999px 18px 18px 999px;
         opacity: 0.56;
@@ -1111,11 +1132,11 @@
         place-items: center;
         padding: 0 4px;
         border: 1px solid #c4d1df;
-        border-bottom-width: 4px;
+        border-bottom-width: clamp(3px, calc(1px + 0.33dvh), 4px);
         border-radius: var(--radius);
         background: #f9fbfd;
         color: var(--ink);
-        font-size: clamp(0.86rem, 1.65vw, 1.16rem);
+        font-size: clamp(0.7rem, calc(0.25rem + 1.6dvh), 1.16rem);
         font-weight: 950;
         line-height: 1;
         text-transform: none;
@@ -1193,18 +1214,18 @@
 
       .key.space-key {
         text-transform: none;
-        font-size: 0.82rem;
+        font-size: clamp(0.6rem, calc(0.2rem + 1.25dvh), 0.82rem);
       }
 
       .key.function-key {
         background: #eef4f7;
         color: #4b5e76;
-        font-size: clamp(0.55rem, 0.95vw, 0.78rem);
+        font-size: clamp(0.52rem, calc(0.15rem + 1dvh), 0.78rem);
         text-transform: none;
       }
 
       .key.number-key {
-        font-size: clamp(0.75rem, 1.35vw, 1rem);
+        font-size: clamp(0.64rem, calc(0.25rem + 1.4dvh), 1rem);
       }
 
       .key.dual-label {
@@ -1248,21 +1269,21 @@
         height: var(--key-height);
         display: grid;
         grid-template-rows: 1fr 1fr;
-        gap: 3px;
+        gap: clamp(2px, calc(0.4px + 0.35dvh), 3px);
       }
 
       .arrow-stack .key {
         height: auto;
         min-height: 0;
         border-bottom-width: 2px;
-        font-size: clamp(0.48rem, 0.8vw, 0.66rem);
+        font-size: clamp(0.45rem, calc(0.14rem + 0.8dvh), 0.66rem);
       }
 
       .trainer-note {
         display: flex;
         justify-content: center;
         color: var(--muted);
-        font-size: 0.83rem;
+        font-size: clamp(0.66rem, calc(0.3rem + 0.9dvh), 0.83rem);
         font-weight: 800;
         line-height: 1.25;
         text-align: center;
@@ -1901,62 +1922,17 @@
 
       @media (max-height: 760px) and (min-width: 760px) {
         .app {
-          padding: 6px 0;
+          padding: 5px 0;
           grid-template-rows: auto auto minmax(0, 0.74fr) minmax(0, 1.26fr);
-          gap: 6px;
+          gap: 5px;
         }
 
         .app.sentence-mode {
           grid-template-rows: auto auto minmax(0, 0.96fr) minmax(0, 1.04fr);
         }
 
-        .top-bar {
-          min-height: 40px;
-        }
-
-        .brand-mark {
-          width: 38px;
-          height: 38px;
-          box-shadow: 3px 3px 0 var(--ink);
-        }
-
-        .brand p {
-          display: none;
-        }
-
-        .settings {
-          min-height: 46px;
-          padding: 6px 9px;
-        }
-
-        .field span,
-        .mode-label,
-        .toggle span:first-child {
-          font-size: 0.66rem;
-        }
-
-        select,
-        .segmented,
-        .switch-track {
-          height: 32px;
-        }
-
-        .switch-track {
-          width: 56px;
-        }
-
-        .switch-track::after {
-          width: 22px;
-          height: 22px;
-        }
-
-        .toggle input:checked + .switch-track::after {
-          transform: translateX(26px);
-        }
-
         .stage,
-        .stats,
-        .coach {
+        .stats {
           padding: 8px 10px;
         }
 
@@ -1999,63 +1975,14 @@
 
         .coach {
           grid-template-rows: auto minmax(0, 1fr);
-          gap: 3px;
         }
 
         .coach-title p {
           display: none;
         }
 
-        .keyboard-wrap {
-          padding: 4px 7px 6px;
-          gap: 2px;
-        }
-
-        .home-strip,
-        .trainer-note {
-          font-size: 0.68rem;
-        }
-
         .coach-tip {
           display: none;
-        }
-
-        .finger[data-finger$="pinky"] {
-          --finger-height: 39px;
-        }
-
-        .finger[data-finger$="ring"] {
-          --finger-height: 47px;
-        }
-
-        .finger[data-finger$="middle"] {
-          --finger-height: 54px;
-        }
-
-        .finger[data-finger$="index"] {
-          --finger-height: 50px;
-        }
-
-        .finger.thumb {
-          --finger-height: 28px;
-        }
-
-        .keyboard {
-          --key-height: clamp(18px, 3.5dvh, 26px);
-        }
-
-        .key {
-          border-bottom-width: 3px;
-          font-size: 0.7rem;
-        }
-
-        .typing-surface {
-          padding-top: 0;
-        }
-
-        .keyboard,
-        .key-row {
-          gap: 3px;
         }
       }
 
@@ -2067,36 +1994,6 @@
 
         .app.sentence-mode {
           grid-template-rows: auto auto minmax(0, 1.08fr) minmax(0, 0.92fr);
-        }
-
-        h1 {
-          font-size: 1.7rem;
-        }
-
-        .settings {
-          min-height: 42px;
-          padding: 5px 8px;
-        }
-
-        select,
-        .segmented,
-        .switch-track {
-          height: 30px;
-        }
-
-        .switch-track {
-          width: 52px;
-        }
-
-        .switch-track::after {
-          top: 3px;
-          left: 3px;
-          width: 22px;
-          height: 22px;
-        }
-
-        .toggle input:checked + .switch-track::after {
-          transform: translateX(24px);
         }
 
         .stage {
@@ -2201,23 +2098,6 @@
         .coach-now {
           min-width: 260px;
           padding: 5px 7px;
-        }
-
-        .keyboard-wrap {
-          padding: 5px 7px 7px;
-        }
-
-        .home-strip,
-        .trainer-note {
-          font-size: 0.66rem;
-        }
-
-        .keyboard {
-          --key-height: clamp(17px, 3.55dvh, 24px);
-        }
-
-        .key {
-          font-size: 0.66rem;
         }
 
         .target-ring {
@@ -2395,7 +2275,6 @@
         }
 
         h1 {
-          font-size: 1.7rem;
           white-space: normal;
         }
 
@@ -2455,10 +2334,6 @@
 
         .coach-head {
           display: none;
-        }
-
-        .key.number-key {
-          font-size: clamp(0.52rem, 1.8dvh, 0.7rem);
         }
 
         .key.dual-label {
