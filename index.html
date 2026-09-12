@@ -717,33 +717,46 @@
         min-height: 0;
         display: grid;
         grid-template-rows: auto minmax(0, 1fr);
-        gap: 7px;
+        gap: 5px;
         padding: 11px 13px 10px;
       }
 
       .coach-head {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) max-content;
+        grid-template-columns: max-content minmax(0, 1fr) max-content;
         align-items: center;
         gap: 10px;
       }
 
       .coach-title {
-        min-height: 34px;
+        min-height: 28px;
         display: flex;
         align-items: center;
+      }
+
+      .coach-head .trainer-note {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 0.58rem;
+        font-weight: 800;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
       }
 
       .coach-now {
         display: grid;
         grid-template-columns: minmax(0, 1fr) max-content;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         width: auto;
         min-width: 0;
         max-width: min(460px, 48vw);
-        height: 34px;
-        padding: 3px 5px;
+        height: 28px;
+        padding: 2px 4px;
         border: 1px solid #d8e3ee;
         border-radius: var(--radius);
         background: #f8fafc;
@@ -761,7 +774,7 @@
         min-width: 0;
         overflow: hidden;
         color: var(--ink);
-        font-size: 0.76rem;
+        font-size: 0.7rem;
         font-weight: 950;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -770,25 +783,25 @@
       .coach-finger::before {
         content: "Use: ";
         color: var(--muted);
-        font-size: 0.68rem;
+        font-size: 0.62rem;
         letter-spacing: 0.04em;
         text-transform: uppercase;
       }
 
       .coach-key {
         width: max-content;
-        min-width: 26px;
+        min-width: 21px;
         max-width: 152px;
-        height: 26px;
+        height: 21px;
         display: grid;
         place-items: center;
-        padding: 0 7px;
+        padding: 0 6px;
         border-radius: var(--radius);
         background: var(--gold);
         color: var(--ink);
         border: 2px solid var(--ink);
-        box-shadow: 3px 3px 0 var(--ink);
-        font-size: 0.72rem;
+        box-shadow: 2px 2px 0 var(--ink);
+        font-size: 0.65rem;
         font-weight: 950;
         line-height: 1;
         white-space: nowrap;
@@ -798,10 +811,10 @@
         position: relative;
         min-height: 0;
         display: grid;
-        grid-template-rows: auto auto auto;
+        grid-template-rows: auto auto;
         align-content: start;
-        gap: 6px;
-        padding: 7px 10px 9px;
+        gap: 3px;
+        padding: 5px 10px 7px;
         border: 1px solid #d8e3ee;
         border-radius: var(--radius);
         background:
@@ -829,7 +842,7 @@
         min-height: 0;
         display: grid;
         align-items: start;
-        padding-top: clamp(4px, 1.4vh, 16px);
+        padding-top: 2px;
       }
 
       .keyboard {
@@ -1956,7 +1969,7 @@
 
         .coach {
           grid-template-rows: auto minmax(0, 1fr);
-          gap: 5px;
+          gap: 3px;
         }
 
         .coach-title p {
@@ -1964,8 +1977,8 @@
         }
 
         .keyboard-wrap {
-          padding: 6px 7px;
-          gap: 4px;
+          padding: 4px 7px 6px;
+          gap: 2px;
         }
 
         .home-strip,
@@ -2361,6 +2374,10 @@
           grid-template-columns: 1fr;
         }
 
+        .coach-head .trainer-note {
+          white-space: normal;
+        }
+
         .coach-now {
           min-width: 0;
           grid-template-columns: minmax(0, 1fr) max-content;
@@ -2392,6 +2409,17 @@
 
         .trainer-note {
           font-size: 0.78rem;
+        }
+      }
+
+      @media (max-height: 760px) {
+        .coach {
+          grid-template-rows: auto;
+          gap: 0;
+        }
+
+        .coach-head {
+          display: none;
         }
       }
 
@@ -2538,6 +2566,9 @@
           <div class="coach-title">
             <span class="coach-kicker">Finger Guide + Keyboard</span>
           </div>
+          <p class="trainer-note">
+            Wrong keys make a hint sound. They do not get typed, and you do not need Backspace.
+          </p>
           <div class="coach-now" aria-label="Current typing hint">
             <strong class="coach-finger" id="fingerName">Ready Fingers</strong>
             <span class="coach-key" id="keyBadge">-</span>
@@ -2595,9 +2626,6 @@
               <div class="target-ring" id="targetRing" hidden></div>
             </div>
           </div>
-          <p class="trainer-note">
-            Wrong keys make a hint sound. They do not get typed, and you do not need Backspace.
-          </p>
         </div>
       </section>
     </main>
